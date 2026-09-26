@@ -6,19 +6,19 @@
   "config": {
     "variables": [
       {
-        "name": "ALUNO1_CAMADA_BRONZE",
+        "name": "CAMADA_BRONZE",
         "value": "bronze",
-        "description": "Schema Bronze do Estudante 1"
+        "description": "Schema Bronze"
       },
       {
-        "name": "ALUNO1_CAMADA_SILVER",
+        "name": "CAMADA_SILVER",
         "value": "silver",
-        "description": "Schema Silver do Estudante 1"
+        "description": "Schema Silver"
       },
       {
-        "name": "ALUNO1_CAMADA_QUARENTENA",
+        "name": "CAMADA_QUARENTENA",
         "value": "quarentena",
-        "description": "Schema de quarentena do Estudante 1"
+        "description": "Schema de quarentena"
       }
     ]
   }

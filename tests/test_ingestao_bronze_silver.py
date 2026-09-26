@@ -73,7 +73,7 @@ def test_bronze_silver_e_quarentena(tmp_path):
 
     cmd = [
         sys.executable,
-        "scripts/estudante1_pipeline.py",
+        "scripts/ingestao_bronze_silver.py",
         "--stage", "all",
         "--source-dir", str(src),
         "--output-dir", str(out),
@@ -108,7 +108,7 @@ def test_falha_arquivo_ausente(tmp_path):
 
     result = subprocess.run([
         sys.executable,
-        "scripts/estudante1_pipeline.py",
+        "scripts/ingestao_bronze_silver.py",
         "--stage", "bronze",
         "--source-dir", str(src),
         "--output-dir", str(out),
@@ -126,7 +126,7 @@ def test_reprocessamento_quarentena_corrigida(tmp_path):
 
     primeira_execucao = subprocess.run([
         sys.executable,
-        "scripts/estudante1_pipeline.py",
+        "scripts/ingestao_bronze_silver.py",
         "--stage", "all",
         "--source-dir", str(src),
         "--output-dir", str(out),
@@ -148,7 +148,7 @@ def test_reprocessamento_quarentena_corrigida(tmp_path):
 
     reprocessamento = subprocess.run([
         sys.executable,
-        "scripts/estudante1_pipeline.py",
+        "scripts/ingestao_bronze_silver.py",
         "--reprocess-quarantine", str(corrigido),
         "--output-dir", str(out),
     ], capture_output=True, text=True)

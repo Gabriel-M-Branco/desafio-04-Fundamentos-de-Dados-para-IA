@@ -411,7 +411,7 @@ def main() -> None:
 
     output_dir = Path(args.output_dir)
     run_id = str(uuid.uuid4())
-    log_file = Path("logs") / "pipeline_estudante1.jsonl"
+    log_file = Path("logs") / "pipeline_ingestao.jsonl"
 
     if args.reprocess_quarantine:
         log_event(log_file, run_id, "reprocessamento", "INICIO", arquivo=args.reprocess_quarantine)
@@ -447,7 +447,7 @@ def main() -> None:
         raise
     finally:
         output_dir.mkdir(parents=True, exist_ok=True)
-        (output_dir / "resumo_estudante1.json").write_text(
+        (output_dir / "resumo_ingestao_bronze_silver.json").write_text(
             json.dumps(result, ensure_ascii=False, indent=2, default=str),
             encoding="utf-8",
         )

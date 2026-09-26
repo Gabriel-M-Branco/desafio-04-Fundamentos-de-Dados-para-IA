@@ -20,7 +20,7 @@ Este documento registra os resultados de execução, equivalência analítica, d
 | **Status da Execução** | `SUCESSO` |
 | **Registros de Entrada Processados** | `1000` interações |
 | **Registros Analíticos Consolidados (Gold)** | `64` categorias/períodos |
-| **Duração do Processamento** | `0.4307 segundos` |
+| **Duração do Processamento** | `0.4019 segundos` |
 | **Arquivo Parquet de Saída** | `C:\Users\branco\Documents\GitHub\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
 | **Tamanho do Arquivo Gerado** | `11597 bytes` |
 
@@ -29,19 +29,19 @@ Este documento registra os resultados de execução, equivalência analítica, d
 [
   {
     "ano": 2026,
-    "mes": 6,
-    "categoria": "Inteligência Artificial",
+    "mes": 3,
+    "categoria": "Devops & Cloud",
     "total_interacoes": 20,
     "usuarios_ativos": 19,
     "total_visualizacoes": 5,
-    "total_inicios": 3,
-    "total_conclusoes": 3,
-    "total_curtidas": 5,
-    "taxa_conclusao_pct": 100.0,
-    "tempo_total_consumido_min": 1244.0,
-    "tempo_medio_min": 62.2,
+    "total_inicios": 5,
+    "total_conclusoes": 4,
+    "total_curtidas": 3,
+    "taxa_conclusao_pct": 80.0,
+    "tempo_total_consumido_min": 1233.0,
+    "tempo_medio_min": 61.65,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-26T16:48:25.854696+00:00",
+    "_data_carga_gold": "2026-09-26T17:21:51.078375+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
@@ -58,24 +58,24 @@ Este documento registra os resultados de execução, equivalência analítica, d
     "tempo_total_consumido_min": 5056.0,
     "tempo_medio_min": 280.89,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-26T16:48:25.854696+00:00",
+    "_data_carga_gold": "2026-09-26T17:21:51.078375+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
     "ano": 2026,
-    "mes": 3,
+    "mes": 5,
     "categoria": "Engenharia De Dados",
-    "total_interacoes": 11,
-    "usuarios_ativos": 9,
-    "total_visualizacoes": 5,
-    "total_inicios": 4,
-    "total_conclusoes": 1,
-    "total_curtidas": 1,
-    "taxa_conclusao_pct": 25.0,
-    "tempo_total_consumido_min": 671.0,
-    "tempo_medio_min": 61.0,
+    "total_interacoes": 21,
+    "usuarios_ativos": 20,
+    "total_visualizacoes": 9,
+    "total_inicios": 0,
+    "total_conclusoes": 4,
+    "total_curtidas": 2,
+    "taxa_conclusao_pct": 0.0,
+    "tempo_total_consumido_min": 5261.0,
+    "tempo_medio_min": 250.52,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-26T16:48:25.854696+00:00",
+    "_data_carga_gold": "2026-09-26T17:21:51.078375+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   }
 ]
@@ -94,7 +94,7 @@ Conforme a Seção 4 do `AGENTS.md`:
 - **Spark instalado no host:** `False` (`None`)
 - **Hadoop winutils presente no Windows:** `False` (`None`)
 - **Status do SparkRunner no Host Local:** `ERRO_COMUNICACAO_WORKER`
-- **Parecer Técnico:** Job Server alcançado no Docker, mas execução distribuída requer SDK harness remoto: Pipeline BeamApp-root-0926164827-8e601838_78afff45-8cb6-4aeb-aa89-085eacbe77c1 failed in state FAILED: org.apache.spark.SparkException: Job aborted due to stage failure: Task 3 in stage 0.0 failed 1 times, most recent failure: Lost task 3.0 in stage 0.0 (TID 3, localhost, executor driver): org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.UncheckedExecutionException: org.apache.beam.vendor.grpc.v1p48p1.io.grpc.StatusRuntimeException: UNAVAILABLE: io exception
+- **Parecer Técnico:** Job Server alcançado no Docker, mas execução distribuída requer SDK harness remoto: Pipeline BeamApp-root-0926172152-e744d455_ebb47ed4-8454-41cf-957b-0997f7a996a3 failed in state FAILED: org.apache.spark.SparkException: Job aborted due to stage failure: Task 3 in stage 0.0 failed 1 times, most recent failure: Lost task 3.0 in stage 0.0 (TID 3, localhost, executor driver): org.apache.beam.vendor.guava.v26_0_jre.com.google.common.util.concurrent.UncheckedExecutionException: org.apache.beam.vendor.grpc.v1p48p1.io.grpc.StatusRuntimeException: UNAVAILABLE: io exception
 	at org.apache.beam.vendor.guava.v26_0_jre.com.google.common.cache.LocalCache$Segment.get(LocalCache.java:2050)
 	at org.apache.beam.vendor.guava.v26_0_jre.com.google.common.cache.LocalCache.get(LocalCache.java:3952)
 	at org.apache.beam.vendor.guava.v26_0_jre.com.google.common.cache.LocalCache.getOrLoad(LocalCache.java:3974)
@@ -163,7 +163,7 @@ Caused by: org.apache.beam.vendor.grpc.v1p48p1.io.grpc.StatusRuntimeException: U
 	at org.apache.beam.vendor.guava.v26_0_jre.com.google.common.cache.LocalCache$Segment.lockedGetOrLoad(LocalCache.java:2154)
 	at org.apache.beam.vendor.guava.v26_0_jre.com.google.common.cache.LocalCache$Segment.get(LocalCache.java:2044)
 	... 54 more
-Caused by: org.apache.beam.vendor.grpc.v1p48p1.io.netty.channel.AbstractChannel$AnnotatedConnectException: finishConnect(..) failed: Connection refused: localhost/0:0:0:0:0:0:0:1:49971
+Caused by: org.apache.beam.vendor.grpc.v1p48p1.io.netty.channel.AbstractChannel$AnnotatedConnectException: finishConnect(..) failed: Connection refused: localhost/0:0:0:0:0:0:0:1:59013
 Caused by: java.net.ConnectException: finishConnect(..) failed: Connection refused
 	at org.apache.beam.vendor.grpc.v1p48p1.io.netty.channel.unix.Errors.newConnectException0(Errors.java:155)
 	at org.apache.beam.vendor.grpc.v1p48p1.io.netty.channel.unix.Errors.handleConnectErrno(Errors.java:128)

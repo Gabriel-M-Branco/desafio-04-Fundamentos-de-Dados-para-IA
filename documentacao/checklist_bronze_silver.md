@@ -1,6 +1,6 @@
-# Checklist — Estudante 1
+# Checklist — Ingestão Bronze e Silver (RF20 a RF23)
 
-Status deste pacote:
+Status desta etapa:
 
 ## RF20 — Bronze
 - [x] projeto Hop e configuração versionável

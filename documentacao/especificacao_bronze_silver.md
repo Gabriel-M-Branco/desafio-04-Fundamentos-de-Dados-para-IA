@@ -55,7 +55,7 @@ Padronização de nomes nas interações:
 
 ## RF22 — Workflow
 
-`hop/workflows/carga_aluno1.hwf` executa:
+`hop/workflows/carga_bronze_silver.hwf` executa:
 
 ```text
 setup -> preparação idempotente -> preflight Desafio 1
@@ -70,12 +70,12 @@ Estados: `SUCESSO`, `SUCESSO_COM_RESSALVAS` e `FALHA`.
 
 Em falha crítica, a Silver parcial do mesmo `RUN_ID` é removida como compensação, a Bronze é preservada e o workflow termina em `Abort`.
 
-Execução manual: `bash hop/run-aluno1.sh`.
+Execução manual: `bash hop/run-pipeline.sh`.
 
 Agendamento às 03:00, exemplo:
 
 ```cron
-0 3 * * * cd /CAMINHO/desafio-04-Fundamentos-de-Dados-para-IA && HOP_HOME=/CAMINHO/apache-hop bash hop/run-aluno1.sh >> logs/cron_aluno1.log 2>&1
+0 3 * * * cd /CAMINHO/desafio-04-Fundamentos-de-Dados-para-IA && HOP_HOME=/CAMINHO/apache-hop bash hop/run-pipeline.sh >> logs/cron_pipeline.log 2>&1
 ```
 
 O workflow final da equipe acrescentará depois: `Qualidade -> Gold -> publicação de metadados`.
@@ -95,7 +95,7 @@ A procedure `controle.reenfileirar_quarentena(...)` reinsere o payload corrigido
 
 ## Evidências para a apresentação
 
-Use `sql/aluno1_evidencias.sql` e capture:
+Use `sql/evidencias_bronze_silver.sql` e capture:
 1. workflow em sucesso ou sucesso com ressalvas;
 2. contagens Bronze;
 3. contagens Silver;

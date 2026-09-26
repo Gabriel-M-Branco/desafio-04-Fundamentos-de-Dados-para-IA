@@ -31,7 +31,7 @@
       <attributes_hac/>
     </action>
     <action>
-      <filename>${PROJECT_HOME}/workflows/carga_aluno1.hwf</filename>
+      <filename>${PROJECT_HOME}/workflows/carga_bronze_silver.hwf</filename>
       <params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row>
       <clear_rows>N</clear_rows>
@@ -45,7 +45,7 @@
         <pass_all_parameters>Y</pass_all_parameters>
       </parameters>
       <run_configuration>local</run_configuration>
-      <name>Carga Aluno 1</name>
+      <name>Carga Bronze e Silver</name>
       <description>RF20 a RF23 - Execução parametrizada Bronze e Silver</description>
       <type>WORKFLOW</type>
       <attributes/>
@@ -65,7 +65,7 @@
       <hour>12</hour>
       <doNotWaitOnFirstExecution>N</doNotWaitOnFirstExecution>
       <name>SUCESSO</name>
-      <description>Fim com sucesso das etapas do Estudante 1</description>
+      <description>Fim com sucesso da ingestão Bronze e Silver</description>
       <type>SPECIAL</type>
       <attributes/>
       <xloc>288</xloc>
@@ -77,13 +77,13 @@
   <hops>
     <hop>
       <from>START</from>
-      <to>Carga Aluno 1</to>
+      <to>Carga Bronze e Silver</to>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>Carga Aluno 1</from>
+      <from>Carga Bronze e Silver</from>
       <to>SUCESSO</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>

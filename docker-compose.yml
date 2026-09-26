@@ -16,7 +16,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql/criar_banco.sql:/docker-entrypoint-initdb.d/01_criar_banco.sql
-      - ./sql/aluno1_camadas.sql:/docker-entrypoint-initdb.d/02_aluno1_camadas.sql
+      - ./sql/camadas_bronze_silver.sql:/docker-entrypoint-initdb.d/02_camadas_bronze_silver.sql
       - ./sql/criar_camada_gold.sql:/docker-entrypoint-initdb.d/03_criar_camada_gold.sql
 
     healthcheck:
