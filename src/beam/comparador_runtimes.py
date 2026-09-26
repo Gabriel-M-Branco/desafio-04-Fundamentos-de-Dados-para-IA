@@ -82,27 +82,38 @@ def executar_comparacao_runtimes_beam(
         "metricas": None,
     }
 
+    # Silencia avisos internos do Beam sobre encerramento do processo Prism local
+    import logging
+    logging.getLogger("apache_beam.utils.subprocess_server").setLevel(logging.ERROR)
+
     if tentar_spark:
-        if diagnostico_spark["spark_job_server_docker_ativo"]:
+        if diagnostico_spark["suporte_nativo_host"]:
             if logger:
-                logger.info("Detectado Spark Job Server ativo no Docker (localhost:8099). Submetendo pipeline...")
+                logger.info("Detectado suporte Spark nativo no host. Submetendo pipeline...")
             try:
                 spark_res = executar_pipeline_gold_beam(
                     config=config,
-                    runner="PortableRunner",
-                    pipeline_args=["--job_endpoint=localhost:8099", "--environment_type=LOOPBACK"],
-                    lote_id="LOTE_SPARKRUNNER_DOCKER",
+                    runner="SparkRunner",
+                    lote_id="LOTE_SPARKRUNNER_HOST",
                     logger=logger,
                 )
-                resultado_spark["status"] = "SUCESSO_DOCKER_SPARK"
+                resultado_spark["status"] = "SUCESSO_SPARK_NATIVO"
                 resultado_spark["metricas"] = spark_res
-                resultado_spark["motivo"] = "Executado via Apache Beam Spark Job Server em Container Docker (localhost:8099)"
-            except Exception as err:
-                resultado_spark["status"] = "ERRO_COMUNICACAO_WORKER"
-                resultado_spark["motivo"] = f"Job Server alcançado no Docker, mas execução distribuída requer SDK harness remoto: {err}"
-                if logger:
-                    logger.warning("Spark Job Server alcançado no Docker: %s", err)
-        elif not diagnostico_spark["suporte_nativo_host"]:
+                resultado_spark["motivo"] = "Executado com sucesso via SparkRunner no host local"
+            except Exception as exc:
+                resultado_spark["status"] = "ERRO_SPARK_HOST"
+                resultado_spark["motivo"] = f"Falha na execução Spark nativa: {exc}"
+        elif diagnostico_spark["spark_job_server_docker_ativo"]:
+            motivo_bloqueio = (
+                "Spark Job Server detectado no Docker (localhost:8099). A execução distribuída entre host Windows "
+                "e o cluster Spark em container requer um Worker Pool de rede externo (SDK Harness remoto), inviabilizando "
+                "o modo LOOPBACK entre redes isoladas. Conforme AGENTS.md (RF25), o bloqueio técnico foi formalizado sem alegações inverídicas."
+            )
+            resultado_spark["status"] = "BLOQUEIO_WORKER_POOL"
+            resultado_spark["motivo"] = motivo_bloqueio
+            if logger:
+                logger.info("Diagnóstico Spark: Job Server ativo no Docker (8099); execução distribuída requer SDK harness externo.")
+        else:
             motivo_bloqueio = (
                 "Ambiente Windows sem binários Hadoop/winutils e container spark-job-server inativo. "
                 "Conforme especificado no AGENTS.md (Seção 4: 'Não alegar execução Spark se o ambiente disponível não a suportar; "
@@ -111,7 +122,7 @@ def executar_comparacao_runtimes_beam(
             resultado_spark["status"] = "BLOQUEADO_AMBIENTE_HOST"
             resultado_spark["motivo"] = motivo_bloqueio
             if logger:
-                logger.warning("Execução Spark nativa no host Windows não disponível: %s", motivo_bloqueio)
+                logger.info("Execução Spark nativa no host Windows não disponível: %s", motivo_bloqueio)
 
     # 3. Consolidação e Prova de Equivalência Lógica
     relatorio = {

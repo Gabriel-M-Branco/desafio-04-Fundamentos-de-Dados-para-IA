@@ -68,8 +68,11 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - ./hop:/files
+      - ./hop:/usr/local/tomcat/webapps/ROOT/config/projects/default
       - ./dados:/dados
+      - ./dados:/usr/local/tomcat/webapps/ROOT/config/projects/dados
       - ./sql:/sql
+      - ./sql:/usr/local/tomcat/webapps/ROOT/config/projects/sql
     depends_on:
       postgres:
         condition: service_healthy

@@ -118,11 +118,13 @@ def main() -> None:
 
     # 4. APACHE BEAM E RUNTIMES (RF25)
     if args.etapa in ("beam", "todas"):
+        import logging
+        logging.getLogger("apache_beam.utils.subprocess_server").setLevel(logging.ERROR)
         logger.info(">>> [4/5] Executando Etapa 3 / RF25: Pipeline Apache Beam e Comparador de Runtimes")
         rel_beam = executar_comparacao_runtimes_beam(config=config, tentar_spark=True, logger=logger)
         print(f"[OK] Pipeline Beam executado:")
         print(f"     DirectRunner: {rel_beam['direct_runner']['status']} | {rel_beam['direct_runner']['registros_gold_gerados']} KPIs gerados")
-        print(f"     SparkRunner: {rel_beam['spark_runner']['status']}")
+        print(f"     SparkRunner: {rel_beam['spark_runner']['status']} (Diagnóstico formalizado no relatório)")
         print(f"     Relatório JSON: dados/processados/resultado_execucao_beam.json")
         print(f"     Documentação MD: documentacao/execucao_beam_spark.md")
 
