@@ -1,5 +1,5 @@
--- Desafio Prático 2 - Estudante 1
--- RF20 a RF23: Bronze, Silver, workflow, quarentena e recuperação.
+-- Desafio Prático 2 — Camadas Bronze, Silver, Quarentena e Controle (RF20 a RF23)
+-- Ingestão, validação, workflow, quarentena e recuperação.
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS bronze;

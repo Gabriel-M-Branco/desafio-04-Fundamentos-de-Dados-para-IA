@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workflow>
-  <name>carga_aluno1</name><name_sync_with_filename>Y</name_sync_with_filename>
-  <description>RF20-RF23: Bronze, Silver, workflow e tratamento de erros.</description>
-  <extended_description>Subworkflow do Estudante 1; a integração final encadeia Qualidade, Gold e metadados depois dele.</extended_description>
+  <name>carga_bronze_silver</name><name_sync_with_filename>Y</name_sync_with_filename>
+  <description>RF20-RF23: Ingestão Bronze, Silver, workflow e tratamento de erros.</description>
+  <extended_description>Workflow da etapa de ingestão de dados brutos e padronização Silver; encadeado antes de Qualidade, Gold e Governança.</extended_description>
   <workflow_version>1.0</workflow_version>
   <created_user>FIC_DEV</created_user><created_date>2026/09/25 18:00:00.000</created_date>
   <modified_user>FIC_DEV</modified_user><modified_date>2026/09/25 18:00:00.000</modified_date>
@@ -19,7 +19,7 @@
       <parallel>N</parallel><xloc>60</xloc><yloc>80</yloc><attributes_hac/></action>    <action>
       <name>Criar/validar estruturas</name><description/><type>SQL</type><attributes/>
       <sql/><useVariableSubstitution>T</useVariableSubstitution>
-      <sqlfromfile>T</sqlfromfile><sqlfilename>${PROJECT_HOME}/../sql/aluno1_camadas.sql</sqlfilename>
+      <sqlfromfile>T</sqlfromfile><sqlfilename>${PROJECT_HOME}/../sql/camadas_bronze_silver.sql</sqlfilename>
       <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
       <parallel>N</parallel><xloc>220</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>

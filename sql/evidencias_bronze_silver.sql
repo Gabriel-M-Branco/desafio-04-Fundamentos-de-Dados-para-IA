@@ -1,4 +1,4 @@
--- Evidências do Estudante 1
+-- Evidências de Auditoria das Camadas Bronze e Silver
 SELECT * FROM controle.execucao_workflow ORDER BY inicio DESC;
 SELECT * FROM controle.execucao_etapa ORDER BY etapa_id DESC;
 

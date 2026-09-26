@@ -1,0 +1,2 @@
+# Exemplo de cron às 03:00; ajuste os caminhos.
+0 3 * * * cd /CAMINHO/desafio-04-Fundamentos-de-Dados-para-IA && HOP_HOME=/CAMINHO/apache-hop bash hop/run-pipeline.sh >> logs/cron_pipeline.log 2>&1

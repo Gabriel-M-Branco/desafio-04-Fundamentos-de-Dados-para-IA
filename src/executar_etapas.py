@@ -61,16 +61,16 @@ def main() -> None:
     logger.info("EXECUÇÃO MODULAR DESAFIO 2 — ETAPA SELECIONADA: %s", args.etapa.upper())
     logger.info("=================================================================")
 
-    # 0. INGESTÃO BRONZE & SILVER (Estudante 1 / RF20-RF23)
+    # 0. INGESTÃO BRONZE & SILVER (RF20-RF23)
     if args.etapa in ("ingestao", "todas"):
-        script_e1 = caminho_absoluto("scripts/estudante1_pipeline.py")
-        if script_e1.exists():
-            logger.info(">>> [0/5] Executando Etapa 1 / RF20-RF23: Ingestão Bronze & Silver (Estudante 1)")
+        script_ingestao = caminho_absoluto("scripts/ingestao_bronze_silver.py")
+        if script_ingestao.exists():
+            logger.info(">>> [0/5] Executando Etapa 1 / RF20-RF23: Ingestão das Camadas Bronze & Silver")
             try:
-                from scripts.estudante1_pipeline import bronze, silver
+                from scripts.ingestao_bronze_silver import bronze, silver
                 dir_brutos = caminho_absoluto("dados/brutos")
                 dir_dados = caminho_absoluto("dados")
-                run_id_ingestao = "RUN_INTEGRADO_E1_E2"
+                run_id_ingestao = "RUN_INTEGRADO_BRONZE_SILVER"
                 r_bronze = bronze(dir_brutos, dir_dados, run_id_ingestao, skip_db=True)
                 r_silver = silver(dir_dados, run_id_ingestao, skip_db=True)
                 print(

@@ -8,7 +8,7 @@ RUN_ID="teste-regra-$(date -u +%Y%m%dT%H%M%SZ)"
 
 # Garante as estruturas.
 docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T postgres \
-  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < "$ROOT_DIR/sql/aluno1_camadas.sql"
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < "$ROOT_DIR/sql/camadas_bronze_silver.sql"
 
 # Insere um registro propositalmente inválido na Bronze.
 docker compose -f "$ROOT_DIR/docker-compose.yml" exec -T postgres \
