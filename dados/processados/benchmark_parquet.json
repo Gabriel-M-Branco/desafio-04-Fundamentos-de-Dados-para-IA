@@ -1,0 +1,62 @@
+{
+  "ambiente": {
+    "sistema_operacional": "Windows-11-10.0.26200-SP0",
+    "python_versao": "3.14.7",
+    "processador": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "pyarrow_versao": "25.0.1",
+    "pandas_versao": "3.0.5"
+  },
+  "metodologia": {
+    "volume_registros": 1000,
+    "repeticoes_por_teste": 5,
+    "descarte_warmup": true,
+    "unidade_tempo": "milissegundos (ms)",
+    "compressao_parquet": "snappy",
+    "particionamento_hive": [
+      "ano",
+      "mes"
+    ]
+  },
+  "metricas": {
+    "parquet_consolidado": {
+      "tamanho_bytes": 36860,
+      "tamanho_kb": 36.0,
+      "reducao_vs_json_pct": 89.44,
+      "reducao_vs_csv_pct": 72.16,
+      "tempo_escrita_ms": 3.628,
+      "tempo_leitura_full_ms": 1.389,
+      "tempo_leitura_projecao_ms": 1.116,
+      "tempo_leitura_filtro_ms": 1.694
+    },
+    "parquet_particionado": {
+      "tamanho_bytes": 96564,
+      "tamanho_kb": 94.3,
+      "reducao_vs_json_pct": 72.34,
+      "reducao_vs_csv_pct": 27.06,
+      "tempo_escrita_ms": 6.791,
+      "tempo_leitura_full_ms": 3.626,
+      "tempo_leitura_projecao_ms": null,
+      "tempo_leitura_filtro_ms": 2.873
+    },
+    "csv": {
+      "tamanho_bytes": 132386,
+      "tamanho_kb": 129.28,
+      "reducao_vs_json_pct": 62.08,
+      "reducao_vs_csv_pct": 0.0,
+      "tempo_escrita_ms": 5.475,
+      "tempo_leitura_full_ms": 2.573,
+      "tempo_leitura_projecao_ms": 1.687,
+      "tempo_leitura_filtro_ms": 2.648
+    },
+    "json": {
+      "tamanho_bytes": 349165,
+      "tamanho_kb": 340.98,
+      "reducao_vs_json_pct": 0.0,
+      "reducao_vs_csv_pct": -163.75,
+      "tempo_escrita_ms": 68.798,
+      "tempo_leitura_full_ms": 1.869,
+      "tempo_leitura_projecao_ms": 1.892,
+      "tempo_leitura_filtro_ms": 1.8
+    }
+  }
+}

@@ -33,3 +33,14 @@ recomendacao:
 
 logs:
   arquivo: logs/pipeline.log
+
+parquet:
+  origem_silver_interacoes: dados/processados/interacoes_processadas.json
+  origem_silver_catalogo: dados/processados/catalogo_processado.csv
+  diretorio_saida: dados/parquet
+  compressao: snappy
+  particionar_por:
+    - ano
+    - mes
+  benchmark_saida: dados/processados/benchmark_parquet.json
+  benchmark_doc: documentacao/benchmark_parquet.md
