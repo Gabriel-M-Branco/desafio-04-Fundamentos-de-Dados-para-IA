@@ -6,14 +6,54 @@ Implementação da etapa de ingestão de dados: Apache Hop, Bronze, Silver, work
 
 O Desafio 2 reaproveita o Desafio 1. A tabela `public.usuarios` deve estar preenchida com os usuários válidos da solução anterior. O workflow faz um preflight e falha explicitamente se ela estiver vazia.
 
-## Preparação
+## Como Executar
 
-1. Copie `.env.example` para `.env` e preencha as credenciais locais.
-2. Defina o Hop: `export HOP_HOME=$HOME/hop` (ajuste o caminho).
-3. Rode `bash hop/configurar-projeto.sh`.
-4. Rode `bash hop/run-pipeline.sh`.
+### 1. Pela Interface Gráfica Web (Hop Web — Play no Navegador)
 
-O script gera um `RUN_ID` único e grava o log em `logs/hop_<RUN_ID>.log`.
+1. Certifique-se de que os contêineres Docker estão em execução:
+   ```bash
+   docker compose up -d
+   ```
+2. Abra no navegador: [http://localhost:8080](http://localhost:8080)
+3. Na barra superior do Hop Web, confirme ou selecione o projeto **`desafio4`** e o ambiente **`desafio4-dev`**.
+4. Abra o workflow principal navegando pela pasta ou menu:
+   `workflows/workflow_principal.hwf` (ou `workflows/carga_bronze_silver.hwf`)
+5. Clique no botão de **Play** (Executar / Run) na barra de ferramentas superior do editor.
+6. Na tela de confirmação de execução:
+   - Run configuration: **`local`**
+   - Log level: **`Basic`**
+7. Clique em **Launch**. O workflow executará todas as etapas (criação de tabelas, preflight, ingestão Bronze, classificação Silver e controle), finalizando com sucesso.
+
+### 2. Pela Linha de Comando no Docker (CLI Headless)
+
+Você também pode disparar a execução diretamente no contêiner com o HopRun:
+```bash
+docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh \
+  --environment desafio4-dev \
+  --project desafio4 \
+  --file /files/workflows/workflow_principal.hwf \
+  --runconfig local \
+  --level BASIC
+```
+
+### 3. Pela Instalação Local do Hop (Desktop)
+
+Se preferir rodar com o Apache Hop instalado na máquina:
+1. Copie `.env.example` para `.env` e preencha as credenciais.
+2. Defina o caminho: `export HOP_HOME=$HOME/hop` (ou variável de ambiente no Windows).
+3. Execute:
+   ```bash
+   bash hop/run-pipeline.sh
+   ```
+
+## Portabilidade e Caminhos Relativos (Multiplataforma)
+
+O projeto foi projetado para rodar em qualquer sistema operacional (Windows, Linux, macOS) e contêineres sem falhas de caminho:
+- Todos os caminhos entre workflows e pipelines usam variáveis relativas nativas do Apache Hop:
+  - `${Internal.Workflow.Filename.Folder}` (diretório relativo do workflow em execução);
+  - `${Internal.Pipeline.Filename.Folder}` (diretório relativo do pipeline em execução);
+- Não há caminhos absolutos ou fixados (*hardcoded*) no projeto;
+- As fontes de dados em `dados/brutos/` e os scripts SQL em `sql/` são localizados de forma relativa a partir das pastas dos workflows e pipelines.
 
 ## Artefatos
 

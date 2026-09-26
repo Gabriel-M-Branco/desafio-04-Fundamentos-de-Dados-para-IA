@@ -467,7 +467,31 @@ A equipe permanece responsável por testar, compreender e justificar toda a solu
 
 O Desafio Prático 2 evolui o ecossistema com foco em processamento distribuído, formatos colunares de alto desempenho, governança, governança de qualidade com barreiras de publicação e materialização analítica na camada Gold.
 
-## Requisitos Implementados — Estudante 2
+### Ingestão e Padronização Bronze e Silver — Apache Hop (RF20 a RF23)
+
+O Apache Hop é responsável por ingerir os dados brutos (`dados/brutos/`), gravar o Staging auditado no schema `bronze` do PostgreSQL, aplicar as regras de negócio e tipagem no schema `silver`, isolar inconsistências em `quarentena.registros` e logar etapas em `controle`.
+
+#### Execução via Interface Web (Hop Web — Navegador):
+1. Com o Docker em execução (`docker compose up -d`), acerte no navegador: **[http://localhost:8080](http://localhost:8080)**.
+2. Na barra de navegação superior, selecione o projeto **`desafio4`** e o ambiente **`desafio4-dev`**.
+3. Abra o arquivo do workflow: `workflows/workflow_principal.hwf`.
+4. Clique no ícone de **Play** (Executar / Run).
+5. Selecione a configuração de execução **`local`** e clique em **Launch**. O workflow executará todas as etapas da Bronze e Silver até o sucesso.
+
+#### Execução via Linha de Comando no Docker (Headless CLI):
+```bash
+docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh \
+  --environment desafio4-dev \
+  --project desafio4 \
+  --file /files/workflows/workflow_principal.hwf \
+  --runconfig local \
+  --level BASIC
+```
+
+#### Portabilidade Multiplataforma e Caminhos Relativos:
+Todos os arquivos `.hwf` e `.hpl` foram projetados com **caminhos estritamente relativos** baseados em variáveis nativas do Hop (`${Internal.Workflow.Filename.Folder}` e `${Internal.Pipeline.Filename.Folder}`). Não há caminhos absolutos (*hardcoded*), garantindo execução estável em Windows, Linux, macOS e Docker.
+
+---
 
 ### RF15 — Orquestração e Execução Modular por Etapas
 O pipeline suporta execução completa ou por etapas isoladas via CLI:

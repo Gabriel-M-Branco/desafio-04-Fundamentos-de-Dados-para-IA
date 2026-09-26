@@ -69,6 +69,7 @@ services:
     volumes:
       - ./hop:/files
       - ./dados:/dados
+      - ./sql:/sql
     depends_on:
       postgres:
         condition: service_healthy

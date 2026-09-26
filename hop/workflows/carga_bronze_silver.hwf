@@ -8,9 +8,9 @@
   <modified_user>FIC_DEV</modified_user><modified_date>2026/09/25 18:00:00.000</modified_date>
   <parameters>
     <parameter><name>RUN_ID</name><default_value>manual</default_value><description>Identificador único da execução</description></parameter>
-    <parameter><name>CATALOGO_PATH</name><default_value>${PROJECT_HOME}/../dados/brutos/catalogo.csv</default_value><description>Fonte CSV</description></parameter>
-    <parameter><name>INTERACOES_PATH</name><default_value>${PROJECT_HOME}/../dados/brutos/interacoes.json</default_value><description>Fonte JSON</description></parameter>
-    <parameter><name>COMENTARIOS_PATH</name><default_value>${PROJECT_HOME}/../dados/brutos/comentarios.json</default_value><description>Fonte JSON</description></parameter>
+    <parameter><name>CATALOGO_PATH</name><default_value>${Internal.Workflow.Filename.Folder}/../../dados/brutos/catalogo.csv</default_value><description>Fonte CSV</description></parameter>
+    <parameter><name>INTERACOES_PATH</name><default_value>${Internal.Workflow.Filename.Folder}/../../dados/brutos/interacoes.json</default_value><description>Fonte JSON</description></parameter>
+    <parameter><name>COMENTARIOS_PATH</name><default_value>${Internal.Workflow.Filename.Folder}/../../dados/brutos/comentarios.json</default_value><description>Fonte JSON</description></parameter>
   </parameters>
   <actions>
     <action><name>Start</name><description/><type>SPECIAL</type><attributes/>
@@ -19,8 +19,8 @@
       <parallel>N</parallel><xloc>60</xloc><yloc>80</yloc><attributes_hac/></action>    <action>
       <name>Criar/validar estruturas</name><description/><type>SQL</type><attributes/>
       <sql/><useVariableSubstitution>T</useVariableSubstitution>
-      <sqlfromfile>T</sqlfromfile><sqlfilename>${PROJECT_HOME}/../sql/camadas_bronze_silver.sql</sqlfilename>
-      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <sqlfromfile>T</sqlfromfile><sqlfilename>${Internal.Workflow.Filename.Folder}/../../sql/camadas_bronze_silver.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement><connection>PostgreSQL</connection>
       <parallel>N</parallel><xloc>220</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>
       <name>Preparar execução</name><description/><type>SQL</type><attributes/>
@@ -48,7 +48,7 @@ BEGIN
  END IF;
 END $$;]]></sql><useVariableSubstitution>T</useVariableSubstitution>
       <sqlfromfile>F</sqlfromfile><sqlfilename/>
-      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <sendOneStatement>T</sendOneStatement><connection>PostgreSQL</connection>
       <parallel>N</parallel><xloc>560</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>
       <name>Iniciar etapa Bronze</name><description/><type>SQL</type><attributes/>
@@ -61,7 +61,7 @@ resultado='EM_EXECUCAO',detalhes=NULL;]]></sql><useVariableSubstitution>T</useVa
       <parallel>N</parallel><xloc>730</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>
       <name>Bronze catálogo</name><description/><type>PIPELINE</type><attributes/>
-      <filename>${PROJECT_HOME}/pipelines/bronze_catalogo.hpl</filename><params_from_previous>N</params_from_previous>
+      <filename>${Internal.Workflow.Filename.Folder}/../pipelines/bronze_catalogo.hpl</filename><params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
       <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
       <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
@@ -71,7 +71,7 @@ resultado='EM_EXECUCAO',detalhes=NULL;]]></sql><useVariableSubstitution>T</useVa
       <parallel>N</parallel><xloc>900</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>
       <name>Bronze interações</name><description/><type>PIPELINE</type><attributes/>
-      <filename>${PROJECT_HOME}/pipelines/bronze_interacoes.hpl</filename><params_from_previous>N</params_from_previous>
+      <filename>${Internal.Workflow.Filename.Folder}/../pipelines/bronze_interacoes.hpl</filename><params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
       <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
       <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
@@ -81,7 +81,7 @@ resultado='EM_EXECUCAO',detalhes=NULL;]]></sql><useVariableSubstitution>T</useVa
       <parallel>N</parallel><xloc>1070</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>
       <name>Bronze comentários</name><description/><type>PIPELINE</type><attributes/>
-      <filename>${PROJECT_HOME}/pipelines/bronze_comentarios.hpl</filename><params_from_previous>N</params_from_previous>
+      <filename>${Internal.Workflow.Filename.Folder}/../pipelines/bronze_comentarios.hpl</filename><params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
       <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
       <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
@@ -112,7 +112,7 @@ resultado='EM_EXECUCAO',detalhes=NULL;]]></sql><useVariableSubstitution>T</useVa
       <parallel>N</parallel><xloc>1580</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>
       <name>Silver catálogo</name><description/><type>PIPELINE</type><attributes/>
-      <filename>${PROJECT_HOME}/pipelines/silver_catalogo.hpl</filename><params_from_previous>N</params_from_previous>
+      <filename>${Internal.Workflow.Filename.Folder}/../pipelines/silver_catalogo.hpl</filename><params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
       <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
       <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
@@ -122,7 +122,7 @@ resultado='EM_EXECUCAO',detalhes=NULL;]]></sql><useVariableSubstitution>T</useVa
       <parallel>N</parallel><xloc>1750</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>
       <name>Silver interações</name><description/><type>PIPELINE</type><attributes/>
-      <filename>${PROJECT_HOME}/pipelines/silver_interacoes.hpl</filename><params_from_previous>N</params_from_previous>
+      <filename>${Internal.Workflow.Filename.Folder}/../pipelines/silver_interacoes.hpl</filename><params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
       <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
       <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
@@ -132,7 +132,7 @@ resultado='EM_EXECUCAO',detalhes=NULL;]]></sql><useVariableSubstitution>T</useVa
       <parallel>N</parallel><xloc>1920</xloc><yloc>80</yloc><attributes_hac/>
     </action>    <action>
       <name>Silver comentários</name><description/><type>PIPELINE</type><attributes/>
-      <filename>${PROJECT_HOME}/pipelines/silver_comentarios.hpl</filename><params_from_previous>N</params_from_previous>
+      <filename>${Internal.Workflow.Filename.Folder}/../pipelines/silver_comentarios.hpl</filename><params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
       <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
       <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>

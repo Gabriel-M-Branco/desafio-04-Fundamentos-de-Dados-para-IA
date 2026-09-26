@@ -23,40 +23,40 @@
       "tamanho_kb": 36.0,
       "reducao_vs_json_pct": 89.44,
       "reducao_vs_csv_pct": 72.16,
-      "tempo_escrita_ms": 3.628,
-      "tempo_leitura_full_ms": 1.389,
-      "tempo_leitura_projecao_ms": 1.116,
-      "tempo_leitura_filtro_ms": 1.694
+      "tempo_escrita_ms": 3.684,
+      "tempo_leitura_full_ms": 1.428,
+      "tempo_leitura_projecao_ms": 1.161,
+      "tempo_leitura_filtro_ms": 1.787
     },
     "parquet_particionado": {
       "tamanho_bytes": 96564,
       "tamanho_kb": 94.3,
       "reducao_vs_json_pct": 72.34,
       "reducao_vs_csv_pct": 27.06,
-      "tempo_escrita_ms": 6.791,
-      "tempo_leitura_full_ms": 3.626,
+      "tempo_escrita_ms": 7.554,
+      "tempo_leitura_full_ms": 3.592,
       "tempo_leitura_projecao_ms": null,
-      "tempo_leitura_filtro_ms": 2.873
+      "tempo_leitura_filtro_ms": 3.047
     },
     "csv": {
       "tamanho_bytes": 132386,
       "tamanho_kb": 129.28,
       "reducao_vs_json_pct": 62.08,
       "reducao_vs_csv_pct": 0.0,
-      "tempo_escrita_ms": 5.475,
-      "tempo_leitura_full_ms": 2.573,
-      "tempo_leitura_projecao_ms": 1.687,
-      "tempo_leitura_filtro_ms": 2.648
+      "tempo_escrita_ms": 5.404,
+      "tempo_leitura_full_ms": 2.194,
+      "tempo_leitura_projecao_ms": 1.746,
+      "tempo_leitura_filtro_ms": 2.658
     },
     "json": {
       "tamanho_bytes": 349165,
       "tamanho_kb": 340.98,
       "reducao_vs_json_pct": 0.0,
       "reducao_vs_csv_pct": -163.75,
-      "tempo_escrita_ms": 68.798,
-      "tempo_leitura_full_ms": 1.869,
-      "tempo_leitura_projecao_ms": 1.892,
-      "tempo_leitura_filtro_ms": 1.8
+      "tempo_escrita_ms": 71.181,
+      "tempo_leitura_full_ms": 1.787,
+      "tempo_leitura_projecao_ms": 1.931,
+      "tempo_leitura_filtro_ms": 1.96
     }
   }
 }
