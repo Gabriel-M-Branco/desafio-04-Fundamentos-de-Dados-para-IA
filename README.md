@@ -463,6 +463,66 @@ A equipe permanece responsável por testar, compreender e justificar toda a solu
 
 ---
 
+# Desafio Prático 2 — Evolução do Pipeline (Estudante 2)
+
+O Desafio Prático 2 evolui o ecossistema com foco em processamento distribuído, formatos colunares de alto desempenho, governança, governança de qualidade com barreiras de publicação e materialização analítica na camada Gold.
+
+## Requisitos Implementados — Estudante 2
+
+### RF15 — Orquestração e Execução Modular por Etapas
+O pipeline suporta execução completa ou por etapas isoladas via CLI:
+```bash
+# Executar etapa Parquet (RF24)
+python -m src.executar_etapas --etapa parquet
+
+# Executar benchmark comparativo de formatos (RF24)
+python -m src.executar_etapas --etapa benchmark
+
+# Executar pipeline Apache Beam e avaliação Spark (RF25)
+python -m src.executar_etapas --etapa beam
+
+# Executar avaliação das 5 dimensões de qualidade de dados (RF31)
+python -m src.executar_etapas --etapa qualidade
+
+# Executar barreira de qualidade e publicação na Gold (RF26)
+python -m src.executar_etapas --etapa gold
+
+# Executar fluxo completo integrado de ponta a ponta
+python -m src.executar_etapas --etapa todas
+```
+
+### RF24 — Parquet, Particionamento Hive e Benchmark Comparativo
+- **Exportação:** 1.000 registros reais da Silver exportados para `dados/parquet/interacoes/particionado/`.
+- **Esquema e Auditoria:** Tipagem estrita com PyArrow e campos corporativos `_data_ingestao`, `_lote_id` e `_origem`.
+- **Particionamento:** Estrutura Hive por período (`ano=YYYY/mes=MM`), viabilizando *partition pruning* imediato nas consultas do Superset.
+- **Benchmark Empírico:** Redução de **89.44%** de tamanho em relação ao JSON e **72.16%** em relação ao CSV, com ganhos comprovados em leitura com projeção colunar e filtros.
+- **Documentação completa:** [`documentacao/benchmark_parquet.md`](documentacao/benchmark_parquet.md) e [`dados/processados/benchmark_parquet.json`](dados/processados/benchmark_parquet.json).
+
+### RF25 — Apache Beam e Execução Distribuída (DirectRunner e Spark)
+- **Transformação de Negócio:** Agregação de KPIs pedagógicos (taxa de conclusão, usuários ativos, tempos e visualizações) com `beam.CombinePerKey` determinístico.
+- **DirectRunner:** Executado com sucesso gerando 64 registros analíticos consolidados em `dados/parquet/gold/kpis_mensais_categoria.parquet`.
+- **Runtime Spark:** Diagnóstico de compatibilidade de ambiente e instruções reproduzíveis via Docker registradas em conformidade com o `AGENTS.md`.
+- **Documentação completa:** [`documentacao/execucao_beam_spark.md`](documentacao/execucao_beam_spark.md) e [`dados/processados/resultado_execucao_beam.json`](dados/processados/resultado_execucao_beam.json).
+
+### RF26 — Camada Gold para Consumo Analítico
+- **DDL e Modelagem:** Schema `gold` no PostgreSQL com as tabelas `gold.kpis_mensais_categoria` e `gold.desempenho_conteudos`.
+- **Visões para o Superset/SQL Lab:** `gold.vw_kpis_executivos` e `gold.vw_ranking_conteudos_engajamento` (com espelhos no schema `public`).
+- **Desacoplamento:** Nenhuma view analítica consulta tabelas brutas; métricas pré-computadas pelo Beam evitam regras duplicadas no dashboard.
+- **Documentação completa:** [`documentacao/camada_gold.md`](documentacao/camada_gold.md) e [`sql/criar_camada_gold.sql`](sql/criar_camada_gold.sql).
+
+### RF31 — Motor de Qualidade de Dados e Barreira da Gold
+- **5 Dimensões Avaliadas:**
+  1. *Completude (Q01):* 100% de preenchimento em campos mandatórios.
+  2. *Validade (Q02):* Conformidade de domínios, notas em [1.0, 5.0] e percentuais em [0.0, 100.0].
+  3. *Unicidade (Q03):* Ausência de duplicações em chaves primárias.
+  4. *Consistência (Q04):* Coerência entre conclusão e percentual de término.
+  5. *Integridade Referencial (Q05):* 0% de chaves órfãs entre interações e catálogo.
+- **Barreira de Qualidade:** Falhas críticas bloqueiam imediatamente a publicação na Gold (`FalhaQualidadeDadosCriticaError`).
+- **Histórico e Evolução:** Métricas persistidas a cada lote em `dados/processados/historico_qualidade.json`.
+- **Documentação completa:** [`documentacao/qualidade_dados.md`](documentacao/qualidade_dados.md).
+
+---
+
 # Controle de versão
 
 A `main` é a branch final de entrega. As branches abaixo registram o desenvolvimento das responsabilidades iniciais da equipe:
