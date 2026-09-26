@@ -1,0 +1,25 @@
+{
+  "metadataBaseFolder": "${PROJECT_HOME}/metadata",
+  "unitTestsBasePath": "${PROJECT_HOME}",
+  "dataSetsCsvFolder": "${PROJECT_HOME}/datasets",
+  "enforcingExecutionInHome": true,
+  "config": {
+    "variables": [
+      {
+        "name": "ALUNO1_CAMADA_BRONZE",
+        "value": "bronze",
+        "description": "Schema Bronze do Estudante 1"
+      },
+      {
+        "name": "ALUNO1_CAMADA_SILVER",
+        "value": "silver",
+        "description": "Schema Silver do Estudante 1"
+      },
+      {
+        "name": "ALUNO1_CAMADA_QUARENTENA",
+        "value": "quarentena",
+        "description": "Schema de quarentena do Estudante 1"
+      }
+    ]
+  }
+}

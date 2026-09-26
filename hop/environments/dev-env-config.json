@@ -1,0 +1,19 @@
+{
+  "variables": [
+    {
+      "name": "CATALOGO_PATH",
+      "value": "${PROJECT_HOME}/../dados/brutos/catalogo.csv",
+      "description": "Fonte CSV do Desafio 1"
+    },
+    {
+      "name": "INTERACOES_PATH",
+      "value": "${PROJECT_HOME}/../dados/brutos/interacoes.json",
+      "description": "Fonte JSON de interações"
+    },
+    {
+      "name": "COMENTARIOS_PATH",
+      "value": "${PROJECT_HOME}/../dados/brutos/comentarios.json",
+      "description": "Fonte JSON de comentários"
+    }
+  ]
+}

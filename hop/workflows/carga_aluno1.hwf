@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow>
+  <name>carga_aluno1</name><name_sync_with_filename>Y</name_sync_with_filename>
+  <description>RF20-RF23: Bronze, Silver, workflow e tratamento de erros.</description>
+  <extended_description>Subworkflow do Estudante 1; a integração final encadeia Qualidade, Gold e metadados depois dele.</extended_description>
+  <workflow_version>1.0</workflow_version>
+  <created_user>FIC_DEV</created_user><created_date>2026/09/25 18:00:00.000</created_date>
+  <modified_user>FIC_DEV</modified_user><modified_date>2026/09/25 18:00:00.000</modified_date>
+  <parameters>
+    <parameter><name>RUN_ID</name><default_value>manual</default_value><description>Identificador único da execução</description></parameter>
+    <parameter><name>CATALOGO_PATH</name><default_value>${PROJECT_HOME}/../dados/brutos/catalogo.csv</default_value><description>Fonte CSV</description></parameter>
+    <parameter><name>INTERACOES_PATH</name><default_value>${PROJECT_HOME}/../dados/brutos/interacoes.json</default_value><description>Fonte JSON</description></parameter>
+    <parameter><name>COMENTARIOS_PATH</name><default_value>${PROJECT_HOME}/../dados/brutos/comentarios.json</default_value><description>Fonte JSON</description></parameter>
+  </parameters>
+  <actions>
+    <action><name>Start</name><description/><type>SPECIAL</type><attributes/>
+      <repeat>N</repeat><schedulerType>0</schedulerType><intervalSeconds>0</intervalSeconds><intervalMinutes>60</intervalMinutes>
+      <hour>3</hour><minutes>0</minutes><weekDay>1</weekDay><DayOfMonth>1</DayOfMonth>
+      <parallel>N</parallel><xloc>60</xloc><yloc>80</yloc><attributes_hac/></action>    <action>
+      <name>Criar/validar estruturas</name><description/><type>SQL</type><attributes/>
+      <sql/><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile><sqlfilename>${PROJECT_HOME}/../sql/aluno1_camadas.sql</sqlfilename>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>220</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Preparar execução</name><description/><type>SQL</type><attributes/>
+      <sql><![CDATA[DELETE FROM quarentena.registros WHERE id_execucao='${RUN_ID}';
+DELETE FROM silver.comentarios WHERE id_execucao='${RUN_ID}';
+DELETE FROM silver.interacoes WHERE id_execucao='${RUN_ID}';
+DELETE FROM silver.catalogo WHERE id_execucao='${RUN_ID}';
+DELETE FROM bronze.comentarios_raw WHERE id_execucao='${RUN_ID}';
+DELETE FROM bronze.interacoes_raw WHERE id_execucao='${RUN_ID}';
+DELETE FROM bronze.catalogo_raw WHERE id_execucao='${RUN_ID}';
+DELETE FROM controle.execucao_etapa WHERE id_execucao='${RUN_ID}';
+INSERT INTO controle.execucao_workflow(id_execucao,inicio,fim,duracao_segundos,resultado,detalhes)
+VALUES('${RUN_ID}',CURRENT_TIMESTAMP,NULL,NULL,'EM_EXECUCAO','Fluxo Estudante 1 iniciado')
+ON CONFLICT(id_execucao) DO UPDATE SET inicio=CURRENT_TIMESTAMP,fim=NULL,duracao_segundos=NULL,
+resultado='EM_EXECUCAO',detalhes='Reexecução idempotente do mesmo RUN_ID';]]></sql><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile><sqlfilename/>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>390</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Preflight Desafio 1</name><description/><type>SQL</type><attributes/>
+      <sql><![CDATA[DO $$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.usuarios) THEN
+   RAISE EXCEPTION 'public.usuarios está vazia. Reutilize/carregue a base válida do Desafio 1.';
+ END IF;
+END $$;]]></sql><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile><sqlfilename/>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>560</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Iniciar etapa Bronze</name><description/><type>SQL</type><attributes/>
+      <sql><![CDATA[INSERT INTO controle.execucao_etapa(id_execucao,etapa,inicio,resultado)
+VALUES('${RUN_ID}','BRONZE',CURRENT_TIMESTAMP,'EM_EXECUCAO')
+ON CONFLICT(id_execucao,etapa) DO UPDATE SET inicio=CURRENT_TIMESTAMP,fim=NULL,duracao_segundos=NULL,
+resultado='EM_EXECUCAO',detalhes=NULL;]]></sql><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile><sqlfilename/>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>730</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Bronze catálogo</name><description/><type>PIPELINE</type><attributes/>
+      <filename>${PROJECT_HOME}/pipelines/bronze_catalogo.hpl</filename><params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
+      <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
+      <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
+      <wait_until_finished>Y</wait_until_finished><follow_abort_remote>N</follow_abort_remote>
+      <create_parent_folder>N</create_parent_folder><run_configuration>local</run_configuration>
+      <parameters><pass_all_parameters>Y</pass_all_parameters></parameters>
+      <parallel>N</parallel><xloc>900</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Bronze interações</name><description/><type>PIPELINE</type><attributes/>
+      <filename>${PROJECT_HOME}/pipelines/bronze_interacoes.hpl</filename><params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
+      <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
+      <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
+      <wait_until_finished>Y</wait_until_finished><follow_abort_remote>N</follow_abort_remote>
+      <create_parent_folder>N</create_parent_folder><run_configuration>local</run_configuration>
+      <parameters><pass_all_parameters>Y</pass_all_parameters></parameters>
+      <parallel>N</parallel><xloc>1070</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Bronze comentários</name><description/><type>PIPELINE</type><attributes/>
+      <filename>${PROJECT_HOME}/pipelines/bronze_comentarios.hpl</filename><params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
+      <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
+      <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
+      <wait_until_finished>Y</wait_until_finished><follow_abort_remote>N</follow_abort_remote>
+      <create_parent_folder>N</create_parent_folder><run_configuration>local</run_configuration>
+      <parameters><pass_all_parameters>Y</pass_all_parameters></parameters>
+      <parallel>N</parallel><xloc>1240</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Finalizar etapa Bronze</name><description/><type>SQL</type><attributes/>
+      <sql><![CDATA[UPDATE controle.execucao_etapa
+SET fim=CURRENT_TIMESTAMP,duracao_segundos=EXTRACT(EPOCH FROM(CURRENT_TIMESTAMP-inicio)),resultado='SUCESSO',
+detalhes=(SELECT format('catalogo=%s; interacoes=%s; comentarios=%s',
+(SELECT count(*) FROM bronze.catalogo_raw WHERE id_execucao='${RUN_ID}'),
+(SELECT count(*) FROM bronze.interacoes_raw WHERE id_execucao='${RUN_ID}'),
+(SELECT count(*) FROM bronze.comentarios_raw WHERE id_execucao='${RUN_ID}')))
+WHERE id_execucao='${RUN_ID}' AND etapa='BRONZE';]]></sql><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile><sqlfilename/>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>1410</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Iniciar etapa Silver</name><description/><type>SQL</type><attributes/>
+      <sql><![CDATA[INSERT INTO controle.execucao_etapa(id_execucao,etapa,inicio,resultado)
+VALUES('${RUN_ID}','SILVER',CURRENT_TIMESTAMP,'EM_EXECUCAO')
+ON CONFLICT(id_execucao,etapa) DO UPDATE SET inicio=CURRENT_TIMESTAMP,fim=NULL,duracao_segundos=NULL,
+resultado='EM_EXECUCAO',detalhes=NULL;]]></sql><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile><sqlfilename/>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>1580</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Silver catálogo</name><description/><type>PIPELINE</type><attributes/>
+      <filename>${PROJECT_HOME}/pipelines/silver_catalogo.hpl</filename><params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
+      <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
+      <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
+      <wait_until_finished>Y</wait_until_finished><follow_abort_remote>N</follow_abort_remote>
+      <create_parent_folder>N</create_parent_folder><run_configuration>local</run_configuration>
+      <parameters><pass_all_parameters>Y</pass_all_parameters></parameters>
+      <parallel>N</parallel><xloc>1750</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Silver interações</name><description/><type>PIPELINE</type><attributes/>
+      <filename>${PROJECT_HOME}/pipelines/silver_interacoes.hpl</filename><params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
+      <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
+      <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
+      <wait_until_finished>Y</wait_until_finished><follow_abort_remote>N</follow_abort_remote>
+      <create_parent_folder>N</create_parent_folder><run_configuration>local</run_configuration>
+      <parameters><pass_all_parameters>Y</pass_all_parameters></parameters>
+      <parallel>N</parallel><xloc>1920</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Silver comentários</name><description/><type>PIPELINE</type><attributes/>
+      <filename>${PROJECT_HOME}/pipelines/silver_comentarios.hpl</filename><params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row><clear_rows>N</clear_rows><clear_files>N</clear_files>
+      <set_logfile>N</set_logfile><logfile/><logext/><add_date>N</add_date><add_time>N</add_time>
+      <loglevel>Basic</loglevel><set_append_logfile>N</set_append_logfile>
+      <wait_until_finished>Y</wait_until_finished><follow_abort_remote>N</follow_abort_remote>
+      <create_parent_folder>N</create_parent_folder><run_configuration>local</run_configuration>
+      <parameters><pass_all_parameters>Y</pass_all_parameters></parameters>
+      <parallel>N</parallel><xloc>2090</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Finalizar etapa Silver</name><description/><type>SQL</type><attributes/>
+      <sql><![CDATA[UPDATE controle.execucao_etapa
+SET fim=CURRENT_TIMESTAMP,duracao_segundos=EXTRACT(EPOCH FROM(CURRENT_TIMESTAMP-inicio)),
+resultado=CASE WHEN EXISTS(SELECT 1 FROM quarentena.registros WHERE id_execucao='${RUN_ID}')
+THEN 'SUCESSO_COM_RESSALVAS' ELSE 'SUCESSO' END,
+detalhes=(SELECT format('catalogo=%s; interacoes=%s; comentarios=%s; quarentena=%s',
+(SELECT count(*) FROM silver.catalogo WHERE id_execucao='${RUN_ID}'),
+(SELECT count(*) FROM silver.interacoes WHERE id_execucao='${RUN_ID}'),
+(SELECT count(*) FROM silver.comentarios WHERE id_execucao='${RUN_ID}'),
+(SELECT count(*) FROM quarentena.registros WHERE id_execucao='${RUN_ID}')))
+WHERE id_execucao='${RUN_ID}' AND etapa='SILVER';]]></sql><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile><sqlfilename/>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>2260</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action>
+      <name>Finalizar workflow</name><description/><type>SQL</type><attributes/>
+      <sql><![CDATA[UPDATE controle.execucao_workflow
+SET fim=CURRENT_TIMESTAMP,duracao_segundos=EXTRACT(EPOCH FROM(CURRENT_TIMESTAMP-inicio)),
+resultado=CASE WHEN EXISTS(SELECT 1 FROM quarentena.registros WHERE id_execucao='${RUN_ID}')
+THEN 'SUCESSO_COM_RESSALVAS' ELSE 'SUCESSO' END,
+detalhes='quarentena='||(SELECT count(*) FROM quarentena.registros WHERE id_execucao='${RUN_ID}')
+WHERE id_execucao='${RUN_ID}';]]></sql><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile><sqlfilename/>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>2430</xloc><yloc>80</yloc><attributes_hac/>
+    </action>    <action><name>Success</name><description/><type>SUCCESS</type><attributes/>
+      <parallel>N</parallel><xloc>2600</xloc><yloc>80</yloc><attributes_hac/></action>    <action>
+      <name>Compensar e registrar falha</name><description/><type>SQL</type><attributes/>
+      <sql><![CDATA[DELETE FROM silver.comentarios WHERE id_execucao='${RUN_ID}';
+DELETE FROM silver.interacoes WHERE id_execucao='${RUN_ID}';
+DELETE FROM silver.catalogo WHERE id_execucao='${RUN_ID}';
+UPDATE controle.execucao_etapa
+SET fim=CURRENT_TIMESTAMP,duracao_segundos=EXTRACT(EPOCH FROM(CURRENT_TIMESTAMP-inicio)),
+resultado='FALHA',detalhes='Falha crítica; Silver desta execução removida para evitar publicação parcial'
+WHERE id_execucao='${RUN_ID}' AND resultado='EM_EXECUCAO';
+UPDATE controle.execucao_workflow
+SET fim=CURRENT_TIMESTAMP,duracao_segundos=EXTRACT(EPOCH FROM(CURRENT_TIMESTAMP-inicio)),
+resultado='FALHA',detalhes='Consulte o log do Hop; compensação da Silver tentada'
+WHERE id_execucao='${RUN_ID}';]]></sql><useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile><sqlfilename/>
+      <sendOneStatement>F</sendOneStatement><connection>PostgreSQL</connection>
+      <parallel>N</parallel><xloc>1400</xloc><yloc>300</yloc><attributes_hac/>
+    </action>    <action><name>Log falha</name><description/><type>WRITE_TO_LOG</type><attributes/>
+      <logmessage>Falha crítica no fluxo do Estudante 1. Verifique a ação anterior e o arquivo de log.</logmessage>
+      <loglevel>Error</loglevel><logsubject>RF20-RF23</logsubject>
+      <parallel>N</parallel><xloc>1600</xloc><yloc>300</yloc><attributes_hac/></action>    <action><name>Abort</name><description/><type>ABORT</type><attributes/>
+      <message>Workflow interrompido por falha crítica.</message>
+      <parallel>N</parallel><xloc>1800</xloc><yloc>300</yloc><attributes_hac/></action>
+  </actions>
+  <hops>
+    <hop><from>Start</from><to>Criar/validar estruturas</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>Y</unconditional>
+    </hop>    <hop><from>Criar/validar estruturas</from><to>Preparar execução</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Preparar execução</from><to>Preflight Desafio 1</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Preflight Desafio 1</from><to>Iniciar etapa Bronze</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Iniciar etapa Bronze</from><to>Bronze catálogo</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Bronze catálogo</from><to>Bronze interações</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Bronze interações</from><to>Bronze comentários</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Bronze comentários</from><to>Finalizar etapa Bronze</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Finalizar etapa Bronze</from><to>Iniciar etapa Silver</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Iniciar etapa Silver</from><to>Silver catálogo</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Silver catálogo</from><to>Silver interações</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Silver interações</from><to>Silver comentários</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Silver comentários</from><to>Finalizar etapa Silver</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Finalizar etapa Silver</from><to>Finalizar workflow</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Finalizar workflow</from><to>Success</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Criar/validar estruturas</from><to>Log falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Preparar execução</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Preflight Desafio 1</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Iniciar etapa Bronze</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Bronze catálogo</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Bronze interações</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Bronze comentários</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Finalizar etapa Bronze</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Iniciar etapa Silver</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Silver catálogo</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Silver interações</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Silver comentários</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Finalizar etapa Silver</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Finalizar workflow</from><to>Compensar e registrar falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Compensar e registrar falha</from><to>Log falha</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Compensar e registrar falha</from><to>Log falha</to><enabled>Y</enabled>
+      <evaluation>N</evaluation><unconditional>N</unconditional>
+    </hop>    <hop><from>Log falha</from><to>Abort</to><enabled>Y</enabled>
+      <evaluation>Y</evaluation><unconditional>Y</unconditional>
+    </hop>
+  </hops>
+  <notepads>    <notepad><note>Ordem do Estudante 1: Bronze -&gt; Silver -&gt; quarentena. Falha crítica compensa a Silver parcial do RUN_ID e termina em Abort.</note><xloc>64</xloc><yloc>40</yloc><width>850</width><heigth>45</heigth>
+      <fontname>Noto Sans</fontname><fontsize>11</fontsize><fontbold>N</fontbold><fontitalic>N</fontitalic>
+      <fontcolorred>14</fontcolorred><fontcolorgreen>58</fontcolorgreen><fontcolorblue>90</fontcolorblue>
+      <backgroundcolorred>201</backgroundcolorred><backgroundcolorgreen>232</backgroundcolorgreen><backgroundcolorblue>251</backgroundcolorblue>
+      <bordercolorred>14</bordercolorred><bordercolorgreen>58</bordercolorgreen><bordercolorblue>90</bordercolorblue>
+    </notepad></notepads>
+  <attributes/>
+</workflow>
