@@ -67,3 +67,15 @@ def caminho_absoluto(caminho: str | Path) -> Path:
     """Resolve caminhos relativos a partir da raiz do repositório."""
     caminho = Path(caminho)
     return caminho if caminho.is_absolute() else RAIZ_PROJETO / caminho
+
+
+def obter_parametros_conexao_postgres(config: dict[str, Any]) -> dict[str, Any]:
+    """Retorna dicionário de parâmetros para conexão psycopg2."""
+    pg = config["postgres"]
+    return {
+        "host": pg["host"],
+        "port": pg["port"],
+        "dbname": pg["database"],
+        "user": pg["user"],
+        "password": pg["password"],
+    }

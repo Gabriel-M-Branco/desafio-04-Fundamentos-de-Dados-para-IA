@@ -15,11 +15,15 @@ venv/
 .DS_Store
 Thumbs.db
 
+# Orientações de agentes e planejamento local
+AGENTS.md
+PLANO_EXECUCAO_DESAFIO2.md
+
 # Logs locais
-logs/*.log
+logs/*
 !logs/.gitkeep
 
-# Entregáveis de dados processados e resumo obrigatório da ingestão (RF05)
+# Entregáveis de dados processados e resumo obrigatório da ingestão (RF05/RF24/RF25/RF31)
 dados/processados/*
 !dados/processados/.gitkeep
 !dados/processados/resumo_ingestao.json
@@ -28,6 +32,24 @@ dados/processados/*
 !dados/processados/comentarios_processados.json
 !dados/processados/recomendacoes.json
 !dados/processados/embeddings.json
+!dados/processados/benchmark_parquet.json
+!dados/processados/historico_qualidade.json
+!dados/processados/resultado_execucao_beam.json
+
+# Dados intermediários de runtime (preservar apenas README/gitkeep da estrutura)
+dados/bronze/*
+!dados/bronze/README.md
+!dados/bronze/.gitkeep
+
+dados/silver/*
+!dados/silver/README.md
+!dados/silver/.gitkeep
+
+dados/quarentena/*
+!dados/quarentena/README.md
+!dados/quarentena/.gitkeep
+
+dados/resumo_*.json
 
 # Apache Superset
 dashboard/superset/

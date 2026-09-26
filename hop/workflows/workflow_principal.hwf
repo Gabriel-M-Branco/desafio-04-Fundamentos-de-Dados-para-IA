@@ -31,57 +31,25 @@
       <attributes_hac/>
     </action>
     <action>
-      <filename>/home/diego/Documentos/desafio-04-Fundamentos-de-Dados-para-IA/hop/pipelines/bronze_pipeline.hpl</filename>
+      <filename>${PROJECT_HOME}/workflows/carga_aluno1.hwf</filename>
       <params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row>
       <clear_rows>N</clear_rows>
       <clear_files>N</clear_files>
-      <create_parent_folder>Y</create_parent_folder>
-      <set_logfile>Y</set_logfile>
-      <set_append_logfile>Y</set_append_logfile>
-      <logfile>/home/diego/Documentos/desafio-04-Fundamentos-de-Dados-para-IA/logs/hop_bronze</logfile>
-      <logext>log</logext>
-      <add_date>Y</add_date>
-      <add_time>Y</add_time>
+      <create_parent_folder>N</create_parent_folder>
+      <set_logfile>N</set_logfile>
+      <set_append_logfile>N</set_append_logfile>
       <loglevel>Basic</loglevel>
       <wait_until_finished>Y</wait_until_finished>
       <parameters>
         <pass_all_parameters>Y</pass_all_parameters>
       </parameters>
       <run_configuration>local</run_configuration>
-      <name>Bronze</name>
-      <description>RF20 - ingestão auditável das fontes CSV e JSON</description>
-      <type>PIPELINE</type>
+      <name>Carga Aluno 1</name>
+      <description>RF20 a RF23 - Execução parametrizada Bronze e Silver</description>
+      <type>WORKFLOW</type>
       <attributes/>
-      <xloc>112</xloc>
-      <yloc>160</yloc>
-      <parallel>N</parallel>
-      <attributes_hac/>
-    </action>
-    <action>
-      <filename>/home/diego/Documentos/desafio-04-Fundamentos-de-Dados-para-IA/hop/pipelines/silver_pipeline.hpl</filename>
-      <params_from_previous>N</params_from_previous>
-      <exec_per_row>N</exec_per_row>
-      <clear_rows>N</clear_rows>
-      <clear_files>N</clear_files>
-      <create_parent_folder>Y</create_parent_folder>
-      <set_logfile>Y</set_logfile>
-      <set_append_logfile>Y</set_append_logfile>
-      <logfile>/home/diego/Documentos/desafio-04-Fundamentos-de-Dados-para-IA/logs/hop_silver</logfile>
-      <logext>log</logext>
-      <add_date>Y</add_date>
-      <add_time>Y</add_time>
-      <loglevel>Basic</loglevel>
-      <wait_until_finished>Y</wait_until_finished>
-      <parameters>
-        <pass_all_parameters>Y</pass_all_parameters>
-      </parameters>
-      <run_configuration>local</run_configuration>
-      <name>Silver</name>
-      <description>RF21/RF23 - padronização, validação, deduplicação e quarentena</description>
-      <type>PIPELINE</type>
-      <attributes/>
-      <xloc>208</xloc>
+      <xloc>160</xloc>
       <yloc>160</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
@@ -109,20 +77,13 @@
   <hops>
     <hop>
       <from>START</from>
-      <to>Bronze</to>
+      <to>Carga Aluno 1</to>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>Bronze</from>
-      <to>Silver</to>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>Silver</from>
+      <from>Carga Aluno 1</from>
       <to>SUCESSO</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
