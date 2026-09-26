@@ -7,7 +7,7 @@
     <pipeline_version>1.0</pipeline_version><pipeline_type>Normal</pipeline_type>
     <parameters>
       <parameter><name>RUN_ID</name><default_value>manual</default_value><description>Identificador único da execução</description></parameter>
-      <parameter><name>COMENTARIOS_PATH</name><default_value>${PROJECT_HOME}/../dados/brutos/comentarios.json</default_value><description>Caminho do JSON de comentarios</description></parameter>
+      <parameter><name>COMENTARIOS_PATH</name><default_value>${Internal.Pipeline.Filename.Folder}/../../dados/brutos/comentarios.json</default_value><description>Caminho do JSON de comentarios</description></parameter>
     </parameters>
     <capture_transform_performance>N</capture_transform_performance>
     <transform_performance_capturing_delay>1000</transform_performance_capturing_delay>
@@ -33,8 +33,8 @@
     <partitioning><method>none</method><schema_name/></partitioning>
     <include>N</include><include_field/><rownum>N</rownum><addresultfile>N</addresultfile>
     <readurl>N</readurl><removeSourceField>N</removeSourceField><IsIgnoreEmptyFile>N</IsIgnoreEmptyFile>
-    <doNotFailIfNoFile>N</doNotFailIfNoFile><ignoreMissingPath>Y</ignoreMissingPath><defaultPathLeafToNull>Y</defaultPathLeafToNull>
-    <rownum_field/><file><name>${COMENTARIOS_PATH}</name><filemask/><exclude_filemask/><file_required>Y</file_required><include_subfolders>N</include_subfolders></file>
+    <doNotFailIfNoFile>Y</doNotFailIfNoFile><ignoreMissingPath>Y</ignoreMissingPath><defaultPathLeafToNull>Y</defaultPathLeafToNull>
+    <rownum_field/><file><name>${COMENTARIOS_PATH}</name><filemask/><exclude_filemask/><file_required>N</file_required><include_subfolders>N</include_subfolders></file>
     <fields>
       <field><name>usuario_id</name><path>$.*.usuario_id</path><type>String</type><format/><currency/><decimal/><group/>
         <length>-1</length><precision>-1</precision><trim_type>none</trim_type><repeat>Y</repeat></field>

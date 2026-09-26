@@ -7,7 +7,7 @@
     <pipeline_version>1.0</pipeline_version><pipeline_type>Normal</pipeline_type>
     <parameters>
       <parameter><name>RUN_ID</name><default_value>manual</default_value><description>Identificador único da execução</description></parameter>
-      <parameter><name>CATALOGO_PATH</name><default_value>${PROJECT_HOME}/../dados/brutos/catalogo.csv</default_value><description>Caminho do CSV de catálogo</description></parameter>
+      <parameter><name>CATALOGO_PATH</name><default_value>${Internal.Pipeline.Filename.Folder}/../../dados/brutos/catalogo.csv</default_value><description>Caminho do CSV de catálogo</description></parameter>
     </parameters>
     <capture_transform_performance>N</capture_transform_performance>
     <transform_performance_capturing_delay>1000</transform_performance_capturing_delay>

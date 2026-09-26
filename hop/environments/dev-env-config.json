@@ -14,6 +14,31 @@
       "name": "COMENTARIOS_PATH",
       "value": "${PROJECT_HOME}/../dados/brutos/comentarios.json",
       "description": "Fonte JSON de comentários"
+    },
+    {
+      "name": "POSTGRES_HOST",
+      "value": "postgres",
+      "description": "Host do PostgreSQL"
+    },
+    {
+      "name": "POSTGRES_PORT",
+      "value": "5432",
+      "description": "Porta do PostgreSQL"
+    },
+    {
+      "name": "POSTGRES_DB",
+      "value": "ficdev_recomendacao",
+      "description": "Nome do Banco de Dados"
+    },
+    {
+      "name": "POSTGRES_USER",
+      "value": "postgres",
+      "description": "Usuário do PostgreSQL"
+    },
+    {
+      "name": "POSTGRES_PASSWORD",
+      "value": "postgres",
+      "description": "Senha do PostgreSQL"
     }
   ]
 }
