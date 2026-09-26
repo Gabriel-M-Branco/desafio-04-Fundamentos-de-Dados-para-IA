@@ -4,7 +4,7 @@
     "python_versao": "3.14.7",
     "processador": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
     "pyarrow_versao": "25.0.1",
-    "pandas_versao": "3.0.5"
+    "pandas_versao": "3.0.6"
   },
   "metodologia": {
     "volume_registros": 1000,
@@ -23,40 +23,40 @@
       "tamanho_kb": 36.0,
       "reducao_vs_json_pct": 89.44,
       "reducao_vs_csv_pct": 72.16,
-      "tempo_escrita_ms": 3.684,
-      "tempo_leitura_full_ms": 1.428,
-      "tempo_leitura_projecao_ms": 1.161,
-      "tempo_leitura_filtro_ms": 1.787
+      "tempo_escrita_ms": 3.113,
+      "tempo_leitura_full_ms": 1.412,
+      "tempo_leitura_projecao_ms": 1.114,
+      "tempo_leitura_filtro_ms": 1.638
     },
     "parquet_particionado": {
       "tamanho_bytes": 96564,
       "tamanho_kb": 94.3,
       "reducao_vs_json_pct": 72.34,
       "reducao_vs_csv_pct": 27.06,
-      "tempo_escrita_ms": 7.554,
-      "tempo_leitura_full_ms": 3.592,
+      "tempo_escrita_ms": 7.527,
+      "tempo_leitura_full_ms": 4.07,
       "tempo_leitura_projecao_ms": null,
-      "tempo_leitura_filtro_ms": 3.047
+      "tempo_leitura_filtro_ms": 3.097
     },
     "csv": {
       "tamanho_bytes": 132386,
       "tamanho_kb": 129.28,
       "reducao_vs_json_pct": 62.08,
       "reducao_vs_csv_pct": 0.0,
-      "tempo_escrita_ms": 5.404,
-      "tempo_leitura_full_ms": 2.194,
-      "tempo_leitura_projecao_ms": 1.746,
-      "tempo_leitura_filtro_ms": 2.658
+      "tempo_escrita_ms": 5.028,
+      "tempo_leitura_full_ms": 2.235,
+      "tempo_leitura_projecao_ms": 1.625,
+      "tempo_leitura_filtro_ms": 2.699
     },
     "json": {
       "tamanho_bytes": 349165,
       "tamanho_kb": 340.98,
       "reducao_vs_json_pct": 0.0,
       "reducao_vs_csv_pct": -163.75,
-      "tempo_escrita_ms": 71.181,
-      "tempo_leitura_full_ms": 1.787,
-      "tempo_leitura_projecao_ms": 1.931,
-      "tempo_leitura_filtro_ms": 1.96
+      "tempo_escrita_ms": 71.677,
+      "tempo_leitura_full_ms": 1.78,
+      "tempo_leitura_projecao_ms": 2.048,
+      "tempo_leitura_filtro_ms": 1.894
     }
   }
 }
