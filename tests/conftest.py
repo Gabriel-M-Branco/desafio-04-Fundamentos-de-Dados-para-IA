@@ -9,8 +9,11 @@ from src.config import carregar_config
 
 @pytest.fixture(scope="session")
 def config_global() -> dict:
-    """Retorna a configuração oficial da aplicação."""
-    return carregar_config()
+    """Retorna a configuração oficial da aplicação com coleção isolada para testes."""
+    cfg = carregar_config()
+    cfg["mongodb"] = dict(cfg["mongodb"])
+    cfg["mongodb"]["colecao_comentarios"] = "comentarios_test"
+    return cfg
 
 
 @pytest.fixture
