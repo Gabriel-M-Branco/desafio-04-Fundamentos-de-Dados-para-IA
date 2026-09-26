@@ -15,7 +15,9 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./sql/criar_banco.sql:/docker-entrypoint-initdb.d/criar_banco.sql
+      - ./sql/criar_banco.sql:/docker-entrypoint-initdb.d/01_criar_banco.sql
+      - ./sql/aluno1_camadas.sql:/docker-entrypoint-initdb.d/02_aluno1_camadas.sql
+      - ./sql/criar_camada_gold.sql:/docker-entrypoint-initdb.d/03_criar_camada_gold.sql
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -42,6 +44,47 @@ services:
     volumes:
       - mongo_data:/data/db
 
+    networks:
+      - backend
+
+
+  hop-web:
+    image: apache/hop-web:latest
+    container_name: hop-web
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - HOP_SERVER_PORT=8080
+      - HOP_PROJECT_NAME=desafio4
+      - HOP_PROJECT_FOLDER=/files
+      - HOP_PROJECT_CONFIG_FILE_NAME=project-config.json
+      - HOP_ENVIRONMENT_NAME=desafio4-dev
+      - HOP_ENVIRONMENT_CONFIG_FILE_NAME_PATHS=/files/environments/dev-env-config.json
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./hop:/files
+      - ./dados:/dados
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+
+  spark-job-server:
+    image: apache/beam_spark_job_server:latest
+    container_name: spark-job-server
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+      - "8098:8098"
+    volumes:
+      - ./dados:/dados
     networks:
       - backend
 
