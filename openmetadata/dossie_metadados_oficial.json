@@ -1,0 +1,77 @@
+{
+  "sistema": "OpenMetadata FIC_DEV",
+  "versao_plataforma": "1.4.6",
+  "credenciais_acesso": {
+    "url": "http://localhost:8585",
+    "email_login": "admin@openmetadata.org",
+    "perfil": "Admin Principal"
+  },
+  "servico_dados": {
+    "nome": "ficdev_postgres",
+    "tipo": "PostgreSQL",
+    "host": "postgres:5432",
+    "banco": "ficdev_recomendacao",
+    "schemas_catalogados": [
+      "silver",
+      "gold"
+    ]
+  },
+  "glossario_negocio": {
+    "nome": "Glossario_Educacional_FICDEV",
+    "descricao": "Vocabulário de Negócio Padronizado para Análise Pedagógica e IA (RF28)",
+    "termos": [
+      {
+        "name": "Usuario_Ativo",
+        "displayName": "Usuário Ativo",
+        "description": "Estudante que realizou pelo menos uma interação de consumo (início, visualização ou conclusão) na plataforma no período de apuração mensal.",
+        "regra_calculo": "COUNT(DISTINCT usuario_id) WHERE ano = YYYY AND mes = MM",
+        "responsavel": "Equipe Pedagógica e Engenharia FIC_DEV",
+        "tabela_associada": "gold.kpis_mensais_categoria",
+        "coluna_associada": "usuarios_ativos",
+        "classificacao_lgpd": "Pseudonimizado (UUIDv5) / Métrica Agregada"
+      },
+      {
+        "name": "Taxa_Conclusao",
+        "displayName": "Taxa de Conclusão",
+        "description": "Eficiência percentual do funil de aprendizagem, calculada pela razão entre o total de conteúdos concluídos e o total de conteúdos iniciados.",
+        "regra_calculo": "ROUND((SUM(total_conclusoes)::NUMERIC / NULLIF(SUM(total_inicios), 0)) * 100, 2)",
+        "responsavel": "Coordenação de Ensino e Avaliação Didática",
+        "tabela_associada": "gold.kpis_mensais_categoria",
+        "coluna_associada": "taxa_conclusao_pct",
+        "classificacao_lgpd": "Métrica Analítica Estatística Não-Identificável"
+      },
+      {
+        "name": "Tempo_Medio_Consumo",
+        "displayName": "Tempo Médio de Consumo",
+        "description": "Tempo médio despendido em minutos pelos alunos em cada formato ou categoria temática durante as jornadas de estudo.",
+        "regra_calculo": "ROUND(AVG(tempo_consumido_min), 2) agrupado por categoria e período",
+        "responsavel": "Equipe de Produto e Conteúdo Pedagógico",
+        "tabela_associada": "gold.kpis_mensais_categoria",
+        "coluna_associada": "tempo_medio_min",
+        "classificacao_lgpd": "Dado Estatístico Agregado (Alvo de Alerta < 500 min)"
+      },
+      {
+        "name": "Conversao_Recomendacao",
+        "displayName": "Conversão de Recomendação",
+        "description": "Proporção de recomendações pedagógicas geradas pelo motor de IA que foram efetivamente consumidas ou concluídas pelos usuários recomendados.",
+        "regra_calculo": "ROUND((COUNT(DISTINCT interacoes_concluidas_recomendadas)::NUMERIC / NULLIF(COUNT(DISTINCT total_recomendacoes_geradas), 0)) * 100, 2)",
+        "responsavel": "Equipe de Inteligência Artificial e Data Science",
+        "tabela_associada": "gold.vw_ranking_conteudos_engajamento",
+        "coluna_associada": "ranking_categoria",
+        "classificacao_lgpd": "Métrica Comportamental Algorítmica"
+      }
+    ]
+  },
+  "controles_anti_data_swamp": [
+    "Esquemas estritamente tipados com contratos DDL nas camadas Silver e Gold.",
+    "Quality Gate bloqueador com 5 dimensões antes da publicação Gold.",
+    "Desduplicação e regras de sobrevivência via Master Data Management (MDM).",
+    "Atribuição formal de proprietários (Data Owners) e regras de cálculo documentadas."
+  ],
+  "classificacoes_sensibilidade_lgpd": {
+    "usuario_id": "PII.Pseudonymized (UUIDv5 determinístico)",
+    "autor": "PII.Masked (Mascaramento parcial J*** D**)",
+    "data_hora": "PII.TemporalGeneralized (Agrupado por ano e mês na Gold)",
+    "avaliacao": "Non-PII (Métrica de Satisfação)"
+  }
+}

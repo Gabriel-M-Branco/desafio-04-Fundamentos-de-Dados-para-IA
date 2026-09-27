@@ -7,7 +7,7 @@ set -a; source "$ROOT_DIR/.env"; set +a
 RUN_ID="${RUN_ID:-pipeline-$(date -u +%Y%m%dT%H%M%SZ)}"
 mkdir -p "$ROOT_DIR/logs"
 "$HOP_HOME/hop-run.sh" --environment desafio4-dev \
-  --file "$ROOT_DIR/hop/workflows/carga_bronze_silver.hwf" --runconfig local --level BASIC \
+  --file "$ROOT_DIR/hop/workflows/workflow_principal.hwf" --runconfig local --level BASIC \
   --logfile "$ROOT_DIR/logs/hop_${RUN_ID}.log" \
   --parameters="RUN_ID=${RUN_ID},CATALOGO_PATH=$ROOT_DIR/dados/brutos/catalogo.csv,INTERACOES_PATH=$ROOT_DIR/dados/brutos/interacoes.json,COMENTARIOS_PATH=$ROOT_DIR/dados/brutos/comentarios.json"
 echo "RUN_ID=$RUN_ID"

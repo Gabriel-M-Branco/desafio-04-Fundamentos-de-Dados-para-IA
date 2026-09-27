@@ -6,6 +6,5 @@
   },
   "name": "local",
   "description": "Configuração de execução local de workflow",
-  "executionInfoLocationName": "local-audit",
   "defaultSelection": true
 }
