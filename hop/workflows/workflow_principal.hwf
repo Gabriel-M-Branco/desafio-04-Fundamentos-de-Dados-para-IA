@@ -2,14 +2,20 @@
 <workflow>
   <name>workflow_principal</name>
   <name_sync_with_filename>Y</name_sync_with_filename>
-  <description>RF22 - Orquestração Estudante 1: Bronze -> Silver. Falha interrompe etapa dependente.</description>
-  <extended_description/>
-  <created_user>-</created_user>
-  <modified_user>-</modified_user>
+  <description>RF22 - Workflow e Orquestração Ponta a Ponta: Bronze -> Silver -> Qualidade -> Gold -> Consumo</description>
+  <extended_description>Workflow mestre integrado do Desafio Prático 2. Executa a esteira completa na ordem correta, interrompe etapas dependentes em caso de falha crítica e registra logs com ID de execução.</extended_description>
+  <workflow_version>2.0</workflow_version>
+  <created_user>FIC_DEV</created_user>
   <created_date>2026/09/25 21:00:00.000</created_date>
-  <modified_date>2026/09/25 21:00:00.000</modified_date>
-  <workflow_version/>
-  <parameters/>
+  <modified_user>FIC_DEV</modified_user>
+  <modified_date>2026/09/27 20:00:00.000</modified_date>
+  <parameters>
+    <parameter>
+      <name>RUN_ID</name>
+      <default_value>manual</default_value>
+      <description>Identificador único de rastreabilidade da execução</description>
+    </parameter>
+  </parameters>
   <actions>
     <action>
       <repeat>N</repeat>
@@ -19,17 +25,18 @@
       <DayOfMonth>1</DayOfMonth>
       <weekDay>1</weekDay>
       <minutes>0</minutes>
-      <hour>8</hour>
+      <hour>3</hour>
       <doNotWaitOnFirstExecution>N</doNotWaitOnFirstExecution>
       <name>START</name>
-      <description>Início do workflow</description>
+      <description>Início da orquestração automatizada</description>
       <type>SPECIAL</type>
       <attributes/>
-      <xloc>16</xloc>
-      <yloc>160</yloc>
+      <xloc>60</xloc>
+      <yloc>120</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
     </action>
+
     <action>
       <filename>${Internal.Workflow.Filename.Folder}/carga_bronze_silver.hwf</filename>
       <params_from_previous>N</params_from_previous>
@@ -45,51 +52,374 @@
         <pass_all_parameters>Y</pass_all_parameters>
       </parameters>
       <run_configuration>local</run_configuration>
-      <name>Carga Bronze e Silver</name>
-      <description>RF20 a RF23 - Execução parametrizada Bronze e Silver</description>
+      <name>1. Ingestao Bronze e Silver</name>
+      <description>RF20 a RF23 - Carga das camadas Bronze e Silver com quarentena de inconsistências</description>
       <type>WORKFLOW</type>
       <attributes/>
-      <xloc>160</xloc>
-      <yloc>160</yloc>
+      <xloc>240</xloc>
+      <yloc>120</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
     </action>
+
     <action>
-      <repeat>N</repeat>
-      <schedulerType>0</schedulerType>
-      <intervalSeconds>0</intervalSeconds>
-      <intervalMinutes>60</intervalMinutes>
-      <DayOfMonth>1</DayOfMonth>
-      <weekDay>1</weekDay>
-      <minutes>0</minutes>
-      <hour>12</hour>
-      <doNotWaitOnFirstExecution>N</doNotWaitOnFirstExecution>
-      <name>SUCESSO</name>
-      <description>Fim com sucesso da ingestão Bronze e Silver</description>
-      <type>SPECIAL</type>
+      <name>2. Criar Estruturas da Camada Gold</name>
+      <description>RF26 - Aplicação do DDL analítico e visões para Superset</description>
+      <type>SQL</type>
       <attributes/>
-      <xloc>288</xloc>
-      <yloc>160</yloc>
+      <sql/>
+      <useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>T</sqlfromfile>
+      <sqlfilename>${Internal.Workflow.Filename.Folder}/../../sql/camada_gold.sql</sqlfilename>
+      <sendOneStatement>T</sendOneStatement>
+      <connection>PostgreSQL</connection>
       <parallel>N</parallel>
+      <xloc>460</xloc>
+      <yloc>120</yloc>
+      <attributes_hac/>
+    </action>
+
+    <action>
+      <name>3. Iniciar Etapa Gold</name>
+      <description>Registra início da consolidação Gold no schema de controle</description>
+      <type>SQL</type>
+      <attributes/>
+      <sql><![CDATA[INSERT INTO controle.execucao_etapa(id_execucao, etapa, inicio, resultado)
+VALUES('${RUN_ID}', 'GOLD', CURRENT_TIMESTAMP, 'EM_EXECUCAO')
+ON CONFLICT(id_execucao, etapa) DO UPDATE 
+SET inicio=CURRENT_TIMESTAMP, fim=NULL, duracao_segundos=NULL, resultado='EM_EXECUCAO', detalhes=NULL;]]></sql>
+      <useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>PostgreSQL</connection>
+      <parallel>N</parallel>
+      <xloc>680</xloc>
+      <yloc>120</yloc>
+      <attributes_hac/>
+    </action>
+
+    <action>
+      <name>4. Consolidar Camada Gold no Banco</name>
+      <description>RF26 - Consolida tabelas analíticas kpis_mensais_categoria e desempenho_conteudos</description>
+      <type>SQL</type>
+      <attributes/>
+      <sql><![CDATA[-- 1. Popula gold.desempenho_conteudos a partir da Silver
+INSERT INTO gold.desempenho_conteudos (
+    conteudo_id, titulo, tipo, categoria, nivel,
+    total_visualizacoes, total_inicios, total_conclusoes, total_curtidas,
+    taxa_conclusao_pct, tempo_total_min, avaliacao_media,
+    _data_carga_gold, _lote_processamento
+)
+SELECT 
+    c.conteudo_id,
+    c.titulo,
+    c.tipo,
+    c.categoria,
+    c.nivel,
+    COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'visualização' THEN 1 END), 0) AS total_visualizacoes,
+    COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'início' THEN 1 END), 0) AS total_inicios,
+    COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'conclusão' THEN 1 END), 0) AS total_conclusoes,
+    COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'curtida' THEN 1 END), 0) AS total_curtidas,
+    COALESCE(ROUND(
+        (COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'conclusão' THEN 1 END), 0)::NUMERIC / 
+        NULLIF(COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'início' THEN 1 END), 0), 0)) * 100, 2
+    ), 0.0) AS taxa_conclusao_pct,
+    COALESCE(ROUND(COALESCE(SUM(i.tempo_consumido_min), 0)::NUMERIC, 2), 0.0) AS tempo_total_min,
+    ROUND(AVG(i.avaliacao)::NUMERIC, 2) AS avaliacao_media,
+    CURRENT_TIMESTAMP AS _data_carga_gold,
+    '${RUN_ID}' AS _lote_processamento
+FROM silver.catalogo c
+LEFT JOIN silver.interacoes i ON c.conteudo_id = i.conteudo_id
+GROUP BY c.conteudo_id, c.titulo, c.tipo, c.categoria, c.nivel
+ON CONFLICT (conteudo_id) DO UPDATE SET
+    total_visualizacoes = EXCLUDED.total_visualizacoes,
+    total_inicios = EXCLUDED.total_inicios,
+    total_conclusoes = EXCLUDED.total_conclusoes,
+    total_curtidas = EXCLUDED.total_curtidas,
+    taxa_conclusao_pct = EXCLUDED.taxa_conclusao_pct,
+    tempo_total_min = EXCLUDED.tempo_total_min,
+    avaliacao_media = EXCLUDED.avaliacao_media,
+    _data_carga_gold = CURRENT_TIMESTAMP,
+    _lote_processamento = EXCLUDED._lote_processamento;
+
+-- 2. Popula gold.kpis_mensais_categoria a partir da Silver
+INSERT INTO gold.kpis_mensais_categoria (
+    ano, mes, categoria, total_interacoes, usuarios_ativos,
+    total_visualizacoes, total_inicios, total_conclusoes, total_curtidas,
+    taxa_conclusao_pct, tempo_total_consumido_min, tempo_medio_min,
+    avaliacao_media, _data_carga_gold, _lote_processamento
+)
+SELECT 
+    EXTRACT(YEAR FROM i.data_hora)::INTEGER AS ano,
+    EXTRACT(MONTH FROM i.data_hora)::INTEGER AS mes,
+    c.categoria,
+    COUNT(i.interacao_id) AS total_interacoes,
+    COUNT(DISTINCT i.usuario_id) AS usuarios_ativos,
+    COUNT(CASE WHEN i.tipo_interacao = 'visualização' THEN 1 END) AS total_visualizacoes,
+    COUNT(CASE WHEN i.tipo_interacao = 'início' THEN 1 END) AS total_inicios,
+    COUNT(CASE WHEN i.tipo_interacao = 'conclusão' THEN 1 END) AS total_conclusoes,
+    COUNT(CASE WHEN i.tipo_interacao = 'curtida' THEN 1 END) AS total_curtidas,
+    COALESCE(ROUND(
+        (COUNT(CASE WHEN i.tipo_interacao = 'conclusão' THEN 1 END)::NUMERIC / 
+        NULLIF(COUNT(CASE WHEN i.tipo_interacao = 'início' THEN 1 END), 0)) * 100, 2
+    ), 0.0) AS taxa_conclusao_pct,
+    COALESCE(ROUND(SUM(i.tempo_consumido_min)::NUMERIC, 2), 0.0) AS tempo_total_consumido_min,
+    COALESCE(ROUND(AVG(i.tempo_consumido_min)::NUMERIC, 2), 0.0) AS tempo_medio_min,
+    ROUND(AVG(i.avaliacao)::NUMERIC, 2) AS avaliacao_media,
+    CURRENT_TIMESTAMP AS _data_carga_gold,
+    '${RUN_ID}' AS _lote_processamento
+FROM silver.interacoes i
+INNER JOIN silver.catalogo c ON i.conteudo_id = c.conteudo_id
+GROUP BY EXTRACT(YEAR FROM i.data_hora), EXTRACT(MONTH FROM i.data_hora), c.categoria
+ON CONFLICT (ano, mes, categoria) DO UPDATE SET
+    total_interacoes = EXCLUDED.total_interacoes,
+    usuarios_ativos = EXCLUDED.usuarios_ativos,
+    total_visualizacoes = EXCLUDED.total_visualizacoes,
+    total_inicios = EXCLUDED.total_inicios,
+    total_conclusoes = EXCLUDED.total_conclusoes,
+    total_curtidas = EXCLUDED.total_curtidas,
+    taxa_conclusao_pct = EXCLUDED.taxa_conclusao_pct,
+    tempo_total_consumido_min = EXCLUDED.tempo_total_consumido_min,
+    tempo_medio_min = EXCLUDED.tempo_medio_min,
+    avaliacao_media = EXCLUDED.avaliacao_media,
+    _data_carga_gold = CURRENT_TIMESTAMP,
+    _lote_processamento = EXCLUDED._lote_processamento;]]></sql>
+      <useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>PostgreSQL</connection>
+      <parallel>N</parallel>
+      <xloc>900</xloc>
+      <yloc>120</yloc>
+      <attributes_hac/>
+    </action>
+
+    <action>
+      <name>5. Finalizar Etapa Gold</name>
+      <description>Registra término da etapa Gold com contagem de registros</description>
+      <type>SQL</type>
+      <attributes/>
+      <sql><![CDATA[UPDATE controle.execucao_etapa
+SET fim=CURRENT_TIMESTAMP, 
+    duracao_segundos=EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - inicio)), 
+    resultado='SUCESSO',
+    detalhes=(SELECT format('kpis_mensais=%s; desempenho_conteudos=%s',
+        (SELECT count(*) FROM gold.kpis_mensais_categoria),
+        (SELECT count(*) FROM gold.desempenho_conteudos)))
+WHERE id_execucao='${RUN_ID}' AND etapa='GOLD';
+
+UPDATE controle.execucao_workflow
+SET fim=CURRENT_TIMESTAMP,
+    duracao_segundos=EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - inicio)),
+    resultado=CASE 
+        WHEN EXISTS(SELECT 1 FROM quarentena.registros WHERE id_execucao='${RUN_ID}') THEN 'SUCESSO_COM_RESSALVAS' 
+        ELSE 'SUCESSO' 
+    END,
+    detalhes=format('Fluxo ponta a ponta concluido com sucesso. Gold populada. Quarentena=%s', 
+        (SELECT count(*) FROM quarentena.registros WHERE id_execucao='${RUN_ID}'))
+WHERE id_execucao='${RUN_ID}';]]></sql>
+      <useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>PostgreSQL</connection>
+      <parallel>N</parallel>
+      <xloc>1100</xloc>
+      <yloc>120</yloc>
+      <attributes_hac/>
+    </action>
+
+    <action>
+      <name>SUCESSO_INTEGRADO</name>
+      <description>Fim com sucesso do pipeline ponta a ponta</description>
+      <type>SUCCESS</type>
+      <attributes/>
+      <xloc>1280</xloc>
+      <yloc>120</yloc>
+      <parallel>N</parallel>
+      <attributes_hac/>
+    </action>
+
+    <action>
+      <name>Compensar e Abortar</name>
+      <description>Registra falha crítica em controle e interrompe etapas dependentes</description>
+      <type>SQL</type>
+      <attributes/>
+      <sql><![CDATA[UPDATE controle.execucao_etapa
+SET fim=CURRENT_TIMESTAMP,
+    duracao_segundos=EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - inicio)),
+    resultado='FALHA',
+    detalhes='Interrupção crítica durante o fluxo integrado'
+WHERE id_execucao='${RUN_ID}' AND resultado='EM_EXECUCAO';
+
+UPDATE controle.execucao_workflow
+SET fim=CURRENT_TIMESTAMP,
+    duracao_segundos=EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - inicio)),
+    resultado='FALHA',
+    detalhes='Workflow ponta a ponta abortado devido a erro crítico'
+WHERE id_execucao='${RUN_ID}';]]></sql>
+      <useVariableSubstitution>T</useVariableSubstitution>
+      <sqlfromfile>F</sqlfromfile>
+      <sqlfilename/>
+      <sendOneStatement>F</sendOneStatement>
+      <connection>PostgreSQL</connection>
+      <parallel>N</parallel>
+      <xloc>680</xloc>
+      <yloc>280</yloc>
+      <attributes_hac/>
+    </action>
+
+    <action>
+      <name>Log Falha Integrada</name>
+      <description>Escreve aviso de falha crítica nos logs do Apache Hop</description>
+      <type>WRITE_TO_LOG</type>
+      <attributes/>
+      <logmessage>Falha crítica no Workflow Principal Integrado. Consulte as mensagens anteriores e logs do PostgreSQL.</logmessage>
+      <loglevel>Error</loglevel>
+      <logsubject>RF22_FALHA_WORKFLOW</logsubject>
+      <parallel>N</parallel>
+      <xloc>900</xloc>
+      <yloc>280</yloc>
+      <attributes_hac/>
+    </action>
+
+    <action>
+      <name>ABORT</name>
+      <description>Interrupção forçada por erro crítico</description>
+      <type>ABORT</type>
+      <attributes/>
+      <message>Workflow Principal Abortado.</message>
+      <parallel>N</parallel>
+      <xloc>1100</xloc>
+      <yloc>280</yloc>
       <attributes_hac/>
     </action>
   </actions>
+
   <hops>
     <hop>
       <from>START</from>
-      <to>Carga Bronze e Silver</to>
+      <to>1. Ingestao Bronze e Silver</to>
       <evaluation>Y</evaluation>
       <unconditional>Y</unconditional>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>Carga Bronze e Silver</from>
-      <to>SUCESSO</to>
+      <from>1. Ingestao Bronze e Silver</from>
+      <to>2. Criar Estruturas da Camada Gold</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
       <enabled>Y</enabled>
     </hop>
+    <hop>
+      <from>2. Criar Estruturas da Camada Gold</from>
+      <to>3. Iniciar Etapa Gold</to>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>3. Iniciar Etapa Gold</from>
+      <to>4. Consolidar Camada Gold no Banco</to>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>4. Consolidar Camada Gold no Banco</from>
+      <to>5. Finalizar Etapa Gold</to>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>5. Finalizar Etapa Gold</from>
+      <to>SUCESSO_INTEGRADO</to>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+
+    <!-- Hops de Falha Crítica -->
+    <hop>
+      <from>1. Ingestao Bronze e Silver</from>
+      <to>Compensar e Abortar</to>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>2. Criar Estruturas da Camada Gold</from>
+      <to>Compensar e Abortar</to>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>3. Iniciar Etapa Gold</from>
+      <to>Compensar e Abortar</to>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>4. Consolidar Camada Gold no Banco</from>
+      <to>Compensar e Abortar</to>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>5. Finalizar Etapa Gold</from>
+      <to>Compensar e Abortar</to>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Compensar e Abortar</from>
+      <to>Log Falha Integrada</to>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Log Falha Integrada</from>
+      <to>ABORT</to>
+      <evaluation>Y</evaluation>
+      <unconditional>Y</unconditional>
+      <enabled>Y</enabled>
+    </hop>
   </hops>
-  <notepads/>
+
+  <notepads>
+    <notepad>
+      <note>RF22 - ORQUESTRAÇÃO INTEGRADA PONTA A PONTA (Apache Hop)
+1. Carga Bronze &amp; Silver (arquivos brutos -> bronze -> tipagem/validação silver -> quarentena)
+2. Aplicação de DDL analítico e visões da Camada Gold
+3. Consolidação e atualização da Camada Gold no PostgreSQL
+4. Registro de auditoria corporativa por etapa e lote (controle.execucao_workflow)
+5. Falha crítica interrompe etapas dependentes e aciona compensação automática.</note>
+      <xloc>60</xloc>
+      <yloc>20</yloc>
+      <width>750</width>
+      <heigth>80</heigth>
+      <fontname>Noto Sans</fontname>
+      <fontsize>10</fontsize>
+      <fontbold>N</fontbold>
+      <fontitalic>N</fontitalic>
+      <fontcolorred>14</fontcolorred>
+      <fontcolorgreen>58</fontcolorgreen>
+      <fontcolorblue>90</fontcolorblue>
+      <backgroundcolorred>201</backgroundcolorred>
+      <backgroundcolorgreen>232</backgroundcolorgreen>
+      <backgroundcolorblue>251</backgroundcolorblue>
+      <bordercolorred>14</bordercolorred>
+      <bordercolorgreen>58</bordercolorgreen>
+      <bordercolorblue>90</bordercolorblue>
+    </notepad>
+  </notepads>
   <attributes/>
 </workflow>

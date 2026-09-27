@@ -35,6 +35,7 @@ dados/processados/*
 !dados/processados/benchmark_parquet.json
 !dados/processados/historico_qualidade.json
 !dados/processados/resultado_execucao_beam.json
+!dados/processados/resultado_dados_mestres.json
 
 # Dados intermediários de runtime (preservar apenas README/gitkeep da estrutura)
 dados/bronze/*

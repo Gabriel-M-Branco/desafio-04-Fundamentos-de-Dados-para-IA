@@ -20,7 +20,7 @@ Este documento registra os resultados de execução, equivalência analítica, d
 | **Status da Execução** | `SUCESSO` |
 | **Registros de Entrada Processados** | `1000` interações |
 | **Registros Analíticos Consolidados (Gold)** | `64` categorias/períodos |
-| **Duração do Processamento** | `0.4607 segundos` |
+| **Duração do Processamento** | `0.4524 segundos` |
 | **Arquivo Parquet de Saída** | `C:\Users\branco\Documents\GitHub\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
 | **Tamanho do Arquivo Gerado** | `11597 bytes` |
 
@@ -30,52 +30,52 @@ Este documento registra os resultados de execução, equivalência analítica, d
   {
     "ano": 2026,
     "mes": 7,
-    "categoria": "Programação & Software",
+    "categoria": "Ciência De Dados",
     "total_interacoes": 13,
-    "usuarios_ativos": 12,
-    "total_visualizacoes": 4,
-    "total_inicios": 3,
-    "total_conclusoes": 1,
-    "total_curtidas": 3,
-    "taxa_conclusao_pct": 33.33,
-    "tempo_total_consumido_min": 616.0,
-    "tempo_medio_min": 47.38,
-    "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-27T23:30:22.434116+00:00",
-    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
-  },
-  {
-    "ano": 2026,
-    "mes": 6,
-    "categoria": "Engenharia De Dados",
-    "total_interacoes": 20,
-    "usuarios_ativos": 19,
-    "total_visualizacoes": 10,
-    "total_inicios": 5,
-    "total_conclusoes": 1,
-    "total_curtidas": 3,
-    "taxa_conclusao_pct": 20.0,
-    "tempo_total_consumido_min": 3908.0,
-    "tempo_medio_min": 195.4,
-    "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-27T23:30:22.434116+00:00",
-    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
-  },
-  {
-    "ano": 2026,
-    "mes": 8,
-    "categoria": "Programação & Software",
-    "total_interacoes": 15,
-    "usuarios_ativos": 15,
-    "total_visualizacoes": 5,
+    "usuarios_ativos": 13,
+    "total_visualizacoes": 2,
     "total_inicios": 2,
-    "total_conclusoes": 4,
+    "total_conclusoes": 3,
     "total_curtidas": 2,
-    "taxa_conclusao_pct": 200.0,
-    "tempo_total_consumido_min": 1907.0,
-    "tempo_medio_min": 127.13,
+    "taxa_conclusao_pct": 150.0,
+    "tempo_total_consumido_min": 654.0,
+    "tempo_medio_min": 50.31,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-27T23:30:22.434116+00:00",
+    "_data_carga_gold": "2026-09-27T18:51:30.037888+00:00",
+    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
+  },
+  {
+    "ano": 2026,
+    "mes": 7,
+    "categoria": "Business Intelligence",
+    "total_interacoes": 21,
+    "usuarios_ativos": 21,
+    "total_visualizacoes": 9,
+    "total_inicios": 4,
+    "total_conclusoes": 1,
+    "total_curtidas": 1,
+    "taxa_conclusao_pct": 25.0,
+    "tempo_total_consumido_min": 4612.0,
+    "tempo_medio_min": 219.62,
+    "avaliacao_media": NaN,
+    "_data_carga_gold": "2026-09-27T18:51:30.037888+00:00",
+    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
+  },
+  {
+    "ano": 2026,
+    "mes": 4,
+    "categoria": "Banco De Dados",
+    "total_interacoes": 14,
+    "usuarios_ativos": 14,
+    "total_visualizacoes": 3,
+    "total_inicios": 3,
+    "total_conclusoes": 2,
+    "total_curtidas": 0,
+    "taxa_conclusao_pct": 66.67,
+    "tempo_total_consumido_min": 964.0,
+    "tempo_medio_min": 68.86,
+    "avaliacao_media": NaN,
+    "_data_carga_gold": "2026-09-27T18:51:30.037888+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   }
 ]

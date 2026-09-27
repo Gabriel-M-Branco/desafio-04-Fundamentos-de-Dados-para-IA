@@ -1,0 +1,30 @@
+{
+  "similaridade_detectada": 1.0,
+  "golden_record": {
+    "master_id": "MDM_CONTEUDO_bc8872383fef5e14",
+    "titulo": "Análise Comparativa e Padrões Recomendados em Adequação à LGPD e Proteção de Dados Pessoais",
+    "tipo": "Artigo",
+    "categoria": "Segurança & Governança",
+    "nivel": "Avançado",
+    "carga_horaria_min": 22,
+    "autor": "Dr. Fernando Zanin Pacheco (Original) / Eng. Rodrigo Alves Mendonça (Revisão)",
+    "status_mdm": "GOLDEN_RECORD_UNIFICADO",
+    "data_reconciliacao": "2026-09-27T21:59:36.859538+00:00"
+  },
+  "tabela_xref": [
+    {
+      "master_id": "MDM_CONTEUDO_bc8872383fef5e14",
+      "sistema_origem": "POSTGRES_SILVER_CATALOGO_ID588",
+      "id_origem": "588",
+      "score_matching": 1.0,
+      "regra_aplicada": "MATCH_TITULO_NORMALIZADO_SURVIVORSHIP_CURADO"
+    },
+    {
+      "master_id": "MDM_CONTEUDO_bc8872383fef5e14",
+      "sistema_origem": "POSTGRES_SILVER_CATALOGO_ID919",
+      "id_origem": "919",
+      "score_matching": 1.0,
+      "regra_aplicada": "MATCH_ORIGEM_HOMOLOGADA_SURVIVORSHIP_RECENTE"
+    }
+  ]
+}
