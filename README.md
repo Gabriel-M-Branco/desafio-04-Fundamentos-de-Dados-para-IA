@@ -80,6 +80,8 @@ flowchart TD
     GOLD --> SUPERSET
 ```
 
+> **Fundamentação Arquitetural (RF19):** Para o detalhamento completo de onde ocorrem Extração, Transformação e Carga, justificativa da classificação como **Arquitetura Híbrida (ETL + ELT)** sob as óticas de custo, governança, desempenho e reprocessamento, e o contraste com as limitações dos scripts isolados do Desafio 1, consulte o documento oficial [documentacao/arquitetura_etl_elt.md](documentacao/arquitetura_etl_elt.md).
+
 ---
 
 ## Guia de Instalação e Execução Multiplataforma
@@ -173,6 +175,8 @@ docker compose ps
 | **Apache Hop Web** | `hop-web` | `8080` | Interface visual de ETL para execução dos workflows e pipelines. |
 | **Spark Job Server** | `spark-job-server` | `8098:8099` | Runtime distribuído de processamento Apache Spark para Beam. |
 | **Apache Superset** | `superset` | `8088` | Plataforma analítica de BI, consultas SQL Lab e dashboards. |
+| **OpenMetadata Server** | `openmetadata-server` | `8585` | Catálogo de dados, linhagem ponta a ponta e governança (RF27-RF30). |
+| **Elasticsearch** | `openmetadata-elasticsearch` | `9200` | Motor de busca e indexação de metadados para o OpenMetadata. |
 
 ---
 
