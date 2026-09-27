@@ -6,6 +6,7 @@
 
 ## 1. Arquitetura, Modelagem e Fundamentos
 - [especificacao_tecnica.md](especificacao_tecnica.md): Especificação técnica completa de arquitetura de dados, modelagem relacional, armazenamento no MongoDB e motor de recomendação.
+- [arquitetura_etl_elt.md](arquitetura_etl_elt.md): Classificação do fluxo entre ETL e ELT, justificativas sob custo, governança, desempenho e limitações dos scripts isolados (RF19).
 - [modelo-dados.pdf](modelo-dados.pdf): Diagramas conceituais, lógicos e relacionais das entidades do banco de dados.
 - [arquitetura.pdf](arquitetura.pdf): Visão gráfica da arquitetura em camadas e fluxo de dados.
 - [kpis.md](kpis.md): Especificação formal dos KPIs, fórmulas matemáticas, views analíticas e perguntas de negócio.

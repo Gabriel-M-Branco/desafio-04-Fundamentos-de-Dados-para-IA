@@ -80,6 +80,8 @@ flowchart TD
     GOLD --> SUPERSET
 ```
 
+> **Fundamentação Arquitetural (RF19):** Para o detalhamento completo de onde ocorrem Extração, Transformação e Carga, justificativa da classificação como **Arquitetura Híbrida (ETL + ELT)** sob as óticas de custo, governança, desempenho e reprocessamento, e o contraste com as limitações dos scripts isolados do Desafio 1, consulte o documento oficial [documentacao/arquitetura_etl_elt.md](documentacao/arquitetura_etl_elt.md).
+
 ---
 
 ## Guia de Instalação e Execução Multiplataforma
