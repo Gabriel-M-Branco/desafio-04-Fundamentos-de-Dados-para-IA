@@ -20,8 +20,8 @@ Este documento registra os resultados de execução, equivalência analítica, d
 | **Status da Execução** | `SUCESSO` |
 | **Registros de Entrada Processados** | `1000` interações |
 | **Registros Analíticos Consolidados (Gold)** | `64` categorias/períodos |
-| **Duração do Processamento** | `0.4764 segundos` |
-| **Arquivo Parquet de Saída** | `C:\Users\branco\Documents\GitHub\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
+| **Duração do Processamento** | `3.1348 segundos` |
+| **Arquivo Parquet de Saída** | `D:\FICDEV_CURSO\Desafio 4 - Modulo Dados\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
 | **Tamanho do Arquivo Gerado** | `11597 bytes` |
 
 ### Amostra dos Registros Gerados (Gold)
@@ -29,53 +29,53 @@ Este documento registra os resultados de execução, equivalência analítica, d
 [
   {
     "ano": 2026,
-    "mes": 2,
-    "categoria": "Engenharia De Dados",
-    "total_interacoes": 18,
-    "usuarios_ativos": 17,
-    "total_visualizacoes": 7,
-    "total_inicios": 3,
-    "total_conclusoes": 4,
-    "total_curtidas": 2,
-    "taxa_conclusao_pct": 133.33,
-    "tempo_total_consumido_min": 5056.0,
-    "tempo_medio_min": 280.89,
-    "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-26T20:19:22.199888+00:00",
-    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
-  },
-  {
-    "ano": 2026,
-    "mes": 4,
-    "categoria": "Inteligência Artificial",
-    "total_interacoes": 17,
-    "usuarios_ativos": 16,
-    "total_visualizacoes": 7,
+    "mes": 7,
+    "categoria": "Programação & Software",
+    "total_interacoes": 13,
+    "usuarios_ativos": 12,
+    "total_visualizacoes": 4,
     "total_inicios": 3,
     "total_conclusoes": 1,
     "total_curtidas": 3,
     "taxa_conclusao_pct": 33.33,
-    "tempo_total_consumido_min": 1419.0,
-    "tempo_medio_min": 83.47,
+    "tempo_total_consumido_min": 616.0,
+    "tempo_medio_min": 47.38,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-26T20:19:22.199888+00:00",
+    "_data_carga_gold": "2026-09-27T21:28:50.055085+00:00",
+    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
+  },
+  {
+    "ano": 2026,
+    "mes": 5,
+    "categoria": "Inteligência Artificial",
+    "total_interacoes": 16,
+    "usuarios_ativos": 15,
+    "total_visualizacoes": 7,
+    "total_inicios": 1,
+    "total_conclusoes": 2,
+    "total_curtidas": 1,
+    "taxa_conclusao_pct": 200.0,
+    "tempo_total_consumido_min": 2628.0,
+    "tempo_medio_min": 164.25,
+    "avaliacao_media": NaN,
+    "_data_carga_gold": "2026-09-27T21:28:50.055085+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
     "ano": 2026,
     "mes": 1,
-    "categoria": "Programação & Software",
+    "categoria": "Ciência De Dados",
     "total_interacoes": 15,
-    "usuarios_ativos": 14,
-    "total_visualizacoes": 5,
+    "usuarios_ativos": 15,
+    "total_visualizacoes": 6,
     "total_inicios": 3,
-    "total_conclusoes": 1,
-    "total_curtidas": 4,
-    "taxa_conclusao_pct": 33.33,
-    "tempo_total_consumido_min": 1331.0,
-    "tempo_medio_min": 88.73,
+    "total_conclusoes": 5,
+    "total_curtidas": 0,
+    "taxa_conclusao_pct": 166.67,
+    "tempo_total_consumido_min": 2730.0,
+    "tempo_medio_min": 182.0,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-26T20:19:22.199888+00:00",
+    "_data_carga_gold": "2026-09-27T21:28:50.055085+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   }
 ]
@@ -90,7 +90,7 @@ Conforme a Seção 4 do `AGENTS.md`:
 
 ### Diagnóstico do Ambiente Host
 - **Sistema Operacional:** `Windows`
-- **Java detectado:** `True` (`None`)
+- **Java detectado:** `False` (`None`)
 - **Spark instalado no host:** `False` (`None`)
 - **Hadoop winutils presente no Windows:** `False` (`None`)
 - **Status do SparkRunner no Host Local:** `BLOQUEIO_WORKER_POOL`
