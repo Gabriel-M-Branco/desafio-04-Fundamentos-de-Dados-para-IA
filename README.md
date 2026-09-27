@@ -173,6 +173,8 @@ docker compose ps
 | **Apache Hop Web** | `hop-web` | `8080` | Interface visual de ETL para execução dos workflows e pipelines. |
 | **Spark Job Server** | `spark-job-server` | `8098:8099` | Runtime distribuído de processamento Apache Spark para Beam. |
 | **Apache Superset** | `superset` | `8088` | Plataforma analítica de BI, consultas SQL Lab e dashboards. |
+| **OpenMetadata Server** | `openmetadata-server` | `8585` | Catálogo de dados, linhagem ponta a ponta e governança (RF27-RF30). |
+| **Elasticsearch** | `openmetadata-elasticsearch` | `9200` | Motor de busca e indexação de metadados para o OpenMetadata. |
 
 ---
 
