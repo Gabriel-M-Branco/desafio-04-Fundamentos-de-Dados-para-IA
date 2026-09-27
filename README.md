@@ -67,6 +67,7 @@ flowchart TD
     H2 -- "Inválidos" --> H3
     H1 --> H4
     H2 --> H4
+    H2 -. "Orquestração Ponta a Ponta" .-> GOLD
 
     PG_RAW --> MG
     PG_RAW --> EMB
@@ -168,21 +169,24 @@ Verifique se todos os contêineres estão saudáveis e operacionais:
 docker compose ps
 ```
 
-| Serviço | Contêiner | Porta | Finalidade |
-| :--- | :--- | :--- | :--- |
-| **PostgreSQL** | `postgres` | `5432` | Banco relacional, extensão pgvector e schemas Medalhão (`bronze`, `silver`, `gold`, `quarentena`, `controle`). |
-| **MongoDB** | `mongodb` | `27017` | Persistência NoSQL orientada a documentos para avaliações e comentários. |
-| **Apache Hop Web** | `hop-web` | `8080` | Interface visual de ETL para execução dos workflows e pipelines. |
-| **Spark Job Server** | `spark-job-server` | `8098:8099` | Runtime distribuído de processamento Apache Spark para Beam. |
-| **Apache Superset** | `superset` | `8088` | Plataforma analítica de BI, consultas SQL Lab e dashboards. |
-| **OpenMetadata Server** | `openmetadata-server` | `8585` | Catálogo de dados, linhagem ponta a ponta e governança (RF27-RF30). |
-| **Elasticsearch** | `openmetadata-elasticsearch` | `9200` | Motor de busca e indexação de metadados para o OpenMetadata. |
+#### Serviços Ativos e Registro Oficial de Versões (RF15)
+
+| Tecnologia / Serviço | Contêiner / Imagem | Versão Fixada | Porta | Finalidade no Desafio 2 |
+| :--- | :--- | :---: | :---: | :--- |
+| **Apache Hop** | `apache/hop-web` | **`2.11.0`** *(latest)* | `8080` | Interface visual de ETL, workflows e refino Silver. |
+| **Apache Beam** | `apache-beam` (Python SDK) | **`2.54.0`** | Host/CLI | Agregação, transformações e cálculo de KPIs analíticos. |
+| **Apache Spark** | `apache/beam_spark_job_server` | **`2.54.0`** *(Spark 3.4)* | `8098:8099` | Runtime distribuído de processamento Apache Spark para Beam. |
+| **Apache Superset** | `apache/superset` | **`4.0.2`** | `8088` | Plataforma analítica de BI, consultas SQL Lab e dashboards. |
+| **OpenMetadata Server** | `openmetadata/server` | **`1.4.6`** | `8585` | Catálogo de dados, linhagem ponta a ponta e governança (RF27-RF30). |
+| **Elasticsearch** | `openmetadata-elasticsearch` | **`8.10.2`** | `9200` | Motor de busca e indexação de metadados para o OpenMetadata. |
+| **PostgreSQL** | `postgres` (`pgvector:pg16`) | **`PostgreSQL 16`** | `5432` | Banco relacional, extensão pgvector e schemas Medalhão (`bronze`, `silver`, `gold`, `quarentena`, `controle`). |
+| **MongoDB** | `mongodb` (`mongo:8`) | **`8.0`** | `27017` | Persistência NoSQL orientada a documentos para avaliações e comentários. |
 
 ---
 
 ### 7. Execução do Pipeline Ponta a Ponta
 
-Para executar toda a plataforma de forma sequencial e integrada, siga as 3 etapas abaixo:
+Para executar toda a plataforma de forma sequencial e integrada, siga as 4 etapas abaixo:
 
 #### Etapa A: Carga Base, IA e Embeddings (Motor Legado e Pré-requisitos)
 Gera o catálogo de conteúdos, carrega o MongoDB, calcula embeddings com `sentence-transformers` na extensão `pgvector` e gera as recomendações personalizadas:
@@ -193,8 +197,8 @@ python -m src.main
 
 > Este comando garante a presença das referências em `public.usuarios` e `public.conteudos`, que são validadas na etapa de integridade referencial do Apache Hop.
 
-#### Etapa B: Ingestão e Padronização Bronze & Silver (Apache Hop)
-O Apache Hop lê os arquivos de `dados/brutos/`, grava a camada bruta com metadados de auditoria em `bronze.*`, valida e tipa em `silver.*`, isola inconsistências em `quarentena.registros` e loga etapas em `controle`.
+#### Etapa B: Ingestão e Orquestração Ponta a Ponta no Apache Hop (RF20 a RF23 e RF26)
+O Apache Hop executa o workflow integrado mestre `workflow_principal.hwf`, que lê os arquivos de `dados/brutos/`, grava a camada bruta com metadados de auditoria em `bronze.*`, valida e tipa em `silver.*`, isola inconsistências em `quarentena.registros`, aplica o DDL analítico [sql/camada_gold.sql](sql/camada_gold.sql) e consolida os KPIs da camada `gold.*` no PostgreSQL com rastreabilidade total no schema `controle`.
 
 Você pode rodá-lo por **qualquer uma das opções**:
 
@@ -214,8 +218,8 @@ Você pode rodá-lo por **qualquer uma das opções**:
     --level BASIC
   ```
 
-#### Etapa C: Parquet, Qualidade, Apache Beam e Camada Gold
-Com as camadas Bronze e Silver povoadas no PostgreSQL e Parquet, execute a esteira analítica distribuída:
+#### Etapa C: Formato Colunar Parquet, Qualidade de Dados e Apache Beam (RF24, RF25 e RF31)
+Com as camadas Bronze, Silver e Gold povoadas no PostgreSQL, execute a esteira analítica distribuída e os testes de qualidade:
 
 ```bash
 python -m src.executar_etapas --etapa todas
@@ -224,9 +228,27 @@ python -m src.executar_etapas --etapa todas
 O orquestrador executará de forma encadeada:
 1. **RF24 (Parquet Hive):** Exporta 1.000 registros para partição colunar (`dados/parquet/interacoes/particionado/ano=2026/mes=MM/`).
 2. **RF24 (Benchmark):** Executa o teste comparativo de performance de leitura colunar (Parquet vs CSV vs JSON).
-3. **RF31 (Qualidade de Dados):** Executa os 5 testes corporativos (Completude, Validade, Unicidade, Consistência e Integridade Referencial).
-4. **RF25 (Apache Beam):** Agrega os KPIs analíticos mensais e de desempenho via DirectRunner e avalia o cluster Spark.
-5. **RF26 (Camada Gold):** Publica as agregações na camada `gold` do PostgreSQL (`kpis_mensais_categoria`, `desempenho_conteudos` e visões analíticas).
+3. **RF31 (Qualidade de Dados):** Executa os 5 testes corporativos (Completude, Validade, Unicidade, Consistência e Integridade Referencial) com barreira bloqueadora (*Quality Gate*).
+4. **RF25 (Apache Beam):** Agrega os KPIs analíticos mensais e de desempenho via DirectRunner e avalia o cluster Spark, gravando em Parquet analítico.
+5. **RF26 (Camada Gold):** Sincroniza e consolida as tabelas analíticas no PostgreSQL e atualiza as amostras físicas em `dados/gold/`.
+
+#### Etapa D: Dados Mestres (MDM) e Governança no OpenMetadata (RF27 a RF30)
+Para consolidar a resolução de conflitos cadastrais e catalogar os metadados técnicos e termos de negócio:
+
+1. **Reconciliação de Dados Mestres (RF30):**
+   Executa o motor de correspondência (*Matching*) e regras de sobrevivência (*Survivorship*), extraindo dois registros reais conflitantes diretamente da tabela `silver.catalogo` do PostgreSQL:
+   ```bash
+   python scripts/demonstrar_dados_mestres.py
+   ```
+   *Evidência gerada:* `dados/processados/resultado_dados_mestres.json` e documentação técnica em [`documentacao/dados_mestres.md`](documentacao/dados_mestres.md).
+
+2. **Configuração e Dossiê do OpenMetadata (RF27 a RF29):**
+   Conecta na API REST do OpenMetadata, autentica com a credencial administrativa, sincroniza o glossário e exporta o dossiê formal de governança:
+   ```bash
+   python scripts/configurar_openmetadata.py
+   ```
+   *Evidência gerada:* `openmetadata/dossie_metadados_oficial.json`.  
+   *Acesso Web:* [http://localhost:8585](http://localhost:8585) (Login: **`admin@openmetadata.org`** / Senha: **`admin`**).
 
 ---
 
@@ -257,20 +279,87 @@ python -c "from src.config import carregar_config; from src.database.mongo impor
 ```
 
 ### 3. Testes Automatizados da Aplicação
-Execute a suíte com **84 testes automatizados**:
+Execute a suíte com **92 testes automatizados**:
 ```bash
 python -m pytest tests/
 ```
 
-### 4. No Apache Superset (Consumo Analítico)
-1. Acesse no navegador: [http://localhost:8088](http://localhost:8088).
-2. Credenciais padrão: usuário `admin` e senha `admin` (conforme `.env`).
-3. Conecte-se ao banco `postgresql://postgres:postgres@postgres:5432/ficdev_recomendacao`.
-4. Os datasets devem consultar exclusivamente a camada **`gold`**:
-   - `gold.kpis_mensais_categoria`
-   - `gold.desempenho_conteudos`
-   - `gold.vw_kpis_executivos`
-   - `gold.vw_ranking_conteudos_engajamento`
+### 4. No Apache Superset (Consumo Analítico, Storytelling e Alertas — RF16 a RF18 e RF26)
+
+O Apache Superset é a interface oficial de consumo dos tomadores de decisão pedagógicos e analíticos da plataforma FIC_DEV.
+
+1. **Acesso à Interface Web:**
+   * **URL no Navegador:** [http://localhost:8088](http://localhost:8088)
+   * **Credenciais Padrão:** Usuário `admin` | Senha `admin` (configuradas no `.env`).
+
+2. **Como Visualizar o Dashboard Oficial:**
+   * No menu superior, clique em **Dashboards**.
+   * Localize e clique no painel **`Dashboard - Desafio 4`** (publicado e homologado).
+   * **Consumo Exclusivo da Camada Gold (RF26):** Todos os gráficos consomem dados agregados do schema `gold` (`gold.kpis_mensais_categoria` e `gold.desempenho_conteudos`), blindando as camadas Bronze e Silver contra acessos analíticos diretos.
+
+3. **Narrativa do Storytelling Executivo (RF16):**
+   O dashboard foi estruturado em uma sequência lógica de 3 gráficos encadeados:
+   * **Passo 1 (Contexto — Atratividade):** Gráfico de Pizza (*Distribuição de acesso por tipo de conteúdo*) demonstrando quais formatos atraem mais visualizações iniciais dos alunos (Artigos e Podcasts).
+   * **Passo 2 (Evidência — Retenção do Funil):** Gráfico de Barras Agrupadas (*STORYTELLING - Retenção por Tipo*) confrontando inícios versus conclusões e revelando o gargalo de evasão em formatos extensos como Cursos.
+   * **Passo 3 (Ação Recomendada — Matriz de Desempenho):** Bubble Chart (*STORYTELLING - Desempenho de cada Tipo*) cruzando volume de consumo, notas médias de satisfação e taxa de conclusão por nível didático.
+
+4. **Interatividade por Filtro Cruzado (*Cross-Filtering* — RF18):**
+   * O recurso está ativo globalmente: **clique em qualquer elemento visual** (por exemplo, na fatia *"Curso"* ou *"Podcast"* do gráfico de pizza do Passo 1).
+   * Imediatamente, todos os demais gráficos do Storytelling e painéis do SQL Lab recalculam suas métricas para o recorte selecionado.
+
+5. **Barra Lateral de Filtros Globais (*Filter Bar* — RF18):**
+   * No painel retrátil à esquerda da tela:
+     * **Filtro 1 — Dimensão de Negócio:** Permite seleção múltipla por área temática (`categoria`), como *Inteligência Artificial*, *Segurança & Governança*, *Business Intelligence*, etc.
+     * **Filtro 2 — Período:** Seletor nativo de intervalo temporal de datas.
+
+6. **Consultas Virtuais e Datasets no SQL Lab (RF17):**
+   * No menu superior, acesse **SQL** $\rightarrow$ **SQL Lab**.
+   * Selecione o Banco de Dados `ficdev_postgresql` e o Schema **`gold`**.
+   * O repositório disponibiliza as consultas modeladas em [`sql/sql_lab.sql`](sql/sql_lab.sql), contendo `JOIN` entre tabelas Gold, funções temporais (`MAKE_DATE`), agregações e classificações condicionais (`CASE WHEN`).
+   * As consultas alimentam os datasets virtuais do dashboard: *SQLab - Análise de Eficiência e Evasão do Funil por Categoria* e *SQLab - Indicadores por Mês*.
+
+7. **Monitoramento Ativo por Alerta de Negócio (RF18):**
+   * No menu superior direito, clique em **Settings (ícone de engrenagem)** $\rightarrow$ **Alerts & Reports**.
+   * Observe o alerta configurado: **`Alerta Crítico: Baixo Tempo Total de Consumo por Categoria`**.
+   * **Regra de Disparo:** Consulta SQL Observer que monitora o mês mais recente na camada Gold e dispara notificação caso o tempo médio de estudo mensal fique abaixo de `500 minutos`.
+
+---
+
+### 5. No OpenMetadata (Catálogo, Glossário, Linhagem e LGPD — RF27 a RF30)
+
+O OpenMetadata é a plataforma central de governança, catálogo unificado e rastreabilidade da arquitetura de dados.
+
+1. **Acesso à Interface Web:**
+   * **URL no Navegador:** [http://localhost:8585](http://localhost:8585)
+   * **Credenciais Oficiais de Administrador:**
+     * **E-mail de Login:** `admin@openmetadata.org`  
+       *(Importante: o OpenMetadata adota o padrão corporativo de autenticação básica exigindo obrigatoriamente o endereço de e-mail no campo de usuário, e não apenas o login textual `admin`)*.
+     * **Senha:** `admin`
+
+2. **Catálogo de Dados e Metadados Técnicos (RF27 e RF28):**
+   * No menu lateral esquerdo, clique em **Explore** $\rightarrow$ **Tables**.
+   * Visualize as entidades catalogadas da plataforma nas camadas **`silver`** e **`gold`** (ex.: `gold.kpis_mensais_categoria`, `gold.desempenho_conteudos`, `silver.catalogo`, etc.).
+   * Cada tabela exibe esquema colunar, tipos de dados, descrições e proprietário atribuído (*Owner*).
+
+3. **Glossário de Negócio e Termos Oficiais (RF28):**
+   * No menu lateral esquerdo, clique em **Govern** $\rightarrow$ **Glossary**.
+   * Abra o glossário da plataforma e confira os **4 termos de negócio obrigatórios** cadastrados (especificados em [`openmetadata/dossie_metadados_oficial.json`](openmetadata/dossie_metadados_oficial.json)):
+     1. **`Usuário Ativo`:** Aluno com interação no período de apuração; vinculado à coluna `usuarios_ativos` da Gold.
+     2. **`Taxa de Conclusão`:** Razão percentual entre conclusões e inícios; vinculada a `taxa_conclusao_pct`.
+     3. **`Tempo Médio de Consumo`:** Duração média em minutos de estudo; vinculada a `tempo_medio_min`.
+     4. **`Conversão de Recomendação`:** Taxa de aceite dos materiais sugeridos pela IA; vinculada a `ranking_categoria`.
+
+4. **Classificações de Privacidade e Sensibilidade LGPD (RF28 e RF32):**
+   * No menu lateral esquerdo, clique em **Govern** $\rightarrow$ **Classification**.
+   * Observe as tags aplicadas como **`PII.Sensitive`** e identificadores protegidos associados aos campos de dados pessoais, evidenciando o inventário formal e o cumprimento da LGPD.
+
+5. **Linhagem Gráfica de Dados Ponta a Ponta (*Lineage* — RF29):**
+   * Ao abrir qualquer tabela da camada Gold (por exemplo, `gold.kpis_mensais_categoria`), clique na aba **Lineage**.
+   * Visualize o grafo de proveniência dos dados demonstrando o fluxo:  
+     `Fontes Brutas (CSV/JSON/Mongo) -> Bronze -> Silver -> Beam/Gold -> Superset Dashboard`.
+
+6. **Controles Anti-Data Swamp (RF27):**
+   * O ambiente impede a degradação em "pântano de dados" ao restringir a catalogação automática a esquemas homologados, exigindo descrições mandatórias, donos formais e aplicação de termos de glossário antes da liberação para consumo.
 
 ---
 
@@ -333,6 +422,9 @@ desafio-04-Fundamentos-de-Dados-para-IA/
 │   ├── metadata/            # Conexões de banco de dados e run configurations
 │   ├── pipelines/           # Pipelines de ingestão Bronze e Silver
 │   └── workflows/           # Workflows orquestradores de execução
+├── lgpd/                    # Governança e proteção de dados pessoais (RF32 e RF33)
+│   ├── inventario_de_dados.md
+│   └── tecnicas_de_protecao.md
 ├── mongodb/                 # Scripts e consultas de agregação NoSQL
 ├── sql/                     # DDLs relacionais, DDLs Medalhão e consultas SQL
 ├── src/                     # Código-fonte Python modular
@@ -343,7 +435,7 @@ desafio-04-Fundamentos-de-Dados-para-IA/
 │   ├── parquet/             # Exportador particionado e benchmark colunar
 │   ├── qualidade/           # Motor de avaliação das 5 dimensões de qualidade
 │   └── recomendacao/        # Embeddings com SentenceTransformers e busca semântica
-├── tests/                   # Suíte de 84 testes automatizados (Pytest)
+├── tests/                   # Suíte de 92 testes automatizados (Pytest)
 ├── docker-compose.yml       # Orquestração de todos os serviços conteinerizados
 ├── requirements.txt         # Dependências Python versionadas
 ├── .env.example             # Modelo de configuração de variáveis de ambiente
@@ -363,6 +455,8 @@ Para aprofundamento técnico em cada módulo específico, consulte:
 - [`documentacao/camada_gold.md`](documentacao/camada_gold.md): Modelagem dimensional, granularidade, medidas e visões analíticas da Gold.
 - [`documentacao/kpis.md`](documentacao/kpis.md): Definição de métricas de negócio e indicadores de decisão pedagógicos.
 - [`documentacao/uso_da_ia.md`](documentacao/uso_da_ia.md): Registro de governança sobre o uso de ferramentas de Inteligência Artificial.
+- [`lgpd/inventario_de_dados.md`](lgpd/inventario_de_dados.md): Inventário formal de dados pessoais, bases legais (Art. 7º) e ciclo de retenção (RF32).
+- [`lgpd/tecnicas_de_protecao.md`](lgpd/tecnicas_de_protecao.md): Especificação e prova de mascaramento, pseudonimização e hashing SHA-256 com salt dinâmico (RF33).
 - [`hop/README.md`](hop/README.md): Documentação detalhada dos workflows e pipelines do Apache Hop.
 
 ---

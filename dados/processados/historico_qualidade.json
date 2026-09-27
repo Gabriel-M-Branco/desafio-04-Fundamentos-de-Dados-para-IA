@@ -1,7 +1,7 @@
 [
   {
-    "lote_id": "LOTE_DQ_20260926_200141_a3789c",
-    "data_hora": "2026-09-26T20:01:41.025931+00:00",
+    "lote_id": "LOTE_DQ_20260927_231343_3cd220",
+    "data_hora": "2026-09-27T23:13:43.050215+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -13,8 +13,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260926_200147_efbc9d",
-    "data_hora": "2026-09-26T20:01:47.788211+00:00",
+    "lote_id": "LOTE_DQ_20260927_231344_2e1f01",
+    "data_hora": "2026-09-27T23:13:44.971607+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -26,8 +26,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260926_200533_43511a",
-    "data_hora": "2026-09-26T20:05:33.867984+00:00",
+    "lote_id": "LOTE_DQ_20260927_232512_7a06d4",
+    "data_hora": "2026-09-27T23:25:12.124081+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -39,229 +39,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260926_200537_ba4e88",
-    "data_hora": "2026-09-26T20:05:37.190391+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_200837_bb6670",
-    "data_hora": "2026-09-26T20:08:37.232966+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_200840_d82665",
-    "data_hora": "2026-09-26T20:08:40.418031+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_200912_039c6b",
-    "data_hora": "2026-09-26T20:09:12.765109+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_200913_93a4b4",
-    "data_hora": "2026-09-26T20:09:13.585923+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_200939_4e0ef4",
-    "data_hora": "2026-09-26T20:09:39.038711+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_200940_cb9f71",
-    "data_hora": "2026-09-26T20:09:40.348053+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_200941_7dccfb",
-    "data_hora": "2026-09-26T20:09:41.659932+00:00",
-    "status_geral": "REPROVADO_CRITICO",
-    "bloquear_publicacao_gold": true,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 75.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_201305_51f08d",
-    "data_hora": "2026-09-26T20:13:05.156371+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_201305_f1689e",
-    "data_hora": "2026-09-26T20:13:05.991658+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_201650_f89cfc",
-    "data_hora": "2026-09-26T20:16:50.446108+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_201651_1df409",
-    "data_hora": "2026-09-26T20:16:51.807105+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_201653_0ad444",
-    "data_hora": "2026-09-26T20:16:53.122523+00:00",
-    "status_geral": "REPROVADO_CRITICO",
-    "bloquear_publicacao_gold": true,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 75.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_201927_7c01a8",
-    "data_hora": "2026-09-26T20:19:27.791307+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_201929_46fa93",
-    "data_hora": "2026-09-26T20:19:29.337142+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260926_201930_4b8c1c",
-    "data_hora": "2026-09-26T20:19:30.660847+00:00",
-    "status_geral": "REPROVADO_CRITICO",
-    "bloquear_publicacao_gold": true,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 75.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260927_212850_bf0ad6",
-    "data_hora": "2026-09-27T21:28:50.014269+00:00",
-    "status_geral": "APROVADO_INTEGRAL",
-    "bloquear_publicacao_gold": false,
-    "metricas": {
-      "taxa_completude_pct": 100.0,
-      "taxa_validade_pct": 100.0,
-      "taxa_unicidade_pct": 100.0,
-      "taxa_consistencia_pct": 100.0,
-      "taxa_integridade_referencial_pct": 100.0
-    }
-  },
-  {
-    "lote_id": "LOTE_DQ_20260927_212853_01dc88",
-    "data_hora": "2026-09-27T21:28:53.329043+00:00",
+    "lote_id": "LOTE_DQ_20260927_232514_344d25",
+    "data_hora": "2026-09-27T23:25:14.206765+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {

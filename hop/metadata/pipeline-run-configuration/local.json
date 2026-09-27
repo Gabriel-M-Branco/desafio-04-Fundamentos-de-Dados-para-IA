@@ -14,7 +14,6 @@
   "name": "local",
   "configurationVariables": [],
   "description": "Configuração de execução local de pipeline",
-  "executionInfoLocationName": "local-audit",
   "dataProfile": "first-last",
   "defaultSelection": true
 }

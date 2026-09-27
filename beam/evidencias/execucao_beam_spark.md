@@ -20,8 +20,8 @@ Este documento registra os resultados de execução, equivalência analítica, d
 | **Status da Execução** | `SUCESSO` |
 | **Registros de Entrada Processados** | `1000` interações |
 | **Registros Analíticos Consolidados (Gold)** | `64` categorias/períodos |
-| **Duração do Processamento** | `1.9466 segundos` |
-| **Arquivo Parquet de Saída** | `D:\FICDEV_CURSO\Desafio 4 - Modulo Dados\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
+| **Duração do Processamento** | `0.4524 segundos` |
+| **Arquivo Parquet de Saída** | `C:\Users\branco\Documents\GitHub\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
 | **Tamanho do Arquivo Gerado** | `11597 bytes` |
 
 ### Amostra dos Registros Gerados (Gold)
@@ -29,36 +29,36 @@ Este documento registra os resultados de execução, equivalência analítica, d
 [
   {
     "ano": 2026,
-    "mes": 2,
-    "categoria": "Segurança & Governança",
-    "total_interacoes": 20,
-    "usuarios_ativos": 19,
-    "total_visualizacoes": 11,
+    "mes": 7,
+    "categoria": "Ciência De Dados",
+    "total_interacoes": 13,
+    "usuarios_ativos": 13,
+    "total_visualizacoes": 2,
     "total_inicios": 2,
-    "total_conclusoes": 2,
-    "total_curtidas": 1,
-    "taxa_conclusao_pct": 100.0,
-    "tempo_total_consumido_min": 4585.0,
-    "tempo_medio_min": 229.25,
+    "total_conclusoes": 3,
+    "total_curtidas": 2,
+    "taxa_conclusao_pct": 150.0,
+    "tempo_total_consumido_min": 654.0,
+    "tempo_medio_min": 50.31,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-27T23:25:12.145920+00:00",
+    "_data_carga_gold": "2026-09-27T18:51:30.037888+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
     "ano": 2026,
-    "mes": 8,
-    "categoria": "Segurança & Governança",
-    "total_interacoes": 7,
-    "usuarios_ativos": 7,
-    "total_visualizacoes": 0,
-    "total_inicios": 2,
-    "total_conclusoes": 2,
+    "mes": 7,
+    "categoria": "Business Intelligence",
+    "total_interacoes": 21,
+    "usuarios_ativos": 21,
+    "total_visualizacoes": 9,
+    "total_inicios": 4,
+    "total_conclusoes": 1,
     "total_curtidas": 1,
-    "taxa_conclusao_pct": 100.0,
-    "tempo_total_consumido_min": 2523.0,
-    "tempo_medio_min": 360.43,
+    "taxa_conclusao_pct": 25.0,
+    "tempo_total_consumido_min": 4612.0,
+    "tempo_medio_min": 219.62,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-27T23:25:12.145920+00:00",
+    "_data_carga_gold": "2026-09-27T18:51:30.037888+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
@@ -75,7 +75,7 @@ Este documento registra os resultados de execução, equivalência analítica, d
     "tempo_total_consumido_min": 964.0,
     "tempo_medio_min": 68.86,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-27T23:25:12.145920+00:00",
+    "_data_carga_gold": "2026-09-27T18:51:30.037888+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   }
 ]
@@ -90,7 +90,7 @@ Conforme a Seção 4 do `AGENTS.md`:
 
 ### Diagnóstico do Ambiente Host
 - **Sistema Operacional:** `Windows`
-- **Java detectado:** `False` (`None`)
+- **Java detectado:** `True` (`None`)
 - **Spark instalado no host:** `False` (`None`)
 - **Hadoop winutils presente no Windows:** `False` (`None`)
 - **Status do SparkRunner no Host Local:** `BLOQUEIO_WORKER_POOL`
