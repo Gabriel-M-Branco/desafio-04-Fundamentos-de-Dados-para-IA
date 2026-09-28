@@ -129,8 +129,16 @@ def ensure_table(conn, schema: str, table: str) -> None:
 
 def load_df(conn, df: pd.DataFrame, schema: str, table: str) -> int:
     ensure_table(conn, schema, table)
-    cols = list(df.columns)
-    values = [[normalize_nulls(v) for v in row] for row in df.itertuples(index=False, name=None)]
+    ddl_str = DDL.get((schema, table), "")
+    allowed_cols = [c.strip().split()[0] for c in ddl_str.strip().split(",") if c.strip()]
+    if allowed_cols:
+        cols = [c for c in allowed_cols if c in df.columns]
+        df_to_load = df[cols]
+    else:
+        cols = list(df.columns)
+        df_to_load = df
+
+    values = [[normalize_nulls(v) for v in row] for row in df_to_load.itertuples(index=False, name=None)]
     if not values:
         return 0
     stmt = sql.SQL("INSERT INTO {}.{} ({}) VALUES ({})").format(
@@ -140,6 +148,45 @@ def load_df(conn, df: pd.DataFrame, schema: str, table: str) -> int:
         sql.SQL(",").join(sql.Placeholder() for _ in cols),
     )
     with conn.cursor() as cur:
+        cur.executemany(stmt, values)
+    conn.commit()
+    return len(values)
+
+
+def salvar_quarentena_db(conn, quarentena_records: list[dict]) -> int:
+    if not quarentena_records:
+        return 0
+    with conn.cursor() as cur:
+        cur.execute("CREATE SCHEMA IF NOT EXISTS quarentena;")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS quarentena.registros (
+              quarentena_id BIGSERIAL PRIMARY KEY,
+              entidade TEXT NOT NULL, id_registro TEXT, origem TEXT NOT NULL,
+              regra_violada TEXT NOT NULL, mensagem_erro TEXT NOT NULL,
+              data_erro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              id_execucao TEXT NOT NULL, payload TEXT NOT NULL,
+              reprocessado BOOLEAN NOT NULL DEFAULT FALSE,
+              data_reprocessamento TIMESTAMP, novo_id_execucao TEXT
+            );
+        """)
+        stmt = sql.SQL("""
+            INSERT INTO quarentena.registros (
+                entidade, id_registro, origem, regra_violada, mensagem_erro, data_erro, id_execucao, payload
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """)
+        values = [
+            (
+                r.get("tipo", "desconhecido"),
+                str(r.get("registro_id")) if r.get("registro_id") is not None else None,
+                r.get("origem", "desconhecido"),
+                r.get("regra", "invalido"),
+                r.get("mensagem", "Erro de validacao"),
+                r.get("data_erro", utc_now()),
+                r.get("run_id", "manual"),
+                json.dumps(r.get("registro", {}), ensure_ascii=False, default=str),
+            )
+            for r in quarentena_records
+        ]
         cur.executemany(stmt, values)
     conn.commit()
     return len(values)
@@ -166,6 +213,22 @@ def bronze(source_dir: Path, output_dir: Path, run_id: str, skip_db: bool) -> di
     catalogo = add_audit(pd.read_csv(sources["catalogo"]), "catalogo.csv", run_id)
     interacoes = add_audit(read_json(sources["interacoes"]), "interacoes.json", run_id)
     comentarios = add_audit(read_json(sources["comentarios"]), "comentarios.json", run_id)
+
+    # Incorpora cenários de teste se disponíveis no diretório brutos/cenarios_de_teste
+    cenarios_dir = source_dir / "cenarios_de_teste"
+    if cenarios_dir.exists():
+        cat_cen = cenarios_dir / "catalogo_cenarios.csv"
+        int_cen = cenarios_dir / "interacoes_cenarios.json"
+        com_cen = cenarios_dir / "comentarios_cenarios.json"
+        if cat_cen.exists():
+            df_cat_cen = add_audit(pd.read_csv(cat_cen), "cenarios_de_teste/catalogo_cenarios.csv", run_id)
+            catalogo = pd.concat([catalogo, df_cat_cen], ignore_index=True)
+        if int_cen.exists():
+            df_int_cen = add_audit(read_json(int_cen), "cenarios_de_teste/interacoes_cenarios.json", run_id)
+            interacoes = pd.concat([interacoes, df_int_cen], ignore_index=True)
+        if com_cen.exists():
+            df_com_cen = add_audit(read_json(com_cen), "cenarios_de_teste/comentarios_cenarios.json", run_id)
+            comentarios = pd.concat([comentarios, df_com_cen], ignore_index=True)
 
     catalogo.to_parquet(bronze_dir / "catalogo.parquet", index=False)
     interacoes.to_parquet(bronze_dir / "interacoes.parquet", index=False)
@@ -246,10 +309,18 @@ def silver(output_dir: Path, run_id: str, skip_db: bool) -> dict[str, int]:
     valid_content = set(catalogo_ok["conteudo_id"].astype(int))
 
     # Interações
-    interacoes = interacoes.rename(columns={
-        "tempo_consumido": "tempo_consumido_min",
-        "avaliacao_atribuida": "avaliacao",
-    })
+    if "avaliacao_atribuida" in interacoes.columns and "avaliacao" in interacoes.columns:
+        interacoes["avaliacao"] = interacoes["avaliacao"].fillna(interacoes["avaliacao_atribuida"])
+        interacoes = interacoes.drop(columns=["avaliacao_atribuida"])
+    elif "avaliacao_atribuida" in interacoes.columns:
+        interacoes = interacoes.rename(columns={"avaliacao_atribuida": "avaliacao"})
+
+    if "tempo_consumido" in interacoes.columns and "tempo_consumido_min" in interacoes.columns:
+        interacoes["tempo_consumido_min"] = interacoes["tempo_consumido_min"].fillna(interacoes["tempo_consumido"])
+        interacoes = interacoes.drop(columns=["tempo_consumido"])
+    elif "tempo_consumido" in interacoes.columns:
+        interacoes = interacoes.rename(columns={"tempo_consumido": "tempo_consumido_min"})
+
     for col in ("usuario_id", "conteudo_id", "tempo_consumido_min", "percentual_conclusao", "avaliacao"):
         if col in interacoes:
             interacoes[col] = pd.to_numeric(interacoes[col], errors="coerce")
@@ -310,6 +381,8 @@ def silver(output_dir: Path, run_id: str, skip_db: bool) -> dict[str, int]:
             load_df(conn, catalogo_ok, "silver", "catalogo")
             load_df(conn, interacoes_ok, "silver", "interacoes")
             load_df(conn, comentarios_ok, "silver", "comentarios")
+            if quarentena:
+                salvar_quarentena_db(conn, quarentena)
 
     return {
         "catalogo_aprovados": len(catalogo_ok),

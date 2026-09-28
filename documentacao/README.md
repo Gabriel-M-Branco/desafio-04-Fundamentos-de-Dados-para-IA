@@ -33,3 +33,5 @@
 - [governanca_openmetadata.md](governanca_openmetadata.md): Guia de governança, tutorial de catálogo via API REST (*Metadata as Code*), glossário, classificação LGPD e linhagem gráfica (RF27 a RF30, RF32).
 - [dados_mestres.md](dados_mestres.md): Especificação de Master Data Management (MDM), correspondência de entidades (Matching Rules) e Golden Record para conteúdos educacionais (RF30).
 
+
+

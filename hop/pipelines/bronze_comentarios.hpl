@@ -15,7 +15,7 @@
     <created_user>FIC_DEV</created_user><created_date>2026/09/25 18:00:00.000</created_date>
     <modified_user>FIC_DEV</modified_user><modified_date>2026/09/25 18:00:00.000</modified_date>
   </info>
-  <notepads>    <notepad><note>RF20: JSON original é pousado na Bronze sem limpeza de regra de negócio; somente auditoria é acrescentada.</note><xloc>64</xloc><yloc>40</yloc><width>850</width><heigth>45</heigth>
+  <notepads>    <notepad><note>RF20: Comentários e cenários de teste pousados na Bronze com campos textuais preservados e auditoria.</note><xloc>64</xloc><yloc>40</yloc><width>850</width><heigth>45</heigth>
       <fontname>Noto Sans</fontname><fontsize>11</fontsize><fontbold>N</fontbold><fontitalic>N</fontitalic>
       <fontcolorred>14</fontcolorred><fontcolorgreen>58</fontcolorgreen><fontcolorblue>90</fontcolorblue>
       <backgroundcolorred>201</backgroundcolorred><backgroundcolorgreen>232</backgroundcolorgreen><backgroundcolorblue>251</backgroundcolorblue>
@@ -23,7 +23,9 @@
     </notepad></notepads>
   <order>
     <hop><from>Ler comentarios.json</from><to>Adicionar origem</to><enabled>Y</enabled></hop>
+    <hop><from>Ler comentarios_cenarios.json</from><to>Adicionar origem cenarios</to><enabled>Y</enabled></hop>
     <hop><from>Adicionar origem</from><to>Adicionar id_execucao</to><enabled>Y</enabled></hop>
+    <hop><from>Adicionar origem cenarios</from><to>Adicionar id_execucao</to><enabled>Y</enabled></hop>
     <hop><from>Adicionar id_execucao</from><to>Adicionar data_hora_ingestao</to><enabled>Y</enabled></hop>
     <hop><from>Adicionar data_hora_ingestao</from><to>Gravar bronze.comentarios_raw</to><enabled>Y</enabled></hop>
   </order>
@@ -52,16 +54,52 @@
     <limit>0</limit><IsInFields>N</IsInFields><IsAFile>N</IsAFile><valueField/>
     <shortFileFieldName/><pathFieldName/><hiddenFieldName/><lastModificationTimeFieldName/>
     <uriNameFieldName/><rootUriNameFieldName/><extensionFieldName/><sizeFieldName/>
-    <attributes/><GUI><xloc>100</xloc><yloc>160</yloc></GUI>
+    <attributes/><GUI><xloc>100</xloc><yloc>120</yloc></GUI>
   </transform>
   <transform>
-    <name>Adicionar origem</name><type>Constant</type><description>Auditoria da fonte.</description>
+    <name>Ler comentarios_cenarios.json</name><type>JsonInput</type><description>Cenários de teste para avaliação de qualidade e quarentena.</description>
+    <distribute>Y</distribute><custom_distribution/><copies>1</copies>
+    <partitioning><method>none</method><schema_name/></partitioning>
+    <include>N</include><include_field/><rownum>N</rownum><addresultfile>N</addresultfile>
+    <readurl>N</readurl><removeSourceField>N</removeSourceField><IsIgnoreEmptyFile>N</IsIgnoreEmptyFile>
+    <doNotFailIfNoFile>Y</doNotFailIfNoFile><ignoreMissingPath>Y</ignoreMissingPath><defaultPathLeafToNull>Y</defaultPathLeafToNull>
+    <rownum_field/><file><name>${PROJECT_HOME}/../dados/brutos/cenarios_de_teste/comentarios_cenarios.json</name><filemask/><exclude_filemask/><file_required>N</file_required><include_subfolders>N</include_subfolders></file>
+    <fields>
+      <field><name>usuario_id</name><path>$.*.usuario_id</path><type>String</type><format/><currency/><decimal/><group/>
+        <length>-1</length><precision>-1</precision><trim_type>none</trim_type><repeat>Y</repeat></field>
+      <field><name>conteudo_id</name><path>$.*.conteudo_id</path><type>String</type><format/><currency/><decimal/><group/>
+        <length>-1</length><precision>-1</precision><trim_type>none</trim_type><repeat>Y</repeat></field>
+      <field><name>avaliacao</name><path>$.*.avaliacao</path><type>String</type><format/><currency/><decimal/><group/>
+        <length>-1</length><precision>-1</precision><trim_type>none</trim_type><repeat>Y</repeat></field>
+      <field><name>comentario</name><path>$.*.comentario</path><type>String</type><format/><currency/><decimal/><group/>
+        <length>-1</length><precision>-1</precision><trim_type>none</trim_type><repeat>Y</repeat></field>
+      <field><name>tags</name><path>$.*.tags</path><type>String</type><format/><currency/><decimal/><group/>
+        <length>-1</length><precision>-1</precision><trim_type>none</trim_type><repeat>Y</repeat></field>
+      <field><name>data</name><path>$.*.data</path><type>String</type><format/><currency/><decimal/><group/>
+        <length>-1</length><precision>-1</precision><trim_type>none</trim_type><repeat>Y</repeat></field>
+    </fields>
+    <limit>0</limit><IsInFields>N</IsInFields><IsAFile>N</IsAFile><valueField/>
+    <shortFileFieldName/><pathFieldName/><hiddenFieldName/><lastModificationTimeFieldName/>
+    <uriNameFieldName/><rootUriNameFieldName/><extensionFieldName/><sizeFieldName/>
+    <attributes/><GUI><xloc>100</xloc><yloc>220</yloc></GUI>
+  </transform>
+  <transform>
+    <name>Adicionar origem</name><type>Constant</type><description>Auditoria da fonte principal.</description>
     <distribute>Y</distribute><custom_distribution/><copies>1</copies>
     <partitioning><method>none</method><schema_name/></partitioning>
     <fields><field><currency/><decimal/><format/><group/><length>-1</length>
       <name>origem</name><nullif>comentarios.json</nullif><precision>-1</precision><set_empty_string>N</set_empty_string><type>String</type>
     </field></fields>
-    <attributes/><GUI><xloc>320</xloc><yloc>160</yloc></GUI>
+    <attributes/><GUI><xloc>320</xloc><yloc>120</yloc></GUI>
+  </transform>
+  <transform>
+    <name>Adicionar origem cenarios</name><type>Constant</type><description>Auditoria dos cenários de teste.</description>
+    <distribute>Y</distribute><custom_distribution/><copies>1</copies>
+    <partitioning><method>none</method><schema_name/></partitioning>
+    <fields><field><currency/><decimal/><format/><group/><length>-1</length>
+      <name>origem</name><nullif>cenarios_de_teste/comentarios_cenarios.json</nullif><precision>-1</precision><set_empty_string>N</set_empty_string><type>String</type>
+    </field></fields>
+    <attributes/><GUI><xloc>320</xloc><yloc>220</yloc></GUI>
   </transform>
   <transform>
     <name>Adicionar id_execucao</name><type>GetVariable</type><description>RUN_ID da execução.</description>

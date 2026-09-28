@@ -37,8 +37,8 @@
     },
     {
       "name": "POSTGRES_PASSWORD",
-      "value": "postgres",
-      "description": "Senha do PostgreSQL"
+      "value": "${POSTGRES_PASSWORD}",
+      "description": "Senha do PostgreSQL injetada via variável de ambiente (.env / RF15)"
     }
   ]
 }

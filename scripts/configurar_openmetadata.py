@@ -14,6 +14,8 @@ from __future__ import annotations
 import base64
 import json
 import os
+import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -105,18 +107,32 @@ TERMOS_GLOSSARIO_OFICIAIS = [
 ]
 
 
+def aguardar_conexao_openmetadata(timeout_total: int = 90, intervalo: int = 4) -> bool:
+    """Aguarda o servidor do OpenMetadata inicializar e responder na porta 8585 (com retry)."""
+    inicio = time.time()
+    print(f"[INFO] Conectando ao OpenMetadata Server em {API_BASE}...")
+    while time.time() - inicio < timeout_total:
+        try:
+            req = urllib.request.Request(f"{API_BASE}/system/version", headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                if resp.status == 200:
+                    dados = json.loads(resp.read().decode("utf-8"))
+                    print(f"\n[OK] OpenMetadata Server conectado e pronto! Versão: {dados.get('version', '1.4.x')}")
+                    return True
+        except Exception:
+            tempo_decorrido = int(time.time() - inicio)
+            sys.stdout.write(f"\r[INFO] Servidor ainda iniciando... aguardando ({tempo_decorrido}s/{timeout_total}s)")
+            sys.stdout.flush()
+        time.sleep(intervalo)
+
+    print(f"\n[AVISO] OpenMetadata Server não respondeu após {timeout_total}s em {API_BASE}.")
+    print("        Certifique-se de que os containers subiram: 'docker compose up -d openmetadata-server'")
+    return False
+
+
 def testar_conexao_openmetadata() -> bool:
     """Verifica se o servidor do OpenMetadata está respondendo na porta 8585."""
-    try:
-        req = urllib.request.Request(f"{API_BASE}/system/version", headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            if resp.status == 200:
-                dados = json.loads(resp.read().decode("utf-8"))
-                print(f"[OK] OpenMetadata Server conectado! Versão: {dados.get('version', '1.4.x')}")
-                return True
-    except Exception as exc:
-        print(f"[INFO] OpenMetadata Server não respondeu em {API_BASE}: {exc}")
-    return False
+    return aguardar_conexao_openmetadata(timeout_total=10, intervalo=2)
 
 
 def autenticar_openmetadata() -> str | None:
@@ -216,6 +232,61 @@ def sincronizar_servico_e_schemas(token: str) -> None:
                 print(f"[INFO] Schema '{schema_name}' já existente.")
             else:
                 print(f"[Aviso] Schema {schema_name}: {err}")
+
+    # 4. Serviço NoSQL MongoDB (RF20 a RF26)
+    svc_mongo_payload = {
+        "name": "ficdev_mongodb",
+        "displayName": "MongoDB FIC_DEV",
+        "description": "Instância NoSQL MongoDB contendo avaliações dissertativas e feedbacks de estudantes",
+        "serviceType": "MongoDB",
+        "connection": {
+            "config": {
+                "type": "MongoDB",
+                "hostPort": "mongodb://mongodb:27017",
+            }
+        },
+    }
+    req_svc_mongo = urllib.request.Request(f"{API_BASE}/services/databaseServices", data=json.dumps(svc_mongo_payload).encode("utf-8"), headers=headers)
+    try:
+        with urllib.request.urlopen(req_svc_mongo, timeout=5) as resp:
+            print("[OK] Serviço NoSQL 'ficdev_mongodb' registrado no OpenMetadata!")
+    except urllib.error.HTTPError as err:
+        if err.code == 409:
+            print("[INFO] Serviço 'ficdev_mongodb' já existente.")
+        else:
+            print(f"[Aviso] Serviço MongoDB: {err}")
+
+    db_mongo_payload = {
+        "name": "ficdev_dw",
+        "displayName": "ficdev_dw",
+        "service": "ficdev_mongodb",
+        "description": "Banco NoSQL MongoDB contendo as coleções operacionais de avaliações.",
+    }
+    req_db_mongo = urllib.request.Request(f"{API_BASE}/databases", data=json.dumps(db_mongo_payload).encode("utf-8"), headers=headers)
+    try:
+        with urllib.request.urlopen(req_db_mongo, timeout=5) as resp:
+            print("[OK] Database 'ficdev_dw' (MongoDB) registrado no OpenMetadata!")
+    except urllib.error.HTTPError as err:
+        if err.code == 409:
+            print("[INFO] Database 'ficdev_dw' (MongoDB) já existente.")
+        else:
+            print(f"[Aviso] Database MongoDB: {err}")
+
+    sch_mongo_payload = {
+        "name": "public",
+        "displayName": "public",
+        "database": "ficdev_mongodb.ficdev_dw",
+        "description": "Coleções documentais NoSQL MongoDB.",
+    }
+    req_sch_mongo = urllib.request.Request(f"{API_BASE}/databaseSchemas", data=json.dumps(sch_mongo_payload).encode("utf-8"), headers=headers)
+    try:
+        with urllib.request.urlopen(req_sch_mongo, timeout=5) as resp:
+            print("[OK] Schema 'public' (MongoDB) registrado no OpenMetadata!")
+    except urllib.error.HTTPError as err:
+        if err.code == 409:
+            print("[INFO] Schema 'public' (MongoDB) já existente.")
+        else:
+            print(f"[Aviso] Schema MongoDB: {err}")
 
 
 def sincronizar_servico_dashboard(token: str) -> str | None:
@@ -319,10 +390,10 @@ def sincronizar_tabelas_catalogo(token: str) -> dict[str, str]:
             ],
         },
         {
-            "name": "comentarios_mongodb",
+            "name": "comentarios",
             "displayName": "comentarios (Coleção NoSQL MongoDB)",
             "description": "Coleção documental NoSQL MongoDB contendo avaliações textuais e feedbacks de alunos (dados/comentarios.json).",
-            "databaseSchema": f"ficdev_postgres.{PG_DB}.fontes",
+            "databaseSchema": "ficdev_mongodb.ficdev_dw.public",
             "tableType": "Regular",
             "columns": [
                 {"name": "usuario_id", "dataType": "INT", "description": "ID do estudante"},
@@ -562,17 +633,29 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
     except Exception as exc:
         print(f"[Aviso] Não foi possível obter ID do usuário admin: {exc}")
 
-    # 2. Atribuição de Owner e Tiers de Governança (RF27)
+    # 2. Atribuição de Owner e Tiers de Governança para TODAS as Tabelas (RF27)
     # Gold: Tier 1 (Ativos analíticos críticos para tomada de decisão e BI)
     # Silver: Tier 2 (Ativos curados e homologados pelo pipeline de dados)
+    # Bronze: Tier 3 (Ingestão bruta com auditoria e campos técnicos Hop)
+    # Fontes: Tier 4 (Arquivos e coleções NoSQL de origem externa)
     config_tabelas = [
+        # Camada Gold (Tier 1)
         ("gold.kpis_mensais_categoria", "Tier.Tier1"),
         ("gold.desempenho_conteudos", "Tier.Tier1"),
         ("gold.vw_ranking_conteudos_engajamento", "Tier.Tier1"),
         ("gold.dataset_virtual_sqllab", "Tier.Tier1"),
+        # Camada Silver (Tier 2)
         ("silver.catalogo", "Tier.Tier2"),
         ("silver.interacoes", "Tier.Tier2"),
         ("silver.comentarios", "Tier.Tier2"),
+        # Camada Bronze (Tier 3)
+        ("bronze.catalogo_raw", "Tier.Tier3"),
+        ("bronze.interacoes_raw", "Tier.Tier3"),
+        ("bronze.comentarios_raw", "Tier.Tier3"),
+        # Camada Fontes (Tier 4)
+        ("fontes.catalogo_csv", "Tier.Tier4"),
+        ("fontes.interacoes_json", "Tier.Tier4"),
+        ("public.comentarios", "Tier.Tier4"),
     ]
 
     for tbl_key, tier_tag in config_tabelas:
@@ -606,6 +689,102 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
             except Exception:
                 pass
 
+    # 2.1 Atribuição de Owner e Tier no Dashboard
+    if dashboard_id and admin_id:
+        patch_dash = [
+            {"op": "add", "path": "/owner", "value": {"id": admin_id, "type": "user"}},
+            {"op": "add", "path": "/tags/0", "value": {
+                "tagFQN": "Tier.Tier1",
+                "source": "Classification",
+                "labelType": "Manual",
+                "state": "Confirmed",
+            }}
+        ]
+        try:
+            req_dash = urllib.request.Request(f"{API_BASE}/dashboards/{dashboard_id}", data=json.dumps(patch_dash).encode("utf-8"), headers=headers_patch, method="PATCH")
+            with urllib.request.urlopen(req_dash, timeout=5):
+                print("[OK] Dashboard 'desafio_4_dashboard' classificado como 'Tier.Tier1' com Owner 'admin' (RF27)!")
+        except Exception:
+            pass
+
+    # 2.2 Atribuição de Owner e Tiers nos Schemas
+    if admin_id:
+        schemas_tier = [
+            ("gold", "Tier.Tier1"),
+            ("silver", "Tier.Tier2"),
+            ("bronze", "Tier.Tier3"),
+            ("fontes", "Tier.Tier4"),
+        ]
+        for sch_name, tier_tag in schemas_tier:
+            try:
+                req_s = urllib.request.Request(f"{API_BASE}/databaseSchemas/name/ficdev_postgres.{PG_DB}.{sch_name}", headers=headers)
+                with urllib.request.urlopen(req_s, timeout=5) as resp:
+                    sch_id = json.loads(resp.read().decode("utf-8"))["id"]
+                patch_sch = [
+                    {"op": "add", "path": "/owner", "value": {"id": admin_id, "type": "user"}},
+                    {"op": "add", "path": "/tags/0", "value": {
+                        "tagFQN": tier_tag,
+                        "source": "Classification",
+                        "labelType": "Manual",
+                        "state": "Confirmed",
+                    }}
+                ]
+                req_ps = urllib.request.Request(f"{API_BASE}/databaseSchemas/{sch_id}", data=json.dumps(patch_sch).encode("utf-8"), headers=headers_patch, method="PATCH")
+                with urllib.request.urlopen(req_ps, timeout=5):
+                    print(f"[OK] Schema '{sch_name}' classificado como '{tier_tag}' com Owner 'admin'!")
+            except Exception:
+                pass
+
+        # 2.3 Atribuição de Owner no Database
+        try:
+            req_db_get = urllib.request.Request(f"{API_BASE}/databases/name/ficdev_postgres.{PG_DB}", headers=headers)
+            with urllib.request.urlopen(req_db_get, timeout=5) as resp:
+                db_id = json.loads(resp.read().decode("utf-8"))["id"]
+            patch_db = [{"op": "add", "path": "/owner", "value": {"id": admin_id, "type": "user"}}]
+            req_pdb = urllib.request.Request(f"{API_BASE}/databases/{db_id}", data=json.dumps(patch_db).encode("utf-8"), headers=headers_patch, method="PATCH")
+            with urllib.request.urlopen(req_pdb, timeout=5):
+                print(f"[OK] Database '{PG_DB}' atribuído a Owner 'admin'!")
+        except Exception:
+            pass
+
+        # 2.4 Atribuição de Owner nos Serviços de Banco e Dashboard
+        for svc_type, svc_name in [("databaseServices", "ficdev_postgres"), ("dashboardServices", "ficdev_superset")]:
+            try:
+                req_svc_get = urllib.request.Request(f"{API_BASE}/services/{svc_type}/name/{svc_name}", headers=headers)
+                with urllib.request.urlopen(req_svc_get, timeout=5) as resp:
+                    svc_id = json.loads(resp.read().decode("utf-8"))["id"]
+                patch_svc = [{"op": "add", "path": "/owner", "value": {"id": admin_id, "type": "user"}}]
+                req_psvc = urllib.request.Request(f"{API_BASE}/services/{svc_type}/{svc_id}", data=json.dumps(patch_svc).encode("utf-8"), headers=headers_patch, method="PATCH")
+                with urllib.request.urlopen(req_psvc, timeout=5):
+                    print(f"[OK] Serviço '{svc_name}' atribuído a Owner 'admin'!")
+            except Exception:
+                pass
+
+        # 2.5 Atribuição de Owner no Glossário e Termos
+        try:
+            req_g_get = urllib.request.Request(f"{API_BASE}/glossaries/name/Glossario_Educacional_FICDEV", headers=headers)
+            with urllib.request.urlopen(req_g_get, timeout=5) as resp:
+                g_id = json.loads(resp.read().decode("utf-8"))["id"]
+            patch_g = [{"op": "add", "path": "/owner", "value": {"id": admin_id, "type": "user"}}]
+            req_pg = urllib.request.Request(f"{API_BASE}/glossaries/{g_id}", data=json.dumps(patch_g).encode("utf-8"), headers=headers_patch, method="PATCH")
+            with urllib.request.urlopen(req_pg, timeout=5):
+                print("[OK] Glossário 'Glossario_Educacional_FICDEV' atribuído a Owner 'admin'!")
+        except Exception:
+            pass
+
+        for t in TERMOS_GLOSSARIO_OFICIAIS:
+            try:
+                t_fqn = f"Glossario_Educacional_FICDEV.{t['name']}"
+                req_t_get = urllib.request.Request(f"{API_BASE}/glossaryTerms/name/{t_fqn}", headers=headers)
+                with urllib.request.urlopen(req_t_get, timeout=5) as resp:
+                    t_id = json.loads(resp.read().decode("utf-8"))["id"]
+                patch_t = [{"op": "add", "path": "/owner", "value": {"id": admin_id, "type": "user"}}]
+                req_pt = urllib.request.Request(f"{API_BASE}/glossaryTerms/{t_id}", data=json.dumps(patch_t).encode("utf-8"), headers=headers_patch, method="PATCH")
+                with urllib.request.urlopen(req_pt, timeout=5):
+                    print(f"[OK] Termo de Glossário '{t['displayName']}' atribuído a Owner 'admin'!")
+            except Exception:
+                pass
+
     # 3. Associação de Termos do Glossário Diretamente às Colunas (RF28)
     termos_colunas = [
         # (tabela, caminho_coluna, termo_fqn, label)
@@ -614,6 +793,7 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
         ("gold.kpis_mensais_categoria", "/columns/8/tags", "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo", "Tempo Médio de Consumo"),
         ("gold.desempenho_conteudos", "/columns/10/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
         ("gold.vw_ranking_conteudos_engajamento", "/columns/5/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+        ("gold.vw_ranking_conteudos_engajamento", "/columns/6/tags", "Glossario_Educacional_FICDEV.Conversao_Recomendacao", "Conversão de Recomendação"),
         ("gold.dataset_virtual_sqllab", "/columns/5/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
     ]
     for tbl_key, path, termo_fqn, label in termos_colunas:
@@ -633,18 +813,29 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
             try:
                 with urllib.request.urlopen(req_g, timeout=5):
                     print(f"[OK] Termo de Glossário '{label}' vinculado à coluna em {tbl_key} (RF28)!")
-            except Exception as e:
+            except Exception:
                 pass
 
-    # 4. Aplica Tags LGPD PII.Sensitive em Colunas (RF28/RF32)
+    # 4. Aplica Tags LGPD PII.Sensitive em Colunas (RF28/RF32) em TODAS as camadas
     tabelas_pii = [
-        ("gold.desempenho_conteudos", "/columns/6/tags"),  # autor
-        ("silver.catalogo", "/columns/6/tags"),            # autor
-        ("bronze.catalogo_raw", "/columns/8/tags"),        # autor
-        ("silver.interacoes", "/columns/0/tags"),          # usuario_id
-        ("bronze.interacoes_raw", "/columns/0/tags"),      # usuario_id
-        ("silver.comentarios", "/columns/0/tags"),         # usuario_id
-        ("silver.comentarios", "/columns/2/tags"),         # comentario
+        # Coluna autor (dado pessoal de instrutor / pessoa natural)
+        ("gold.desempenho_conteudos", "/columns/6/tags"),    # autor
+        ("silver.catalogo", "/columns/6/tags"),              # autor
+        ("bronze.catalogo_raw", "/columns/8/tags"),          # autor
+        ("fontes.catalogo_csv", "/columns/8/tags"),          # autor
+
+        # Coluna usuario_id (identificador pessoal de aluno)
+        ("silver.interacoes", "/columns/0/tags"),            # usuario_id
+        ("bronze.interacoes_raw", "/columns/0/tags"),        # usuario_id
+        ("fontes.interacoes_json", "/columns/0/tags"),       # usuario_id
+        ("silver.comentarios", "/columns/0/tags"),           # usuario_id
+        ("bronze.comentarios_raw", "/columns/0/tags"),       # usuario_id
+        ("public.comentarios", "/columns/0/tags"),           # usuario_id
+
+        # Coluna comentario (texto livre com avaliações subjetivas)
+        ("silver.comentarios", "/columns/2/tags"),           # comentario
+        ("bronze.comentarios_raw", "/columns/2/tags"),       # comentario
+        ("public.comentarios", "/columns/2/tags"),           # comentario
     ]
     for tbl_key, path in tabelas_pii:
         if tbl_key in tabelas_ids:
@@ -671,7 +862,7 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
             )
             try:
                 with urllib.request.urlopen(patch_req, timeout=5) as resp:
-                    print(f"[OK] Tag LGPD 'PII.Sensitive' aplicada em {tbl_key}!")
+                    print(f"[OK] Tag LGPD 'PII.Sensitive' aplicada em {tbl_key} ({path})!")
             except Exception:
                 pass  # Já aplicada
 
@@ -680,7 +871,7 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
         # --- ETAPA 1: Fontes Brutas -> Bronze (Ingestão Hop) ---
         ("fontes.catalogo_csv", "bronze.catalogo_raw", "table", "table", "Ingestão Hop: catalogo.csv -> bronze.catalogo_raw"),
         ("fontes.interacoes_json", "bronze.interacoes_raw", "table", "table", "Ingestão Hop: interacoes.json -> bronze.interacoes_raw"),
-        ("fontes.comentarios_mongodb", "bronze.comentarios_raw", "table", "table", "Ingestão Hop: MongoDB comentarios -> bronze.comentarios_raw"),
+        ("public.comentarios", "bronze.comentarios_raw", "table", "table", "Ingestão Hop: MongoDB comentarios -> bronze.comentarios_raw"),
 
         # --- ETAPA 2: Bronze -> Silver (Curadoria, Tipagem e Qualidade Hop) ---
         ("bronze.catalogo_raw", "silver.catalogo", "table", "table", "Padronização Hop: bronze.catalogo_raw -> silver.catalogo"),
@@ -863,11 +1054,22 @@ def exportar_dossie_metadados() -> Path:
                 "gold.desempenho_conteudos",
                 "gold.vw_ranking_conteudos_engajamento",
                 "gold.dataset_virtual_sqllab",
+                "dashboard.desafio_4_dashboard",
             ],
             "tier_2_silver_curado": [
                 "silver.catalogo",
                 "silver.interacoes",
                 "silver.comentarios",
+            ],
+            "tier_3_bronze_ingestao": [
+                "bronze.catalogo_raw",
+                "bronze.interacoes_raw",
+                "bronze.comentarios_raw",
+            ],
+            "tier_4_fontes_origem": [
+                "fontes.catalogo_csv",
+                "fontes.interacoes_json",
+                "fontes.comentarios_mongodb",
             ],
         },
         "termos_glossario_vinculados_colunas": {
@@ -876,6 +1078,8 @@ def exportar_dossie_metadados() -> Path:
             "gold.kpis_mensais_categoria.tempo_medio_min": "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo",
             "gold.desempenho_conteudos.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
             "gold.vw_ranking_conteudos_engajamento.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+            "gold.vw_ranking_conteudos_engajamento.ranking_categoria": "Glossario_Educacional_FICDEV.Conversao_Recomendacao",
+            "gold.dataset_virtual_sqllab.taxa_conversao_inicio_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
         },
         "controles_anti_data_swamp": [
             "Esquemas estritamente tipados com contratos DDL nas camadas Silver e Gold.",
@@ -901,9 +1105,10 @@ def exportar_dossie_metadados() -> Path:
 def main() -> None:
     print("=================================================================")
     print("AUTOMAÇÃO COMPLETA DO OPENMETADATA (RF27 — RF29)")
+    print("Abordagem: Metadata as Code via API REST Oficial")
     print("=================================================================")
 
-    ativo = testar_conexao_openmetadata()
+    ativo = aguardar_conexao_openmetadata(timeout_total=90)
     exportar_dossie_metadados()
 
     if ativo:
@@ -925,12 +1130,15 @@ def main() -> None:
             aplicar_tags_lgpd_e_linhagem(token, tbl_ids, dashboard_id)
 
             print("\n[SUCESSO] Plataforma OpenMetadata 100% configurada com linhagem completa de 5 pontas!")
+    else:
+        print("\n[INFO] O Dossiê JSON oficial foi exportado offline, mas o provisionamento completo")
+        print("       requer o servidor em execução (docker compose up -d openmetadata-server).")
 
     print("\n-----------------------------------------------------------------")
-    print("INSTRUÇÕES DE ACESSO AO OPENMETADATA:")
-    print(f"  URL no Navegador: {OPENMETADATA_URL}")
-    print(f"  E-mail de Login:  {OM_ADMIN_EMAIL}")
-    print("  Senha:            (conforme variável OPENMETADATA_ADMIN_PASSWORD no .env)")
+    print("INSTRUÇÕES DE ACESSO:")
+    print(f"  URL Base:        {OPENMETADATA_URL}")
+    print(f"  Login / E-mail:  {OM_ADMIN_EMAIL}")
+    print("  Senha:           (conforme variável OPENMETADATA_ADMIN_PASSWORD no .env)")
     print("-----------------------------------------------------------------")
     print("=================================================================")
 

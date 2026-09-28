@@ -1,6 +1,7 @@
 -- Desafio Prático 2 — Camadas Bronze, Silver, Quarentena e Controle (RF20 a RF23)
 -- Ingestão, validação, workflow, quarentena e recuperação.
 BEGIN;
+SET timezone TO 'America/Cuiaba';
 
 CREATE SCHEMA IF NOT EXISTS bronze;
 CREATE SCHEMA IF NOT EXISTS silver;

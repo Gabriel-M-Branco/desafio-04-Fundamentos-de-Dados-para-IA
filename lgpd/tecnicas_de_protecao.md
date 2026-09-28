@@ -65,9 +65,9 @@ SELECT
         LEFT(SPLIT_PART(autor, ' ', 2), 1),
         REPEAT('*', GREATEST(0, LENGTH(SPLIT_PART(autor, ' ', 2)) - 1))
     ) AS autor_mascarado,
-    nota,
-    sentimento
-FROM silver.comentarios_fato;
+    titulo,
+    categoria
+FROM silver.catalogo;
 ```
 
 ---
@@ -78,7 +78,7 @@ FROM silver.comentarios_fato;
 > *"Para os efeitos deste artigo, a pseudonimização é o tratamento por meio do qual um dado perde a possibilidade de associação, direta ou indireta, a um indivíduo, senão pelo uso de informação adicional mantida separadamente pelo controlador em ambiente controlado e seguro."*
 
 Diferente da anonimização total, a pseudonimização determinística permite que cientistas de dados e analistas de BI:
-1. Realizem junções relacionais (*joins*) entre interações de acesso (`silver.interacoes_fato`) e avaliações (`silver.comentarios_fato`);
+1. Realizem junções relacionais (*joins*) entre interações de acesso (`silver.interacoes`) e avaliações (`silver.comentarios`);
 2. Calculem métricas de contagem distinta (`COUNT(DISTINCT usuario_pseudonimo)`) para dimensionar o público ativo real da plataforma;
 3. Alimentem algoritmos de recomendação colaborativa sem jamais ter acesso ao ID relacional primário (`usuario_id`) ou aos dados cadastrais reais do aluno.
 

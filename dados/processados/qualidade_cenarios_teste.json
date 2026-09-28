@@ -1,0 +1,72 @@
+{
+  "lote_id": "LOTE_DQ_20260928_223308_d75ceb",
+  "data_hora_avaliacao": "2026-09-28T22:33:08.468552+00:00",
+  "total_registros_interacoes": 8,
+  "total_registros_catalogo": 5,
+  "status_geral": "REPROVADO_CRITICO",
+  "bloquear_publicacao_gold": true,
+  "metricas_chave_evolucao": {
+    "taxa_completude_pct": 96.3636,
+    "taxa_validade_pct": 93.75,
+    "taxa_unicidade_pct": 84.6154,
+    "taxa_consistencia_pct": 66.6667,
+    "taxa_integridade_referencial_pct": 87.5
+  },
+  "detalhes_testes": [
+    {
+      "id_regra": "Q01_COMPLETUDE",
+      "nome": "Completude de Campos Obrigatórios",
+      "dimensao": "Completude",
+      "severidade": "CRITICA",
+      "status": "FALHOU",
+      "metrica_valor": 96.3636,
+      "metrica_descricao": "Taxa de completude de atributos: 96.3636% (nulos=2)",
+      "limite_esperado": "100.0%",
+      "bloqueante": true
+    },
+    {
+      "id_regra": "Q02_VALIDADE",
+      "nome": "Validade de Domínios e Escalas Numéricas",
+      "dimensao": "Validade",
+      "severidade": "CRITICA",
+      "status": "FALHOU",
+      "metrica_valor": 93.75,
+      "metrica_descricao": "Taxa de validade de domínios: 93.75% (invalidezes=2)",
+      "limite_esperado": "100.0%",
+      "bloqueante": true
+    },
+    {
+      "id_regra": "Q03_UNICIDADE",
+      "nome": "Unicidade de Identificadores Primários",
+      "dimensao": "Unicidade",
+      "severidade": "CRITICA",
+      "status": "FALHOU",
+      "metrica_valor": 84.6154,
+      "metrica_descricao": "Taxa de unicidade de identificadores: 84.6154% (duplicatas=2)",
+      "limite_esperado": "100.0%",
+      "bloqueante": true
+    },
+    {
+      "id_regra": "Q04_CONSISTENCIA",
+      "nome": "Consistência Lógica de Eventos de Conclusão",
+      "dimensao": "Consistência",
+      "severidade": "AVISO",
+      "status": "ALERTA",
+      "metrica_valor": 66.6667,
+      "metrica_descricao": "Taxa de consistência de conclusão: 66.6667% (inconsistências=1)",
+      "limite_esperado": ">= 99.0% (Tolerância <= 1.0% de ressalva)",
+      "bloqueante": false
+    },
+    {
+      "id_regra": "Q05_INTEGRIDADE_REFERENCIAL",
+      "nome": "Integridade Referencial entre Interações e Catálogo",
+      "dimensao": "Integridade Referencial",
+      "severidade": "CRITICA",
+      "status": "FALHOU",
+      "metrica_valor": 87.5,
+      "metrica_descricao": "Taxa de integridade referencial: 87.5% (órfãos=1)",
+      "limite_esperado": "100.0%",
+      "bloqueante": true
+    }
+  ]
+}

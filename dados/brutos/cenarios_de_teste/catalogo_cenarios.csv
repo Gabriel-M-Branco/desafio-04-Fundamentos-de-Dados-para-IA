@@ -1,0 +1,6 @@
+conteudo_id,titulo,tipo,categoria,nivel,carga_horaria_min,data_publicacao,descricao,autor
+1,Curso Completo de Engenharia de Dados e Data Lakehouse,Curso,Engenharia de Dados,Avançado,1200,2026-01-10,"Curso prático abordando arquitetura Medalhão e Apache Beam.",Gabriel Moreira Branco
+2,Guia Rápido de Governança de Metadados e LGPD,Artigo,Segurança & Governança,Básico,15,2026-02-15,"Artigo técnico explorando catalogação e conformidade regulatória.",Ana Beatriz Costa
+3,,Vídeo,Ciência de Dados,Básico,45,2026-02-20,"Cenário de violação de completude: título nulo/vazio.",Carlos Eduardo Santos
+4,Análise de Métricas com Validade Inválida,Artigo,Business Intelligence,Intermediário,-120,2026-03-01,"Cenário de violação de validade: carga horária negativa.",Mariana Vasconcelos
+1,Duplicata Proposital do Conteúdo ID 1,Curso,Engenharia de Dados,Avançado,1200,2026-01-10,"Cenário de violação de unicidade: chave primária repetida.",Gabriel Moreira Branco

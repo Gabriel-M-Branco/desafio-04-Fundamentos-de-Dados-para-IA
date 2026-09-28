@@ -1,0 +1,62 @@
+[
+  {
+    "cenario": "Caminho Feliz (Comentario Didatico e Avaliacao 5.0)",
+    "usuario_id": 1001,
+    "conteudo_id": 1,
+    "avaliacao": 5.0,
+    "comentario": "Excelente curso de Engenharia de Dados! A didática e a prática com Beam e Medalhão foram muito claras.",
+    "tags": [
+      "lakehouse",
+      "beam",
+      "medalhao"
+    ],
+    "data": "2026-03-10"
+  },
+  {
+    "cenario": "LGPD - Minimizacao (Texto livre mantido na Silver e suprimido na Gold)",
+    "usuario_id": 1002,
+    "conteudo_id": 2,
+    "avaliacao": 4.5,
+    "comentario": "O artigo sobre LGPD e governança foi esclarecedor para meu trabalho de conclusao de curso.",
+    "tags": [
+      "lgpd",
+      "governanca",
+      "seguranca"
+    ],
+    "data": "2026-03-11"
+  },
+  {
+    "cenario": "Violacao de Validade (Nota 0.0 abaixo do limite minimo 1.0 -> Quarentena Hop)",
+    "usuario_id": 1003,
+    "conteudo_id": 1,
+    "avaliacao": 0.0,
+    "comentario": "Avaliacao com nota zero para simular violacao de escala de satisfacao.",
+    "tags": [
+      "erro",
+      "quarentena"
+    ],
+    "data": "2026-03-12"
+  },
+  {
+    "cenario": "Violacao de Validade (Nota -1.0 negativa -> Quarentena Hop)",
+    "usuario_id": 1004,
+    "conteudo_id": 1,
+    "avaliacao": -1.0,
+    "comentario": "Nota negativa para teste de validade.",
+    "tags": [
+      "invalido"
+    ],
+    "data": "2026-03-13"
+  },
+  {
+    "cenario": "Violacao de Integridade Referencial (conteudo_id 99999 orfao -> Quarentena Hop)",
+    "usuario_id": 1005,
+    "conteudo_id": 99999,
+    "avaliacao": 4.0,
+    "comentario": "Comentario vinculado a conteudo inexistente no catalogo.",
+    "tags": [
+      "orfao"
+    ],
+    "data": "2026-03-14"
+  }
+]

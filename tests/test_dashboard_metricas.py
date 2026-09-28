@@ -30,9 +30,9 @@ def test_views_definidas_no_criar_banco_sql():
 def test_integridade_exportacao_dashboard_superset():
     """Valida se o arquivo zip exportado do Superset existe e contém todos os elementos obrigatórios."""
     pasta_dashboard = caminho_absoluto("dashboard")
-    zips = sorted(pasta_dashboard.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
+    zips = sorted(pasta_dashboard.glob("*.zip"))
     assert len(zips) > 0, "Nenhum arquivo zip de exportação do dashboard Superset encontrado em dashboard/"
-    caminho_zip = zips[0]
+    caminho_zip = next((p for p in zips if "desafio_3" in p.name or "dashboard_export.zip" in p.name), zips[0])
 
     with zipfile.ZipFile(caminho_zip) as z:
         arquivos = z.namelist()
@@ -55,6 +55,30 @@ def test_integridade_exportacao_dashboard_superset():
         parsed = yaml.safe_load(chart_content)
         assert "viz_type" in parsed
         assert "slice_name" in parsed
+
+
+def test_integridade_exportacao_dashboard_desafio_4():
+    """Valida a integridade do pacote oficial de exportação do Superset do Desafio 4 (RF16-RF18)."""
+    caminho_zip = caminho_absoluto("dashboard/dashboard_desafio_4.zip")
+    assert caminho_zip.exists(), "Pacote zip do Desafio 4 não encontrado em dashboard/dashboard_desafio_4.zip"
+
+    with zipfile.ZipFile(caminho_zip) as z:
+        arquivos = z.namelist()
+        assert any("metadata.yaml" in a for a in arquivos)
+        assert any("Dashboard_-_Desafio_4" in a for a in arquivos)
+        assert any("STORYTELLING" in a for a in arquivos)
+        assert any("SQLab_-_Indicadores_por_Mes" in a for a in arquivos)
+
+
+def test_evidencias_visuais_segregadas_por_desafio():
+    """Valida a existência das evidências visuais segregadas em dashboard/evidencias/desafio_3 e desafio_4."""
+    pasta_evidencias = caminho_absoluto("dashboard/evidencias")
+    evidencias_d3 = list((pasta_evidencias / "desafio_3").glob("*.png"))
+    evidencias_d4 = list((pasta_evidencias / "desafio_4").glob("*.png"))
+
+    assert len(evidencias_d3) >= 4, f"Esperado ao menos 4 evidências do Desafio 3, encontradas {len(evidencias_d3)}"
+    assert len(evidencias_d4) >= 2, f"Esperado ao menos 2 evidências do Desafio 4, encontradas {len(evidencias_d4)}"
+
 
 
 def test_logica_kpi_taxa_conclusao_com_protecao_divisao_zero():

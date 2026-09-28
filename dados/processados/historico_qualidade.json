@@ -1,7 +1,7 @@
 [
   {
-    "lote_id": "LOTE_DQ_20260928_014614_fa1b61",
-    "data_hora": "2026-09-28T01:46:14.821277+00:00",
+    "lote_id": "LOTE_DQ_20260928_220846_c39089",
+    "data_hora": "2026-09-28T22:08:46.853819+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -13,8 +13,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_014615_62e96f",
-    "data_hora": "2026-09-28T01:46:15.942683+00:00",
+    "lote_id": "LOTE_DQ_20260928_220848_9ddbac",
+    "data_hora": "2026-09-28T22:08:48.007137+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -26,8 +26,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_015809_2b0504",
-    "data_hora": "2026-09-28T01:58:09.375774+00:00",
+    "lote_id": "LOTE_DQ_20260928_221243_45e045",
+    "data_hora": "2026-09-28T22:12:43.573342+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -39,8 +39,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_015810_c74499",
-    "data_hora": "2026-09-28T01:58:10.768738+00:00",
+    "lote_id": "LOTE_DQ_20260928_221244_6e92c7",
+    "data_hora": "2026-09-28T22:12:44.872344+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -52,8 +52,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_015812_0f308e",
-    "data_hora": "2026-09-28T01:58:12.160167+00:00",
+    "lote_id": "LOTE_DQ_20260928_221246_cdd7fb",
+    "data_hora": "2026-09-28T22:12:46.155179+00:00",
     "status_geral": "REPROVADO_CRITICO",
     "bloquear_publicacao_gold": true,
     "metricas": {
@@ -65,8 +65,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_020900_c334d4",
-    "data_hora": "2026-09-28T02:09:00.162030+00:00",
+    "lote_id": "LOTE_DQ_20260928_222409_7e4154",
+    "data_hora": "2026-09-28T22:24:09.750380+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -78,8 +78,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_020901_ec3577",
-    "data_hora": "2026-09-28T02:09:01.564691+00:00",
+    "lote_id": "LOTE_DQ_20260928_222410_6bf106",
+    "data_hora": "2026-09-28T22:24:10.582477+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -91,8 +91,34 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_020902_0d036a",
-    "data_hora": "2026-09-28T02:09:02.907241+00:00",
+    "lote_id": "LOTE_DQ_20260928_222436_dfb13d",
+    "data_hora": "2026-09-28T22:24:36.593598+00:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_222438_5e84b1",
+    "data_hora": "2026-09-28T22:24:38.083491+00:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_222439_a5fb79",
+    "data_hora": "2026-09-28T22:24:39.498711+00:00",
     "status_geral": "REPROVADO_CRITICO",
     "bloquear_publicacao_gold": true,
     "metricas": {
@@ -104,8 +130,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_022528_e863d5",
-    "data_hora": "2026-09-28T02:25:28.469726+00:00",
+    "lote_id": "LOTE_DQ_20260928_222922_a14dd0",
+    "data_hora": "2026-09-28T22:29:22.894752+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -117,8 +143,8 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_022529_7bf357",
-    "data_hora": "2026-09-28T02:25:29.825305+00:00",
+    "lote_id": "LOTE_DQ_20260928_222923_0c182c",
+    "data_hora": "2026-09-28T22:29:23.788572+00:00",
     "status_geral": "APROVADO_INTEGRAL",
     "bloquear_publicacao_gold": false,
     "metricas": {
@@ -130,8 +156,60 @@
     }
   },
   {
-    "lote_id": "LOTE_DQ_20260928_022531_609288",
-    "data_hora": "2026-09-28T02:25:31.285508+00:00",
+    "lote_id": "LOTE_DQ_20260928_223308_4b8236",
+    "data_hora": "2026-09-28T22:33:08.454934+00:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_223309_050f61",
+    "data_hora": "2026-09-28T22:33:09.246338+00:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_223500_f3aa7b",
+    "data_hora": "2026-09-28T22:35:00.298424+00:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_223501_230f7f",
+    "data_hora": "2026-09-28T22:35:01.649678+00:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_223503_d183cc",
+    "data_hora": "2026-09-28T22:35:03.054235+00:00",
     "status_geral": "REPROVADO_CRITICO",
     "bloquear_publicacao_gold": true,
     "metricas": {

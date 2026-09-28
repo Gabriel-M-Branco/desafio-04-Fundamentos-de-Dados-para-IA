@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 services:
 
   postgres:
@@ -267,3 +268,282 @@ volumes:
 networks:
   backend:
     driver: bridge
+=======
+services:
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: ${TZ:-America/Cuiaba}
+      PGTZ: ${TZ:-America/Cuiaba}
+
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/00_init_openmetadata_db.sql:/docker-entrypoint-initdb.d/00_init_openmetadata_db.sql
+      - ./sql/criar_banco.sql:/docker-entrypoint-initdb.d/01_criar_banco.sql
+      - ./sql/camadas_bronze_silver.sql:/docker-entrypoint-initdb.d/02_camadas_bronze_silver.sql
+      - ./sql/camada_gold.sql:/docker-entrypoint-initdb.d/03_camada_gold.sql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - backend
+
+
+  mongodb:
+    image: mongo:8
+    container_name: mongodb
+    restart: unless-stopped
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+
+    ports:
+      - "27017:27017"
+
+    volumes:
+      - mongo_data:/data/db
+
+    networks:
+      - backend
+
+
+  hop-web:
+    image: apache/hop-web:latest
+    container_name: hop-web
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - HOP_SERVER_PORT=8080
+      - HOP_PROJECT_NAME=desafio4
+      - HOP_PROJECT_FOLDER=/files
+      - HOP_PROJECT_CONFIG_FILE_NAME=project-config.json
+      - HOP_ENVIRONMENT_NAME=desafio4-dev
+      - HOP_ENVIRONMENT_CONFIG_FILE_NAME_PATHS=/files/environments/dev-env-config.json
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=${TZ:-America/Cuiaba}
+    volumes:
+      - ./hop:/files
+      - ./hop:/usr/local/tomcat/webapps/ROOT/config/projects/default
+      - ./dados:/dados
+      - ./dados:/usr/local/tomcat/webapps/ROOT/config/projects/dados
+      - ./sql:/sql
+      - ./sql:/usr/local/tomcat/webapps/ROOT/config/projects/sql
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+
+  spark-job-server:
+    image: apache/beam_spark_job_server:latest
+    container_name: spark-job-server
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+      - "8098:8098"
+    volumes:
+      - ./dados:/dados
+    networks:
+      - backend
+
+
+  superset:
+    image: apache/superset:4.0.2
+    container_name: superset
+    restart: unless-stopped
+    ports:
+      - "${SUPERSET_PORT}:8088"
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PYTHONPATH: "/app/pythonpath"
+    volumes:
+      - superset_home:/app/superset_home
+      - ./dashboard:/app/dashboard
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+    command: >
+      /bin/sh -c "
+        superset db upgrade &&
+        superset fab create-admin --username $${SUPERSET_ADMIN_USERNAME} --firstname Admin --lastname Dev --email admin@ficdev.local --password $${SUPERSET_ADMIN_PASSWORD} || true &&
+        superset init &&
+        python /app/dashboard/sync_database.py || true &&
+        /usr/bin/run-server.sh
+      "
+
+
+  openmetadata-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: openmetadata-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health?pretty | grep status | grep -qE 'green|yellow' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - backend
+    volumes:
+      - openmetadata_es_data:/usr/share/elasticsearch/data
+
+
+  openmetadata-init:
+    image: openmetadata/server:1.4.6
+    container_name: openmetadata-init
+    command: "./bootstrap/openmetadata-ops.sh migrate"
+    environment:
+      SERVER_PORT: 8585
+      SERVER_ADMIN_PORT: 8586
+      DB_DRIVER_CLASS: org.postgresql.Driver
+      DB_SCHEME: postgresql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_USER_PASSWORD: ${POSTGRES_PASSWORD}
+      OM_DATABASE: openmetadata_db
+      ELASTICSEARCH_HOST: openmetadata-elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_SCHEME: http
+      SEARCH_TYPE: elasticsearch
+      OPENMETADATA_HEAP_OPTS: "-Xms512m -Xmx512m"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openmetadata-elasticsearch:
+        condition: service_healthy
+    networks:
+      - backend
+
+
+  openmetadata-server:
+    image: openmetadata/server:1.4.6
+    container_name: openmetadata-server
+    restart: unless-stopped
+    ports:
+      - "${OPENMETADATA_PORT:-8585}:8585"
+      - "${OPENMETADATA_ADMIN_PORT:-8586}:8586"
+    environment:
+      OPENMETADATA_CLUSTER_NAME: openmetadata
+      SERVER_PORT: 8585
+      SERVER_ADMIN_PORT: 8586
+      LOG_LEVEL: INFO
+      AUTHORIZER_CLASS_NAME: org.openmetadata.service.security.DefaultAuthorizer
+      AUTHORIZER_REQUEST_FILTER: org.openmetadata.service.security.JwtFilter
+      AUTHORIZER_ADMIN_PRINCIPALS: "[admin]"
+      AUTHENTICATION_PROVIDER: basic
+      AUTHENTICATION_ENABLE_SELF_SIGNUP: "true"
+      DB_DRIVER_CLASS: org.postgresql.Driver
+      DB_SCHEME: postgresql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_USER_PASSWORD: ${POSTGRES_PASSWORD}
+      OM_DATABASE: openmetadata_db
+      ELASTICSEARCH_HOST: openmetadata-elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_SCHEME: http
+      SEARCH_TYPE: elasticsearch
+      OPENMETADATA_HEAP_OPTS: "-Xmx1G -Xms1G"
+      PIPELINE_SERVICE_CLIENT_ENABLED: "false"
+      PIPELINE_SERVICE_CLIENT_ENDPOINT: "http://ingestion:8080"
+      SERVER_HOST_API_URL: "http://openmetadata-server:8585/api"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openmetadata-elasticsearch:
+        condition: service_healthy
+      openmetadata-init:
+        condition: service_completed_successfully
+    networks:
+      - backend
+
+
+  # Container opcional de Ingestão via Airflow (OpenMetadata Ingestion Pipeline Service).
+  # DESATIVADO POR PADRÃO: economiza 2.5GB a 3.5GB de RAM em máquinas de desenvolvimento.
+  # O projeto adota a prática de 'Metadata as Code' via API REST oficial (scripts/configurar_openmetadata.py).
+  # Para ativar caso necessário: docker compose --profile airflow-ingestion up -d ingestion
+  ingestion:
+    profiles:
+      - airflow-ingestion
+    image: docker.getcollate.io/openmetadata/ingestion:1.4.6
+    container_name: openmetadata_ingestion
+    restart: unless-stopped
+    environment:
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__OPENMETADATA_AIRFLOW_APIS__DAG_GENERATED_CONFIGS: "/opt/airflow/dag_generated_configs"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      AIRFLOW_DB: airflow_db
+      DB_SCHEME: postgresql+psycopg2
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    entrypoint: /bin/bash
+    command:
+      - "/opt/airflow/ingestion_dependency.sh"
+    ports:
+      - "8082:8080"
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openmetadata-server:
+        condition: service_started
+    volumes:
+      - ingestion_volume_dag_airflow:/opt/airflow/dag_generated_configs
+      - ingestion_volume_dags:/opt/airflow/dags
+      - ingestion_volume_tmp:/tmp
+
+
+volumes:
+  postgres_data:
+  mongo_data:
+  superset_home:
+  openmetadata_es_data:
+  ingestion_volume_dag_airflow:
+  ingestion_volume_dags:
+  ingestion_volume_tmp:
+
+
+networks:
+  backend:
+    driver: bridge
+>>>>>>> 68ca945bade7e684b7ee4593af88d0c5cea2156b
