@@ -329,6 +329,13 @@ O Apache Superset é a interface oficial de consumo dos tomadores de decisão pe
 
 O OpenMetadata é a plataforma central de governança, catálogo unificado e rastreabilidade da arquitetura de dados.
 
+> **Como a Governança é Populada (Automação via API REST):**  
+> Para garantir 100% de reprodutibilidade e evitar consumo excessivo de memória com agentes de orquestração do Apache Airflow (`PIPELINE_SERVICE_CLIENT_ENABLED: false`), toda a catalogação (serviço do PostgreSQL, database, schemas `silver` e `gold`, tabelas, tags LGPD `PII.Sensitive`, linhagem gráfica e os 4 termos de glossário) é provisionada de forma automatizada via API REST pelo comando:
+> ```bash
+> python scripts/configurar_openmetadata.py
+> ```
+> *Nota Técnica:* Não é necessário tentar criar o conector manualmente pela interface web clicando em *"Test Connection"*, pois esse botão tenta despachar uma DAG para um agente do Airflow que foi desabilitado intencionalmente no Docker Compose para manter o ambiente leve. O script Python acima já realiza a integração completa e instantânea via API.
+
 1. **Acesso à Interface Web:**
    * **URL no Navegador:** [http://localhost:8585](http://localhost:8585)
    * **Credenciais Oficiais de Administrador:**
@@ -338,28 +345,30 @@ O OpenMetadata é a plataforma central de governança, catálogo unificado e ras
 
 2. **Catálogo de Dados e Metadados Técnicos (RF27 e RF28):**
    * No menu lateral esquerdo, clique em **Explore** $\rightarrow$ **Tables**.
-   * Visualize as entidades catalogadas da plataforma nas camadas **`silver`** e **`gold`** (ex.: `gold.kpis_mensais_categoria`, `gold.desempenho_conteudos`, `silver.catalogo`, etc.).
+   * Visualize as entidades catalogadas da plataforma nas camadas **`silver`** e **`gold`**:
+     * `ficdev_postgres.ficdev_recomendacao.gold.kpis_mensais_categoria`
+     * `ficdev_postgres.ficdev_recomendacao.gold.desempenho_conteudos`
+     * `ficdev_postgres.ficdev_recomendacao.silver.catalogo`
    * Cada tabela exibe esquema colunar, tipos de dados, descrições e proprietário atribuído (*Owner*).
 
 3. **Glossário de Negócio e Termos Oficiais (RF28):**
    * No menu lateral esquerdo, clique em **Govern** $\rightarrow$ **Glossary**.
-   * Abra o glossário da plataforma e confira os **4 termos de negócio obrigatórios** cadastrados (especificados em [`openmetadata/dossie_metadados_oficial.json`](openmetadata/dossie_metadados_oficial.json)):
+   * Abra o `Glossario_Educacional_FICDEV` e confira os **4 termos de negócio obrigatórios** cadastrados (especificados em [`openmetadata/dossie_metadados_oficial.json`](openmetadata/dossie_metadados_oficial.json)):
      1. **`Usuário Ativo`:** Aluno com interação no período de apuração; vinculado à coluna `usuarios_ativos` da Gold.
      2. **`Taxa de Conclusão`:** Razão percentual entre conclusões e inícios; vinculada a `taxa_conclusao_pct`.
      3. **`Tempo Médio de Consumo`:** Duração média em minutos de estudo; vinculada a `tempo_medio_min`.
      4. **`Conversão de Recomendação`:** Taxa de aceite dos materiais sugeridos pela IA; vinculada a `ranking_categoria`.
 
 4. **Classificações de Privacidade e Sensibilidade LGPD (RF28 e RF32):**
-   * No menu lateral esquerdo, clique em **Govern** $\rightarrow$ **Classification**.
-   * Observe as tags aplicadas como **`PII.Sensitive`** e identificadores protegidos associados aos campos de dados pessoais, evidenciando o inventário formal e o cumprimento da LGPD.
+   * Abra a tabela `desempenho_conteudos` (em *Explore -> Tables*).
+   * Observe na coluna **`autor`** a tag azul aplicada: **`PII.Sensitive`**, protegendo o dado pessoal de identificação conforme o inventário formal da LGPD.
 
 5. **Linhagem Gráfica de Dados Ponta a Ponta (*Lineage* — RF29):**
-   * Ao abrir qualquer tabela da camada Gold (por exemplo, `gold.kpis_mensais_categoria`), clique na aba **Lineage**.
-   * Visualize o grafo de proveniência dos dados demonstrando o fluxo:  
-     `Fontes Brutas (CSV/JSON/Mongo) -> Bronze -> Silver -> Beam/Gold -> Superset Dashboard`.
+   * Ao abrir a tabela `gold.kpis_mensais_categoria` ou `gold.desempenho_conteudos`, clique na aba superior **Lineage**.
+   * Visualize o grafo de proveniência dos dados conectado graficamente a partir de `silver.catalogo`, demonstrando a rastreabilidade do pipeline.
 
 6. **Controles Anti-Data Swamp (RF27):**
-   * O ambiente impede a degradação em "pântano de dados" ao restringir a catalogação automática a esquemas homologados, exigindo descrições mandatórias, donos formais e aplicação de termos de glossário antes da liberação para consumo.
+   * O ambiente impede a degradação em "pântano de dados" ao restringir a catalogação a esquemas homologados, exigindo descrições mandatórias, donos formais e aplicação de termos de glossário antes da liberação para consumo.
 
 ---
 
