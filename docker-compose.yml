@@ -18,7 +18,7 @@ services:
       - ./sql/00_init_openmetadata_db.sql:/docker-entrypoint-initdb.d/00_init_openmetadata_db.sql
       - ./sql/criar_banco.sql:/docker-entrypoint-initdb.d/01_criar_banco.sql
       - ./sql/camadas_bronze_silver.sql:/docker-entrypoint-initdb.d/02_camadas_bronze_silver.sql
-      - ./sql/criar_camada_gold.sql:/docker-entrypoint-initdb.d/03_criar_camada_gold.sql
+      - ./sql/camada_gold.sql:/docker-entrypoint-initdb.d/03_camada_gold.sql
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -207,7 +207,7 @@ services:
       ELASTICSEARCH_SCHEME: http
       SEARCH_TYPE: elasticsearch
       OPENMETADATA_HEAP_OPTS: "-Xmx1G -Xms1G"
-      PIPELINE_SERVICE_CLIENT_ENABLED: "true"
+      PIPELINE_SERVICE_CLIENT_ENABLED: "false"
       PIPELINE_SERVICE_CLIENT_ENDPOINT: "http://ingestion:8080"
       SERVER_HOST_API_URL: "http://openmetadata-server:8585/api"
     depends_on:
@@ -221,7 +221,13 @@ services:
       - backend
 
 
+  # Container opcional de Ingestão via Airflow (OpenMetadata Ingestion Pipeline Service).
+  # DESATIVADO POR PADRÃO: economiza 2.5GB a 3.5GB de RAM em máquinas de desenvolvimento.
+  # O projeto adota a prática de 'Metadata as Code' via API REST oficial (scripts/configurar_openmetadata.py).
+  # Para ativar caso necessário: docker compose --profile airflow-ingestion up -d ingestion
   ingestion:
+    profiles:
+      - airflow-ingestion
     image: docker.getcollate.io/openmetadata/ingestion:1.4.6
     container_name: openmetadata_ingestion
     restart: unless-stopped

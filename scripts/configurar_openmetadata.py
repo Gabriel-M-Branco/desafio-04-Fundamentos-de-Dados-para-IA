@@ -14,6 +14,8 @@ from __future__ import annotations
 import base64
 import json
 import os
+import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -105,18 +107,32 @@ TERMOS_GLOSSARIO_OFICIAIS = [
 ]
 
 
+def aguardar_conexao_openmetadata(timeout_total: int = 90, intervalo: int = 4) -> bool:
+    """Aguarda o servidor do OpenMetadata inicializar e responder na porta 8585 (com retry)."""
+    inicio = time.time()
+    print(f"[INFO] Conectando ao OpenMetadata Server em {API_BASE}...")
+    while time.time() - inicio < timeout_total:
+        try:
+            req = urllib.request.Request(f"{API_BASE}/system/version", headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                if resp.status == 200:
+                    dados = json.loads(resp.read().decode("utf-8"))
+                    print(f"\n[OK] OpenMetadata Server conectado e pronto! Versão: {dados.get('version', '1.4.x')}")
+                    return True
+        except Exception:
+            tempo_decorrido = int(time.time() - inicio)
+            sys.stdout.write(f"\r[INFO] Servidor ainda iniciando... aguardando ({tempo_decorrido}s/{timeout_total}s)")
+            sys.stdout.flush()
+        time.sleep(intervalo)
+
+    print(f"\n[AVISO] OpenMetadata Server não respondeu após {timeout_total}s em {API_BASE}.")
+    print("        Certifique-se de que os containers subiram: 'docker compose up -d openmetadata-server'")
+    return False
+
+
 def testar_conexao_openmetadata() -> bool:
     """Verifica se o servidor do OpenMetadata está respondendo na porta 8585."""
-    try:
-        req = urllib.request.Request(f"{API_BASE}/system/version", headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            if resp.status == 200:
-                dados = json.loads(resp.read().decode("utf-8"))
-                print(f"[OK] OpenMetadata Server conectado! Versão: {dados.get('version', '1.4.x')}")
-                return True
-    except Exception as exc:
-        print(f"[INFO] OpenMetadata Server não respondeu em {API_BASE}: {exc}")
-    return False
+    return aguardar_conexao_openmetadata(timeout_total=10, intervalo=2)
 
 
 def autenticar_openmetadata() -> str | None:
@@ -901,9 +917,10 @@ def exportar_dossie_metadados() -> Path:
 def main() -> None:
     print("=================================================================")
     print("AUTOMAÇÃO COMPLETA DO OPENMETADATA (RF27 — RF29)")
+    print("Abordagem: Metadata as Code via API REST Oficial")
     print("=================================================================")
 
-    ativo = testar_conexao_openmetadata()
+    ativo = aguardar_conexao_openmetadata(timeout_total=90)
     exportar_dossie_metadados()
 
     if ativo:
@@ -925,12 +942,22 @@ def main() -> None:
             aplicar_tags_lgpd_e_linhagem(token, tbl_ids, dashboard_id)
 
             print("\n[SUCESSO] Plataforma OpenMetadata 100% configurada com linhagem completa de 5 pontas!")
+    else:
+        print("\n[INFO] O Dossiê JSON oficial foi exportado offline, mas o provisionamento completo")
+        print("       requer o servidor em execução (docker compose up -d openmetadata-server).")
 
     print("\n-----------------------------------------------------------------")
-    print("INSTRUÇÕES DE ACESSO AO OPENMETADATA:")
-    print(f"  URL no Navegador: {OPENMETADATA_URL}")
-    print(f"  E-mail de Login:  {OM_ADMIN_EMAIL}")
-    print("  Senha:            (conforme variável OPENMETADATA_ADMIN_PASSWORD no .env)")
+    print("INSTRUÇÕES DE ACESSO E CAPTURA DE EVIDÊNCIAS (RF34):")
+    print(f"  URL Base:        {OPENMETADATA_URL}")
+    print(f"  Login / E-mail:  {OM_ADMIN_EMAIL}")
+    print("  Senha:           (conforme variável OPENMETADATA_ADMIN_PASSWORD no .env)")
+    print("")
+    print("  PÁGINAS PARA SCREENSHOTS OBRIGATÓRIOS (salvar em openmetadata/evidencias/):")
+    print(f"  1. Catálogo de Tabelas (RF27/RF28):  {OPENMETADATA_URL}/explore/tables")
+    print(f"  2. Glossário de Negócio (RF28):      {OPENMETADATA_URL}/glossary/Glossario_Educacional_FICDEV")
+    print(f"  3. Linhagem Ponta a Ponta (RF29):    {OPENMETADATA_URL}/table/ficdev_postgres.{PG_DB}.gold.kpis_mensais_categoria/lineage")
+    print(f"  4. Dashboard no Catálogo (RF29):     {OPENMETADATA_URL}/dashboard/ficdev_superset.desafio_4_dashboard/lineage")
+    print(f"  5. Tags e Sensibilidade LGPD (RF32): {OPENMETADATA_URL}/tags")
     print("-----------------------------------------------------------------")
     print("=================================================================")
 

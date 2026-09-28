@@ -140,20 +140,39 @@ O script [`scripts/configurar_openmetadata.py`](../scripts/configurar_openmetada
 | `/api/v1/tables` | `POST` | Cadastro das 12 tabelas com esquemas colunares, tipos DDL e descrições. | RF27 / RF28 |
 | `/api/v1/dashboards` | `POST` | Cadastro da entidade `desafio_4_dashboard` vinculada ao Superset. | RF29 |
 | `/api/v1/tables/{id}` | `PATCH` | Aplicação da tag `PII.Sensitive` nas colunas de dados pessoais (`autor`, `usuario_id`). | RF28 / RF32 |
-| `/api/v1/lineage` | `PUT` | Registro das 16 arestas de linhagem (Tabela $\rightarrow$ Tabela e Tabela $\rightarrow$ Dashboard). | RF29 |
+| `/api/v1/lineage` | `PUT` | Registro das 19 arestas de linhagem (Tabela $\rightarrow$ Tabela e Tabela $\rightarrow$ Dashboard). | RF29 |
 | `/api/v1/glossaries` | `POST` | Cadastro do vocabulário corporativo `Glossario_Educacional_FICDEV`. | RF28 |
 | `/api/v1/glossaryTerms` | `POST` | Cadastro dos 4 termos formais com fórmulas de cálculo e donos de negócio. | RF28 |
 
 ---
 
+### 3.1 Otimização de Recursos: Desativação do Apache Airflow e Adoção de *Metadata as Code*
+
+O OpenMetadata disponibiliza por padrão um container de ingestão baseado no **Apache Airflow** (`openmetadata_ingestion`). Contudo, o Airflow opera com múltiplos daemons internos (Scheduler, Webserver, Workers e banco de metadados), consumindo sozinho entre **2.5 GB e 3.5 GB de memória RAM**, mesmo ocioso.
+
+Como o enunciado do Desafio 2 **não exige o Apache Airflow** e orienta que *"a equipe poderá adaptar tecnologias e disposição dos componentes, desde que preserve as responsabilidades das camadas e justifique as alterações"* (Seção 8), adotou-se a seguinte estratégia de engenharia:
+
+1. **Eliminação do Airflow em Execuções Locais:** O serviço `ingestion` foi isolado no profile opcional `airflow-ingestion` no [`docker-compose.yml`](../docker-compose.yml) e o parâmetro `PIPELINE_SERVICE_CLIENT_ENABLED` foi configurado como `false` no `openmetadata-server`.
+2. **Metadata as Code via Script Python:** A ingestão, o catálogo, o glossário de 4 termos e o grafo de linhagem foram automatizados de forma idempotente via chamadas à API REST oficial do OpenMetadata ([`scripts/configurar_openmetadata.py`](../scripts/configurar_openmetadata.py)).
+3. **Impacto Prático:**
+   - **Economia de RAM:** Redução de ~60% no consumo de memória do OpenMetadata (de ~5.5 GB para ~2.2 GB).
+   - **Viabilidade para Toda a Equipe:** Permite que integrantes com máquinas de 8 GB ou 16 GB de RAM executem a governança e o pipeline completo sem sobrecarregar o subsistema Docker / WSL2.
+   - **Reprodutibilidade (RF15/RF27):** O catálogo é provisionado em segundos de forma auditável e versionável no Git, sem necessidade de configuração manual suscetível a erros na UI.
+
+---
+
 ## 4. Guia Passo a Passo: Como Executar e Navegar na UI
 
-### Passo 1: Executar o Provisionamento
-Com o OpenMetadata em execução, rode:
+### Passo 1: Iniciar os Serviços e Executar o Provisionamento
+Para subir os containers do OpenMetadata (sem o overhead do Airflow) e executar o provisionamento:
 ```bash
+# 1. Iniciar o Postgres e os serviços do OpenMetadata
+docker compose up -d postgres openmetadata-elasticsearch openmetadata-init openmetadata-server
+
+# 2. Executar o provisionamento automatizado via API REST
 python scripts/configurar_openmetadata.py
 ```
-O script provisionará todas as 12 entidades nas 4 camadas, o serviço de Dashboard do Superset e conectará as 16 arestas de linhagem gráfica.
+O script aguarda ativamente a inicialização do servidor (com retry de até 90s), provisiona as 12 entidades nas 4 camadas, registra o serviço de Dashboard do Superset, cria o Glossário com fórmulas e conecta as 19 arestas de linhagem gráfica.
 
 ### Passo 2: Acessar a Interface Web
 - **URL:** [http://localhost:8585](http://localhost:8585)
@@ -222,6 +241,21 @@ Na interface web do OpenMetadata, todos os campos foram enriquecidos e populados
 
 ## 5. Dossiê Oficial de Auditoria
 
-A execução do script gera automaticamente o dossiê formal consolidado em JSON para auditoria técnica:
-- **Caminho:** [`openmetadata/dossie_metadados_oficial.json`](../openmetadata/dossie_metadados_oficial.json)
-- **Conteúdo:** Versão da plataforma, serviços catalogados, esquemas, glossário com fórmulas, taxonomia LGPD, donos de ativos, tiers corporativos e a relação completa das 16 arestas de linhagem RF29.
+- **Conteúdo:** Versão da plataforma, serviços catalogados, esquemas, glossário com fórmulas, taxonomia LGPD, donos de ativos, tiers corporativos e a relação completa das 19 arestas de linhagem RF29.
+
+---
+
+## 6. Evidências Fotográficas do Catálogo e Governança (RF34)
+
+As capturas de tela oficiais da interface web do OpenMetadata estão armazenadas e versionadas no diretório [`openmetadata/evidencias/`](../openmetadata/evidencias/):
+
+| Arquivo de Evidência | Tela / Funcionalidade | Requisitos Atendidos | Detalhes Visíveis na Imagem |
+| :--- | :--- | :---: | :--- |
+| `01_catalogo_detalhes_tabela_gold.png` | Explore $\rightarrow$ Tables $\rightarrow$ Detalhes da Tabela | RF27, RF28 | Visão colunar, tipos de dados PostgreSQL, owner atribuído e descrições técnicas da camada Gold. |
+| `02_glossario_quatro_termos_oficiais.png` | Govern $\rightarrow$ Glossary | RF28 | Painel do `Glossario_Educacional_FICDEV` listando os 4 termos formais de negócio cadastrados. |
+| `03_termo_glossario_usuario_ativo.png` | Detalhe do Termo: Usuário Ativo | RF28 | Descrição conceitual, fórmula de cálculo `COUNT(DISTINCT usuario_id)` e dono pedagógico. |
+| `04_termo_glossario_taxa_conclusao.png` | Detalhe do Termo: Taxa de Conclusão | RF28 | Descrição, regra percentual de conclusões/inícios e vínculo à coluna física `taxa_conclusao_pct`. |
+| `05_termo_glossario_conversao_recomendacao.png` | Detalhe do Termo: Conversão de Recomendação | RF28 | Regra de conversão de materiais recomendados por IA e critérios de engajamento do aluno. |
+| `06_termo_glossario_tempo_medio_consumo.png` | Detalhe do Termo: Tempo Médio de Consumo | RF28 | Unidade em minutos, cálculo da média aritmética e relevância para monitoramento de evasão. |
+| `07_glossario_ativos_vinculados_gold.png` | Glossary $\rightarrow$ Assets Vinculados | RF28 | Relação das tabelas e colunas físicas da camada Gold formalmente associadas aos termos. |
+| `08_linhagem_grafica_cinco_pontas.png` | Lineage Graph (5 Pontas) | RF29 | Grafo interativo completo conectando Fontes $\rightarrow$ Bronze $\rightarrow$ Silver $\rightarrow$ Gold $\rightarrow$ Superset. |
