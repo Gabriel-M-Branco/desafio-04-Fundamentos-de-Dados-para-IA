@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storytelling com Dados - Diagnostico de Evasao e Retencao | FIC_DEV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      
+      --secondary: #4f46e5;
+      --accent: #0284c7;
+      
+      --success: #059669;
+      --success-light: #ecfdf5;
+      --success-border: #a7f3d0;
+      
+      --warning: #d97706;
+      --warning-light: #fffbeb;
+      --warning-border: #fde68a;
+      
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+      --danger-border: #fecaca;
+      
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+      --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+      
+      --radius-sm: 6px;
+      --radius: 10px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.6;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Bar de Apresentacao */
+    .top-bar {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 0.9rem 2rem;
+      border-bottom: 3px solid var(--primary);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .top-bar-inner {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .badge-tag {
+      background: rgba(37, 99, 235, 0.25);
+      border: 1px solid var(--primary);
+      color: #93c5fd;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .actions-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .btn-control {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.825rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-control:hover {
+      background: #334155;
+      color: #ffffff;
+      border-color: #475569;
+    }
+
+    .btn-control.primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+
+    .btn-control.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Container Principal */
+    .presentation-container {
+      max-width: 1260px;
+      margin: 2.5rem auto 4rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ==========================================================================
+       ESTRUTURA DO STORYTELLING COM BORDAS LATERAIS ELEGANTES E ROBUSTAS
+       ========================================================================== */
+    .storytelling-frame {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      /* BORDAS LATERAIS DEMANDADAS */
+      border-left: 12px solid var(--primary);
+      border-right: 12px solid var(--primary);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Faixa decorativa sutil superior */
+    .storytelling-frame::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    }
+
+    .storytelling-body {
+      padding: 3.5rem 4rem;
+    }
+
+    /* Hero Executivo */
+    .hero-section {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 2.25rem;
+      margin-bottom: 2.75rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    .hero-lead {
+      font-size: 1.15rem;
+      color: #475569;
+      max-width: 960px;
+      line-height: 1.6;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .tag-item {
+      font-size: 0.775rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: var(--radius-sm);
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Grid de KPIs */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 3.25rem;
+    }
+
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .kpi-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .kpi-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.1;
+      margin-bottom: 0.25rem;
+    }
+
+    .kpi-sub {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+    }
+
+    .kpi-card.highlight {
+      border-color: var(--primary-border);
+      background: linear-gradient(180deg, #ffffff 0%, var(--primary-light) 100%);
+    }
+    .kpi-card.highlight .kpi-number { color: var(--primary); }
+
+    .kpi-card.success {
+      border-color: var(--success-border);
+      background: linear-gradient(180deg, #ffffff 0%, var(--success-light) 100%);
+    }
+    .kpi-card.success .kpi-number { color: var(--success); }
+
+    .kpi-card.warning {
+      border-color: var(--warning-border);
+      background: linear-gradient(180deg, #ffffff 0%, var(--warning-light) 100%);
+    }
+    .kpi-card.warning .kpi-number { color: var(--warning); }
+
+    /* Seções Narrativas */
+    .narrative-block {
+      margin-bottom: 3.5rem;
+    }
+
+    .narrative-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .step-number {
+      background: var(--primary);
+      color: #ffffff;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .narrative-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+    }
+
+    .narrative-text {
+      font-size: 1.05rem;
+      color: #334155;
+      margin-bottom: 1.15rem;
+      line-height: 1.7;
+    }
+
+    /* Visualização do Funil */
+    .funnel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin: 2rem 0;
+    }
+
+    .funnel-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .funnel-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.6rem;
+    }
+
+    .funnel-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #0f172a;
+    }
+
+    .funnel-rate {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .funnel-bar-track {
+      height: 16px;
+      background: #f1f5f9;
+      border-radius: 9999px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .funnel-bar-progress {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 1s ease-in-out;
+    }
+
+    .funnel-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.75rem;
+      margin-top: 0.6rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .funnel-legend strong {
+      color: #1e293b;
+    }
+
+    /* Callout Boxes */
+    .insight-callout {
+      border-left: 4px solid var(--primary);
+      background: #f8fafc;
+      padding: 1.25rem 1.5rem;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin: 1.5rem 0;
+      border-top: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .insight-callout.warning {
+      border-left-color: var(--warning);
+      background: var(--warning-light);
+      border-color: var(--warning-border);
+    }
+
+    .insight-callout.danger {
+      border-left-color: var(--danger);
+      background: var(--danger-light);
+      border-color: var(--danger-border);
+    }
+
+    .callout-head {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 0.35rem;
+      color: #0f172a;
+    }
+
+    /* Tabela de 12 Segmentos */
+    .data-table-wrap {
+      margin: 1.75rem 0;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      overflow-x: auto;
+      background: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.925rem;
+    }
+
+    thead {
+      background: #f1f5f9;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    th {
+      padding: 0.9rem 1.2rem;
+      font-weight: 600;
+      color: #334155;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 0.9rem 1.2rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    .num-col {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 0.25rem 0.55rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-status.success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-status.info { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .badge-status.danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+    /* Plano de Acao */
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .action-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+
+    .action-card.danger { border-top: 4px solid var(--danger); }
+    .action-card.primary { border-top: 4px solid var(--primary); }
+    .action-card.success { border-top: 4px solid var(--success); }
+
+    .action-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.75rem;
+    }
+
+    .action-desc {
+      font-size: 0.925rem;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    /* Rodape */
+    .page-footer {
+      max-width: 1260px;
+      margin: 3rem auto 2rem auto;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      gap: 1rem;
+    }
+
+    /* Print & Fullscreen */
+    @media print {
+      body {
+        background: #ffffff;
+        color: #000000;
+        font-size: 12px;
+      }
+      .top-bar, .actions-group {
+        display: none !important;
+      }
+      .presentation-container {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      .storytelling-frame {
+        border-left: 6px solid #2563eb !important;
+        border-right: 6px solid #2563eb !important;
+        box-shadow: none !important;
+      }
+      .storytelling-body {
+        padding: 1.5rem;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .storytelling-body {
+        padding: 2rem 1.25rem;
+      }
+      .storytelling-frame {
+        border-left: 6px solid var(--primary);
+        border-right: 6px solid var(--primary);
+      }
+      .hero-title {
+        font-size: 1.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Navegacao e Apresentacao -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div class="brand-group">
+        <span class="brand-title">FIC_DEV</span>
+        <span class="badge-tag">Storytelling com Dados (RF16-RF18)</span>
+      </div>
+
+      <div class="actions-group">
+        <a href="arquitetura.html" class="btn-control">Ver Arquitetura (RF19)</a>
+        <a href="arquitetura_e_storytelling.html" class="btn-control">Visao Integrada</a>
+        <button class="btn-control primary" onclick="toggleFullscreen()">Tela Cheia</button>
+        <button class="btn-control" onclick="window.print()">Imprimir / PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container de Apresentacao -->
+  <main class="presentation-container">
+
+    <!-- Card Principal do Storytelling com Bordas Laterais Solicitadas -->
+    <article class="storytelling-frame">
+      <div class="storytelling-body">
+
+        <!-- Hero Executivo -->
+        <header class="hero-section">
+          <div class="hero-meta">
+            <span class="badge-tag">Diagnostico Executivo</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Modulo: Fundamentos de Dados para IA</span>
+          </div>
+          <h1 class="hero-title">Analise de Retencao e Diagnostico de Evasao na Plataforma Educacional</h1>
+          <p class="hero-lead">
+            Uma investigacao analitica orientada a dados reais da camada Gold para compreender o engajamento dos estudantes, desvendar o gargalo de evasao em cursos estruturados e fundamentar intervencoes pedagogicas com base em telemetria auditavel.
+          </p>
+
+          <div class="tag-list">
+            <span class="tag-item">Camada Gold (PostgreSQL)</span>
+            <span class="tag-item">Virtual Dataset SQL Lab (RF17)</span>
+            <span class="tag-item">Apache Superset Dashboard (RF16)</span>
+            <span class="tag-item">Base Homologada: 1.000 Conteudos</span>
+          </div>
+        </header>
+
+        <!-- Cards de Metricas Reais do Sistema -->
+        <section class="kpi-grid">
+          <div class="kpi-card highlight">
+            <div class="kpi-title">Total de Conteudos</div>
+            <div class="kpi-number">1.000</div>
+            <div class="kpi-sub">Titulos unicos catalogados</div>
+          </div>
+
+          <div class="kpi-card highlight">
+            <div class="kpi-title">Visualizacoes Totais</div>
+            <div class="kpi-number">351</div>
+            <div class="kpi-sub">Acessos acumulados na telemetria</div>
+          </div>
+
+          <div class="kpi-card success">
+            <div class="kpi-title">Inicios de Estudos</div>
+            <div class="kpi-number">187</div>
+            <div class="kpi-sub">Estudantes que iniciaram aulas</div>
+          </div>
+
+          <div class="kpi-card warning">
+            <div class="kpi-title">Conclusoes Efetivas</div>
+            <div class="kpi-number">154</div>
+            <div class="kpi-sub">Jornadas integralmente concluidas</div>
+          </div>
+
+          <div class="kpi-card highlight">
+            <div class="kpi-title">Satisfacao Media</div>
+            <div class="kpi-number">4,51</div>
+            <div class="kpi-sub">Escala de 1,00 a 5,00 estrelas</div>
+          </div>
+        </section>
+
+        <!-- 1. O Cenario de Satisfacao vs Funil -->
+        <section class="narrative-block">
+          <div class="narrative-header">
+            <span class="step-number">1</span>
+            <h2 class="narrative-title">O Cenario: Alta Satisfacao Geral, mas Disparidade no Funil</h2>
+          </div>
+          <p class="narrative-text">
+            A plataforma educacional FIC_DEV registra excelente avaliacao qualitativa por parte dos alunos, sustentando uma <strong>nota media ponderada de 4,51 de 5,00 estrelas</strong>. No entanto, ao examinar a esteira de consumo do inicio ao encerramento dos modulos na camada Gold, identifica-se que a conversao e altamente heterogenea entre os formatos didaticos.
+          </p>
+          <p class="narrative-text">
+            O catalogo contempla 1.000 conteudos (distribuidos de forma balanceada entre Artigos, Podcasts, Videos e Cursos). A telemetria computou 351 visualizacoes exploratorias, 187 inicios de atividades e 154 conclusoes completas. Embora a taxa de conversao media global aparente solidez (82,35%), o desdobramento por formato expoe um ponto critico de atrito.
+          </p>
+        </section>
+
+        <!-- 2. O Funil Comparativo por Formato -->
+        <section class="narrative-block">
+          <div class="narrative-header">
+            <span class="step-number">2</span>
+            <h2 class="narrative-title">O Funil de Retencao: Podcasts e Videos Superam Cursos Estruturados</h2>
+          </div>
+          <p class="narrative-text">
+            Cruzando os dados consolidados do dataset virtual do SQL Lab (<code>gold.dataset_virtual_sqllab</code>), emerge a principal evidencia de negocio: <strong>formatos curtos e ageis alcancam retencao muito superior a cursos tradicionais extensos</strong>.
+          </p>
+
+          <div class="funnel-list">
+            <!-- Podcast -->
+            <div class="funnel-card">
+              <div class="funnel-top">
+                <span class="funnel-name">Podcasts Educacionais</span>
+                <span class="funnel-rate" style="color: var(--success);">95,24% de Conversao</span>
+              </div>
+              <div class="funnel-bar-track">
+                <div class="funnel-bar-progress" style="width: 95.24%; background: var(--success);"></div>
+              </div>
+              <div class="funnel-legend">
+                <span>Visualizacoes: <strong>95</strong></span>
+                <span>Inicios: <strong>42</strong></span>
+                <span>Conclusoes: <strong>40</strong></span>
+                <span>Satisfacao: <strong>4,49</strong></span>
+              </div>
+            </div>
+
+            <!-- Video -->
+            <div class="funnel-card">
+              <div class="funnel-top">
+                <span class="funnel-name">Videos e Tutoriais Praticos</span>
+                <span class="funnel-rate" style="color: var(--primary);">89,80% de Conversao</span>
+              </div>
+              <div class="funnel-bar-track">
+                <div class="funnel-bar-progress" style="width: 89.80%; background: var(--primary);"></div>
+              </div>
+              <div class="funnel-legend">
+                <span>Visualizacoes: <strong>81</strong></span>
+                <span>Inicios: <strong>49</strong></span>
+                <span>Conclusoes: <strong>44</strong></span>
+                <span>Satisfacao: <strong>4,53</strong></span>
+              </div>
+            </div>
+
+            <!-- Artigo -->
+            <div class="funnel-card">
+              <div class="funnel-top">
+                <span class="funnel-name">Artigos e Documentacao Tecnica</span>
+                <span class="funnel-rate" style="color: var(--accent);">84,00% de Conversao</span>
+              </div>
+              <div class="funnel-bar-track">
+                <div class="funnel-bar-progress" style="width: 84.00%; background: var(--accent);"></div>
+              </div>
+              <div class="funnel-legend">
+                <span>Visualizacoes: <strong>100</strong></span>
+                <span>Inicios: <strong>50</strong></span>
+                <span>Conclusoes: <strong>42</strong></span>
+                <span>Satisfacao: <strong>4,51</strong></span>
+              </div>
+            </div>
+
+            <!-- Curso -->
+            <div class="funnel-card" style="border-color: var(--danger-border); background: var(--danger-light);">
+              <div class="funnel-top">
+                <span class="funnel-name" style="color: var(--danger);">Cursos Completos (Ponto Critico de Evasao)</span>
+                <span class="funnel-rate" style="color: var(--danger);">60,87% de Conversao</span>
+              </div>
+              <div class="funnel-bar-track">
+                <div class="funnel-bar-progress" style="width: 60.87%; background: var(--danger);"></div>
+              </div>
+              <div class="funnel-legend">
+                <span>Visualizacoes: <strong>75</strong></span>
+                <span>Inicios: <strong>46</strong></span>
+                <span style="color: var(--danger); font-weight: 700;">Conclusoes: 28 (18 Evasoes / Quase 40% Perda)</span>
+                <span>Satisfacao: <strong>4,49</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="insight-callout warning">
+            <div class="callout-head">Diagnostico de Evasao em Cursos</div>
+            Enquanto nos Podcasts 95 a cada 100 alunos que iniciam concluem o audio, nos Cursos apenas 60 concluem a jornada integral. Mais de 39% dos estudantes abandonam o curso apos os primeiros capitulos, demandando acoes estruturadas na extensao das trilhas.
+          </div>
+        </section>
+
+        <!-- 3. Mapa Multidimensional de 12 Segmentos -->
+        <section class="narrative-block">
+          <div class="narrative-header">
+            <span class="step-number">3</span>
+            <h2 class="narrative-title">O Mapa Multidimensional: Formato vs Nivel (12 Segmentos Analisados)</h2>
+          </div>
+          <p class="narrative-text">
+            O grafico de dispersao/bolhas do Superset (<code>STORYTELLING - Desempenho de cada Tipo</code>), originado de <code>gold.desempenho_conteudos</code>, mapeia a intersecao entre Formato e Nivel de Dificuldade, destacando onde a evasao e mais acentuada:
+          </p>
+
+          <div class="data-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Formato & Nivel</th>
+                  <th>Tipo</th>
+                  <th>Nivel</th>
+                  <th class="num-col">Taxa Conclusao Media (X)</th>
+                  <th class="num-col">Nota Media (Y)</th>
+                  <th class="num-col">Acessos (Tamanho)</th>
+                  <th>Status Diagnostico</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Artigo - Intermediario</strong></td>
+                  <td>Artigo</td>
+                  <td>Intermediario</td>
+                  <td class="num-col" style="font-weight: 700; color: var(--success);">4,44%</td>
+                  <td class="num-col">4,57</td>
+                  <td class="num-col">29</td>
+                  <td><span class="badge-status success">Maior Taxa Media</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Video - Basico</strong></td>
+                  <td>Video</td>
+                  <td>Basico</td>
+                  <td class="num-col">3,80%</td>
+                  <td class="num-col">4,52</td>
+                  <td class="num-col">25</td>
+                  <td><span class="badge-status success">Alta Retencao</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Video - Avancado</strong></td>
+                  <td>Video</td>
+                  <td>Avancado</td>
+                  <td class="num-col">3,57%</td>
+                  <td class="num-col">4,41</td>
+                  <td class="num-col">28</td>
+                  <td><span class="badge-status success">Alta Retencao</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Curso - Basico</strong></td>
+                  <td>Curso</td>
+                  <td>Basico</td>
+                  <td class="num-col">3,41%</td>
+                  <td class="num-col">4,44</td>
+                  <td class="num-col">28</td>
+                  <td><span class="badge-status info">Engajamento Estavel</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Podcast - Intermediario</strong></td>
+                  <td>Podcast</td>
+                  <td>Intermediario</td>
+                  <td class="num-col">3,26%</td>
+                  <td class="num-col">4,43</td>
+                  <td class="num-col">40</td>
+                  <td><span class="badge-status success">Segundo Maior Volume</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Curso - Avancado</strong></td>
+                  <td>Curso</td>
+                  <td>Avancado</td>
+                  <td class="num-col">2,34%</td>
+                  <td class="num-col" style="font-weight: 700; color: var(--success);">4,80</td>
+                  <td class="num-col">18</td>
+                  <td><span class="badge-status success">Maior Nota da Plataforma</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Video - Intermediario</strong></td>
+                  <td>Video</td>
+                  <td>Intermediario</td>
+                  <td class="num-col">1,33%</td>
+                  <td class="num-col">4,66</td>
+                  <td class="num-col">28</td>
+                  <td><span class="badge-status info">Bom Desempenho</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Artigo - Basico</strong></td>
+                  <td>Artigo</td>
+                  <td>Basico</td>
+                  <td class="num-col">1,14%</td>
+                  <td class="num-col">4,41</td>
+                  <td class="num-col">30</td>
+                  <td><span class="badge-status info">Engajamento Regular</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Artigo - Avancado</strong></td>
+                  <td>Artigo</td>
+                  <td>Avancado</td>
+                  <td class="num-col">1,06%</td>
+                  <td class="num-col">4,53</td>
+                  <td class="num-col">41</td>
+                  <td><span class="badge-status info">Maior Volume de Acessos</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Podcast - Basico</strong></td>
+                  <td>Podcast</td>
+                  <td>Basico</td>
+                  <td class="num-col">0,30%</td>
+                  <td class="num-col">4,76</td>
+                  <td class="num-col">29</td>
+                  <td><span class="badge-status success">Nota Muito Alta</span></td>
+                </tr>
+                <tr style="background: #fef2f2;">
+                  <td><strong>Curso - Intermediario</strong></td>
+                  <td>Curso</td>
+                  <td>Intermediario</td>
+                  <td class="num-col" style="font-weight: 700; color: var(--danger);">0,00%</td>
+                  <td class="num-col">4,35</td>
+                  <td class="num-col">29</td>
+                  <td><span class="badge-status danger">Evasao Critica (0 Conclusoes)</span></td>
+                </tr>
+                <tr style="background: #fef2f2;">
+                  <td><strong>Podcast - Avancado</strong></td>
+                  <td>Podcast</td>
+                  <td>Avancado</td>
+                  <td class="num-col" style="font-weight: 700; color: var(--danger);">0,00%</td>
+                  <td class="num-col">4,24</td>
+                  <td class="num-col">26</td>
+                  <td><span class="badge-status danger">Evasao Critica (0 Conclusoes)</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="insight-callout">
+            <div class="callout-head">Esclarecimento Tecnico sobre a Escala de Conclusao</div>
+            O indicador <code>taxa_conclusao_pct</code> e persistido diretamente em escala percentual (onde 1,00 representa 1,00% e 4,44 representa 4,44%, e nao 100% ou 400%). Os valores 0,00% em <em>Curso - Intermediario</em> e <em>Podcast - Avancado</em> apontam que, apesar de mais de 25 acessos computados em cada, nenhum estudante finalizou o ciclo, sinalizando materiais com barreira excessiva de conclusao.
+          </div>
+        </section>
+
+        <!-- 4. Recomendacoes Estrategicas -->
+        <section class="narrative-block">
+          <div class="narrative-header">
+            <span class="step-number">4</span>
+            <h2 class="narrative-title">Plano de Acao Estrategico: 3 Recomendacoes Pedagogicas</h2>
+          </div>
+          <p class="narrative-text">
+            Com base no diagnostico da camada Gold e na visualizacao interativa por filtros cruzados do Superset, propomos tres recomendacoes executivas para a coordenacao pedagogica:
+          </p>
+
+          <div class="action-grid">
+            <div class="action-card danger">
+              <h3 class="action-title">1. Modularizacao de Cursos Intermediarios</h3>
+              <p class="action-desc">
+                Fracionar os modulos extensos de <em>Curso - Intermediario</em> (que tiveram 0% de conclusao) em capsulas de 10 a 15 minutos com exercicios praticos, reduzindo a sobrecarga cognitiva e aumentando a persistencia dos alunos.
+              </p>
+            </div>
+
+            <div class="action-card primary">
+              <h3 class="action-title">2. Recomendacao de Cursos Avancados</h3>
+              <p class="action-desc">
+                O segmento <em>Curso - Avancado</em> possui a maior nota de avaliacao de toda a plataforma (<strong>4,80 estrelas</strong>), porem apenas 18 acessos. O motor de recomendacao deve priorizar esse conteudo para usuarios com historico de conclusao nos cursos basicos.
+              </p>
+            </div>
+
+            <div class="action-card success">
+              <h3 class="action-title">3. Monitoramento Ativo com Alerta no Superset (RF18)</h3>
+              <p class="action-desc">
+                Implementacao e validacao do alerta automatizado no Apache Superset: se o tempo medio mensal de estudo cair abaixo de 500 minutos ou a taxa de conclusao recuar abaixo de 40%, um aviso imediato e enviado a equipe pedagogica para intervencao antes do fim do ciclo letivo.
+              </p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </article>
+
+  </main>
+
+  <!-- Rodape Executivo -->
+  <footer class="page-footer">
+    <div>
+      <strong>FIC_DEV — Fundamentos de Dados para IA</strong> &bull; Desafio Pratico 2
+    </div>
+    <div>
+      Documentacao Oficial Homologada &bull; Testes Automatizados Validados (98/98)
+    </div>
+  </footer>
+
+  <script>
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'p' || e.key === 'P') {
+        window.print();
+      }
+    });
+  </script>
+</body>
+</html>

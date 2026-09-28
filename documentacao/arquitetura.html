@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arquitetura de Dados - Data Lakehouse Medallion Hibrido | FIC_DEV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      
+      --secondary: #4f46e5;
+      --accent: #0284c7;
+      
+      --success: #059669;
+      --success-light: #ecfdf5;
+      --success-border: #a7f3d0;
+      
+      --warning: #d97706;
+      --warning-light: #fffbeb;
+      --warning-border: #fde68a;
+      
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+      --danger-border: #fecaca;
+      
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+      --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+      
+      --radius-sm: 6px;
+      --radius: 10px;
+      --radius-lg: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.6;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Bar de Apresentacao */
+    .top-bar {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 0.9rem 2rem;
+      border-bottom: 3px solid var(--primary);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .top-bar-inner {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .badge-tag {
+      background: rgba(37, 99, 235, 0.25);
+      border: 1px solid var(--primary);
+      color: #93c5fd;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .actions-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .btn-control {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.825rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-control:hover {
+      background: #334155;
+      color: #ffffff;
+      border-color: #475569;
+    }
+
+    .btn-control.primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary-dark);
+    }
+
+    .btn-control.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Container Principal */
+    .arch-wrapper {
+      max-width: 1260px;
+      margin: 2.5rem auto 4rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Header de Arquitetura */
+    .arch-hero {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2.75rem 3rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .arch-hero::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #2563eb, #4f46e5, #0284c7);
+    }
+
+    .arch-hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.3rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+    }
+
+    .arch-hero .hero-sub {
+      font-size: 1.1rem;
+      color: #475569;
+      max-width: 950px;
+      line-height: 1.6;
+    }
+
+    .arch-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .arch-pill {
+      font-size: 0.775rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: var(--radius-sm);
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Seções de Arquitetura */
+    .arch-section {
+      margin-bottom: 3.5rem;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .step-badge {
+      background: var(--primary);
+      color: #ffffff;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .section-desc {
+      font-size: 1.05rem;
+      color: #334155;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Diagrama Visual das Camadas */
+    .medallion-pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin: 2rem 0;
+    }
+
+    .pipeline-stage {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.75rem 2rem;
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      grid-template-columns: 240px 1fr 200px;
+      gap: 2rem;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .pipeline-stage:hover {
+      border-color: #94a3b8;
+      box-shadow: var(--shadow);
+    }
+
+    .stage-badge {
+      display: inline-flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .stage-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .stage-tech {
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .stage-body h4 {
+      font-size: 0.975rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 0.35rem;
+    }
+
+    .stage-body p {
+      font-size: 0.9rem;
+      color: #475569;
+      line-height: 1.55;
+    }
+
+    .stage-metric {
+      text-align: right;
+      border-left: 1px solid var(--border-color);
+      padding-left: 1.5rem;
+    }
+
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .metric-lbl {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .stage-fontes .stage-badge { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .stage-bronze .stage-badge { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .stage-silver .stage-badge { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+    .stage-parquet .stage-badge { background: #e0f2fe; color: #0284c7; border: 1px solid #bfdbfe; }
+    .stage-gold .stage-badge { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+    .stage-governance .stage-badge { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+
+    /* Grid de Pilares ETL/ELT */
+    .dual-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .dual-box {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .dual-box.etl { border-top: 4px solid var(--primary); }
+    .dual-box.elt { border-top: 4px solid var(--secondary); }
+
+    .dual-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.75rem;
+    }
+
+    .dual-text {
+      font-size: 0.95rem;
+      color: #475569;
+      line-height: 1.65;
+    }
+
+    /* Tabela de Trade-offs */
+    .table-frame {
+      margin: 2rem 0;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      overflow-x: auto;
+      background: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.925rem;
+    }
+
+    thead {
+      background: #f1f5f9;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    th {
+      padding: 0.9rem 1.2rem;
+      font-weight: 600;
+      color: #334155;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 0.95rem 1.2rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* Comparativo Desafio 1 vs Desafio 2 */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .compare-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .compare-card.legacy { border-top: 4px solid var(--danger); }
+    .compare-card.modern { border-top: 4px solid var(--success); }
+
+    .compare-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .compare-card.legacy .compare-title { color: var(--danger); }
+    .compare-card.modern .compare-title { color: var(--success); }
+
+    .compare-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+
+    .compare-desc {
+      font-size: 0.9rem;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    /* Rodape */
+    .page-footer {
+      max-width: 1260px;
+      margin: 3rem auto 2rem auto;
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      gap: 1rem;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        color: #000000;
+        font-size: 12px;
+      }
+      .top-bar, .actions-group {
+        display: none !important;
+      }
+      .arch-wrapper {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      .arch-hero {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+      .pipeline-stage {
+        box-shadow: none !important;
+        page-break-inside: avoid;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .pipeline-stage {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      .stage-metric {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--border-color);
+        padding-top: 1rem;
+        text-align: left;
+      }
+      .arch-hero {
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra Superior de Navegacao e Apresentacao -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div class="brand-group">
+        <span class="brand-title">FIC_DEV</span>
+        <span class="badge-tag">Arquitetura de Dados (RF19)</span>
+      </div>
+
+      <div class="actions-group">
+        <a href="storytelling.html" class="btn-control">Ver Storytelling (RF16-RF18)</a>
+        <a href="arquitetura_e_storytelling.html" class="btn-control">Visao Integrada</a>
+        <button class="btn-control primary" onclick="toggleFullscreen()">Tela Cheia</button>
+        <button class="btn-control" onclick="window.print()">Imprimir / PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container Principal -->
+  <main class="arch-wrapper">
+
+    <!-- Hero Executivo da Arquitetura -->
+    <header class="arch-hero">
+      <span class="badge-tag">Especificacao Tecnica Formal (RF19)</span>
+      <h1 style="margin-top: 0.75rem;">Arquitetura de Dados: Topologia Hibrida e Engenharia de Pipeline</h1>
+      <p class="hero-sub">
+        Especificacao formal da arquitetura Medallion (Bronze, Silver e Gold) integrada ao Data Lakehouse com Apache Beam, Apache Hop, Parquet colunar Snappy, Quality Gate rigoroso e Governanca automatizada no OpenMetadata.
+      </p>
+
+      <div class="arch-tags">
+        <span class="arch-pill">Data Lakehouse Medallion</span>
+        <span class="arch-pill">Arquitetura Hibrida (ETL + ELT)</span>
+        <span class="arch-pill">Parquet Hive (ano=YYYY/mes=MM)</span>
+        <span class="arch-pill">Apache Beam (DirectRunner & Spark)</span>
+        <span class="arch-pill">OpenMetadata (Metadata as Code)</span>
+        <span class="arch-pill">98/98 Testes Homologados</span>
+      </div>
+    </header>
+
+    <!-- 1. Topologia do Pipeline em 5 Estagios -->
+    <section class="arch-section">
+      <div class="section-title">
+        <span class="step-badge">1</span>
+        <h2>Topologia do Pipeline em 5 Estagios com Contratos Rigorosos</h2>
+      </div>
+      <p class="section-desc">
+        O fluxo de dados foi projetado para assegurar separacao estrita de responsabilidades, imutabilidade da camada raw, auditoria tecnica continua, linhagem completa e bloqueio automatico em caso de falhas de qualidade:
+      </p>
+
+      <div class="medallion-pipeline">
+        
+        <!-- Fontes -->
+        <div class="pipeline-stage stage-fontes">
+          <div>
+            <span class="stage-badge">Estagio 1: Fontes</span>
+            <div class="stage-name">Fontes Heterogeneas</div>
+            <div class="stage-tech">CSV, JSON e MongoDB</div>
+          </div>
+          <div class="stage-body">
+            <h4>Origem Bruta Desacoplada</h4>
+            <p>Catalogo administrativo de cursos (CSV com 1.000 registros), logs de telemetria de interacoes (JSON com 1.000 eventos) e avaliacoes textuais livres extraidas do NoSQL (MongoDB com 1.000 documentos).</p>
+          </div>
+          <div class="stage-metric">
+            <div class="metric-val">3 Fontes</div>
+            <div class="metric-lbl">Multi-Formato</div>
+          </div>
+        </div>
+
+        <!-- Bronze -->
+        <div class="pipeline-stage stage-bronze">
+          <div>
+            <span class="stage-badge">Estagio 2: Bronze</span>
+            <div class="stage-name">Copia Raw Auditavel</div>
+            <div class="stage-tech">Apache Hop + PostgreSQL</div>
+          </div>
+          <div class="stage-body">
+            <h4>Ingestao Imutavel com Metadados Tecnicos (RF20)</h4>
+            <p>Carga 1:1 sem perdas de schema. Cada registro e enriquecido com campos de auditoria corporativa: <code>_origem</code> (nome do arquivo ou collection), <code>_ingestao_em</code> (timestamp ISO) e <code>_run_id</code> (UUID de execucao).</p>
+          </div>
+          <div class="stage-metric">
+            <div class="metric-val">3.000</div>
+            <div class="metric-lbl">Linhas Ingeridas</div>
+          </div>
+        </div>
+
+        <!-- Silver & Quarentena -->
+        <div class="pipeline-stage stage-silver">
+          <div>
+            <span class="stage-badge">Estagio 3: Silver</span>
+            <div class="stage-name">Curadoria & Quarentena</div>
+            <div class="stage-tech">Apache Hop + PyArrow</div>
+          </div>
+          <div class="stage-body">
+            <h4>Higienizacao, Tipagem e Resolucao MDM (RF20/RF30)</h4>
+            <p>Padronizacao de tipos (inteiros, decimais, timestamps), deduplicacao e reconciliacao de Golden Record. Registros anomalos sao desviados para <code>quarentena.registros</code> (8 inconsistencias isoladas com payload e motivo intactos).</p>
+          </div>
+          <div class="stage-metric">
+            <div class="metric-val">3.000 / 8</div>
+            <div class="metric-lbl">Silver / Quarentena</div>
+          </div>
+        </div>
+
+        <!-- Lakehouse Parquet -->
+        <div class="pipeline-stage stage-parquet" style="border-left: 6px solid var(--accent);">
+          <div>
+            <span class="stage-badge" style="background: #e0f2fe; color: #0284c7;">Data Lakehouse</span>
+            <div class="stage-name">Parquet Hive Snappy</div>
+            <div class="stage-tech">PyArrow + Particionamento</div>
+          </div>
+          <div class="stage-body">
+            <h4>Armazenamento Colunar de Alta Eficiencia (RF24)</h4>
+            <p>Exportacao estruturada no padrao Hive <code>ano=YYYY/mes=MM/part-0.parquet</code>. Reducao comprovada de 72,16% no tamanho comparado ao CSV e 89,44% comparado ao JSON, viabilizando partition pruning e pushdown de colunas.</p>
+          </div>
+          <div class="stage-metric">
+            <div class="metric-val">-72,16%</div>
+            <div class="metric-lbl">Compressao Snappy</div>
+          </div>
+        </div>
+
+        <!-- Gold -->
+        <div class="pipeline-stage stage-gold">
+          <div>
+            <span class="stage-badge">Estagio 4: Gold</span>
+            <div class="stage-name">Agregacoes Analiticas</div>
+            <div class="stage-tech">Apache Beam + Quality Gate</div>
+          </div>
+          <div class="stage-body">
+            <h4>Calculo Distribuido e Quality Gate Bloqueador (RF25/RF26/RF31)</h4>
+            <p>Pipeline Beam computa 64 agregacoes mensais em <code>kpis_mensais_categoria</code> e consolida 1.000 linhas em <code>desempenho_conteudos</code>. A gravacao e condicionada a 100% de aprovacao nos testes criticos de qualidade.</p>
+          </div>
+          <div class="stage-metric">
+            <div class="metric-val">1.064</div>
+            <div class="metric-lbl">Registros Gold</div>
+          </div>
+        </div>
+
+        <!-- Consumo e Governanca -->
+        <div class="pipeline-stage stage-governance">
+          <div>
+            <span class="stage-badge">Estagio 5: Consumo</span>
+            <div class="stage-name">BI & Governanca</div>
+            <div class="stage-tech">Superset + OpenMetadata</div>
+          </div>
+          <div class="stage-body">
+            <h4>Visualizacao Executiva e Conformidade LGPD (RF16-RF18, RF27-RF33)</h4>
+            <p>Dashboards com cross-filtering e alertas automatizados no Superset. Catalogo com 13 tabelas, 4 Tiers, glossario formal, mascaramento LGPD e 19 arestas de linhagem rastreadas no OpenMetadata.</p>
+          </div>
+          <div class="stage-metric">
+            <div class="metric-val">19 Arestas</div>
+            <div class="metric-lbl">Linhagem Completa</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. Classificacao Hibrida ETL + ELT -->
+    <section class="arch-section">
+      <div class="section-title">
+        <span class="step-badge">2</span>
+        <h2>Classificacao Arquitetural: A Abordagem Hibrida (ETL + ELT)</h2>
+      </div>
+      <p class="section-desc">
+        O projeto adota uma classificacao formal de <strong>Arquitetura Hibrida</strong>, equilibrando seguranca e saneamento antecipado na entrada com flexibilidade e poder de computacao distribuida no core:
+      </p>
+
+      <div class="dual-grid">
+        <div class="dual-box etl">
+          <h3 class="dual-title">1. ETL na Borda (Ingestao no Apache Hop)</h3>
+          <p class="dual-text">
+            <strong>Escopo:</strong> Da camada de Fontes Brutas ate a Camada Silver.<br><br>
+            <strong>Justificativa Tecnica:</strong> As fontes externas (CSV, JSON, MongoDB) possuem inconsistencias severas, valores nulos e ids corrompidos. Tratar os dados <em>antes</em> de grava-los na Silver impede a contaminacao do banco analitico e assegura que dados invalidos sejam desviados para a quarentena com rastreabilidade total.
+          </p>
+        </div>
+
+        <div class="dual-box elt">
+          <h3 class="dual-title">2. ELT no Core (Lakehouse Parquet e Apache Beam)</h3>
+          <p class="dual-text">
+            <strong>Escopo:</strong> Da Camada Silver ate a Camada Gold.<br><br>
+            <strong>Justificativa Tecnica:</strong> Os dados validados sao exportados diretamente em formato bruto colunar particionado (Parquet). O motor analitico (Apache Beam e Apache Spark) carrega o dataset integral no lake e executa transformacoes, agrupamentos e calculos de KPIs sob demanda, sem refazer a ingestao primaria.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Matriz de Trade-offs com Evidencias do Sistema -->
+    <section class="arch-section">
+      <div class="section-title">
+        <span class="step-badge">3</span>
+        <h2>Matriz de Trade-offs e Decisoes de Engenharia (RF19)</h2>
+      </div>
+      <p class="section-desc">
+        Cada escolha arquitetural foi fundamentada em testes comparativos e requisitos operacionais mensuraveis:
+      </p>
+
+      <div class="table-frame">
+        <table>
+          <thead>
+            <tr>
+              <th>Dimensoes de Trade-off</th>
+              <th>Decisao Implementada</th>
+              <th>Alternativa Rejeitada</th>
+              <th>Evidencia / Justificativa Concreta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Custo de Storage</strong></td>
+              <td>Parquet particionado Snappy</td>
+              <td>JSON ou CSV bruto em disco</td>
+              <td>Reducao comprovada de <strong>72,16% vs CSV</strong> (36 KB vs 129 KB) e <strong>89,44% vs JSON</strong> (36 KB vs 341 KB) no benchmark homologado.</td>
+            </tr>
+            <tr>
+              <td><strong>Desempenho de Leitura</strong></td>
+              <td>Pushdown de projecao e particao</td>
+              <td>Full Table Scans no banco relacional</td>
+              <td>Consultas analiticas leem somente colunas solicitadas, diminuindo o tempo de I/O de 2,26 ms (CSV) para 1,08 ms (Parquet).</td>
+            </tr>
+            <tr>
+              <td><strong>Governanca de Dados</strong></td>
+              <td>OpenMetadata via API REST (Code)</td>
+              <td>Planilhas manuais ou Airflow pesado</td>
+              <td>13 entidades catalogadas com Owner 'admin', 4 Tiers, 4 termos no glossario e economia de mais de 3 GB de RAM ao dispensar containers lentos.</td>
+            </tr>
+            <tr>
+              <td><strong>Qualidade de Dados</strong></td>
+              <td>Quality Gate com bloqueio de Gold</td>
+              <td>Carga permissiva sem validacao</td>
+              <td>5 dimensoes testadas (Completude, Validade, Unicidade, Consistencia e Referencial); bloqueio de 75% comprovado em cenarios de teste anomalos.</td>
+            </tr>
+            <tr>
+              <td><strong>Reprocessamento</strong></td>
+              <td>Particionamento Hive idempotente</td>
+              <td>Carga incremental monolitica</td>
+              <td>Reprocessar um mes especifico exige reescrever somente o diretorio <code>ano=YYYY/mes=MM</code>, sem impacto ou lock nas particoes dos demais meses.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 4. Comparativo com o Desafio 1 -->
+    <section class="arch-section">
+      <div class="section-title">
+        <span class="step-badge">4</span>
+        <h2>Evolucao Arquitetural: Do Legado (Desafio 1) ao Lakehouse (Desafio 2)</h2>
+      </div>
+
+      <div class="compare-grid">
+        <div class="compare-card legacy">
+          <div class="compare-title">Desafio Pratico 1 (Legado)</div>
+          <div class="compare-val">Scripts Desacoplados</div>
+          <p class="compare-desc">
+            Execucoes pontuais de scripts Python via linha de comando, sem orquestracao visual, sem metadados de auditoria em camadas, sem isolamento de quarentena e sem catalogo central de dados.
+          </p>
+        </div>
+
+        <div class="compare-card modern">
+          <div class="compare-title">Desafio Pratico 2 (Atual)</div>
+          <div class="compare-val">Pipeline Lakehouse Integrado</div>
+          <p class="compare-desc">
+            Orquestracao visual reproduzivel no Apache Hop, esteira distribuida em Apache Beam, armazenamento colunar Parquet particionado, bloqueio automatico por Quality Gate e governanca ponta a ponta no OpenMetadata.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Rodape Executivo -->
+  <footer class="page-footer">
+    <div>
+      <strong>FIC_DEV — Fundamentos de Dados para IA</strong> &bull; Desafio Pratico 2
+    </div>
+    <div>
+      Documentacao Tecnica Homologada &bull; 98/98 Testes Automatizados Concluidos
+    </div>
+  </footer>
+
+  <script>
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'p' || e.key === 'P') {
+        window.print();
+      }
+    });
+  </script>
+</body>
+</html>

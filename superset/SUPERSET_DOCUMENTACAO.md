@@ -4,7 +4,7 @@ Este documento detalha a construção das visualizações, do storytelling execu
 
 ---
 
-## 📊 Requisito 16 — Storytelling Executivo com Dados
+## Requisito 16 — Storytelling Executivo com Dados
 
 ### 1. Pergunta Decisória Central
 > *"A alta demanda pelos formatos mais consumidos da plataforma traduz-se em retenção e conclusão efetiva, ou estamos gerando volume de acessos sem engajamento real?"*
@@ -37,7 +37,7 @@ A narrativa foi dividida em uma sequência lógica de 3 gráficos encadeados:
 
 ---
 
-## 📈 Requisito 17 — Visualizações Específicas do SQL Lab
+## Requisito 17 — Visualizações Específicas do SQL Lab
 
 Para garantir análises complementares ao Storytelling, foram desenvolvidas visualizações nativas baseadas em consultas virtuais executadas no SQL Lab:
 
@@ -54,7 +54,7 @@ Para garantir análises complementares ao Storytelling, foram desenvolvidas visu
 
 ---
 
-## ⚙️ Requisito 18 — Filtros Cruzados e Alertas no Superset
+## Requisito 18 — Filtros Cruzados e Alertas no Superset
 
 ### 1. Interatividade por Filtro Cruzado (*Cross-Filtering*)
 * **Configuração:** Recurso habilitado nas propriedades globais do Dashboard (`Enable cross-filtering`).
@@ -91,7 +91,7 @@ Disponibilizados no painel lateral esquerdo (*Filter Bar*):
 
 ---
 
-## 📁 Localização dos Pacotes e Evidências
+## Localização dos Pacotes e Evidências
 
 Todos os pacotes de exportação e capturas de tela foram consolidados e padronizados no diretório [`dashboard/`](../dashboard/):
 - **Pacotes ZIP de Exportação:**

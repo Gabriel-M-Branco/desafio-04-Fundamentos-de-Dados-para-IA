@@ -67,7 +67,7 @@ flowchart TD
     H2 -- "Inválidos" --> H3
     H1 --> H4
     H2 --> H4
-    H2 -. "Orquestração Ponta a Ponta" .-> GOLD
+    H2 -. "Prepara DDL e Handoff" .-> GOLD
 
     PG_RAW --> MG
     PG_RAW --> EMB
@@ -111,18 +111,21 @@ docker compose up -d
 
 # 5. Executar o fluxo ponta a ponta de dados e IA
 python -m src.main                                      # Carga base, pgvector e recomendações IA
-docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh \
-  --environment desafio4-dev --project desafio4 \
-  --file /files/workflows/workflow_principal.hwf \
-  --runconfig local --level BASIC                       # Ingestão Bronze/Silver e DDL Gold no Hop
-python -m src.executar_etapas --etapa todas             # Parquet Hive, Testes de Qualidade (RF31) e Beam
+
+# Ingestão Bronze/Silver e DDL Gold no Apache Hop (escolha uma das duas opções):
+# Opção A (Terminal / Headless via Docker - compatível com PowerShell e Bash):
+docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh --environment desafio4-dev --project desafio4 --file /files/workflows/workflow_principal.hwf --runconfig local --level BASIC
+# Opção B (Navegador via Hop Web): acesse http://localhost:8080 e execute workflow_principal.hwf
+
+# Pipeline analítico, Particionamento Parquet Hive, Testes RF31, LGPD e Apache Beam:
+python -m src.executar_etapas --etapa todas
 
 # 6. Governança, Metadados e Sincronização Analítica
 python scripts/demonstrar_dados_mestres.py              # MDM / Golden Record (RF30)
 python scripts/configurar_openmetadata.py               # Catálogo, Glossário e Linhagem 5 pontas (RF27-RF29)
 python dashboard/sync_database.py                       # Importação dos dashboards no Apache Superset (RF16-RF18)
 
-# 7. Executar a suíte com 94 testes automatizados
+# 7. Executar a suíte completa com 98 testes automatizados
 python -m pytest tests/
 ```
 
@@ -245,40 +248,39 @@ python -m src.main
 
 > Este comando garante a presença das referências em `public.usuarios` e `public.conteudos`, que são validadas na etapa de integridade referencial do Apache Hop.
 
-#### Etapa B: Ingestão e Orquestração Ponta a Ponta no Apache Hop (RF20 a RF23 e RF26)
-O Apache Hop executa o workflow integrado mestre `workflow_principal.hwf`, que lê os arquivos de `dados/brutos/`, grava a camada bruta com metadados de auditoria em `bronze.*`, valida e tipa em `silver.*`, isola inconsistências em `quarentena.registros`, aplica o DDL analítico [sql/camada_gold.sql](sql/camada_gold.sql) e consolida os KPIs da camada `gold.*` no PostgreSQL com rastreabilidade total no schema `controle`.
+#### Etapa B: Ingestão e Governança de Borda no Apache Hop (RF20 a RF23 e RF26)
+O Apache Hop executa o workflow integrado mestre `workflow_principal.hwf`, que lê os arquivos de `dados/brutos/`, grava a camada bruta com metadados de auditoria em `bronze.*`, valida e padroniza em `silver.*`, isola inconsistências em `quarentena.registros`, provisiona o DDL analítico [sql/camada_gold.sql](sql/camada_gold.sql) e registra no schema `controle` a prontidão dos dados e o handoff para a esteira analítica distribuída.
 
 Você pode rodá-lo por **qualquer uma das opções**:
 
 - **Opção 1 — Pela Interface Web (Hop Web no Navegador — Play):**
   1. Acesse no navegador: [http://localhost:8080](http://localhost:8080).
   2. Na árvore de arquivos à esquerda (pasta `default`), dê dois cliques na pasta **`workflows`** e abra **`workflow_principal.hwf`** (ou use o ícone de pasta amarela no menu superior para abrir).
-  3. Com o fluxograma aberto na tela, clique no ícone de **Play (▶ Executar)** na barra superior do fluxo.
+  3. Com o fluxograma aberto na tela, clique no ícone de **Play (Executar)** na barra superior do fluxo.
   4. Na janela de diálogo, selecione a run configuration **`local`** e clique em **Launch**.
   
 - **Opção 2 — Pela Linha de Comando (Headless via Docker):**
   ```bash
-  docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh \
-    --environment desafio4-dev \
-    --project desafio4 \
-    --file /files/workflows/workflow_principal.hwf \
-    --runconfig local \
-    --level BASIC
+  docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh --environment desafio4-dev --project desafio4 --file /files/workflows/workflow_principal.hwf --runconfig local --level BASIC
   ```
 
-#### Etapa C: Formato Colunar Parquet, Qualidade de Dados e Apache Beam (RF24, RF25 e RF31)
-Com as camadas Bronze, Silver e Gold povoadas no PostgreSQL, execute a esteira analítica distribuída e os testes de qualidade:
+#### Etapa C: Formato Colunar Parquet, Qualidade de Dados, LGPD e Apache Beam (RF24, RF25, RF31, RF32/RF33)
+Com a camada Silver validada e as estruturas analíticas preparadas, execute a esteira de processamento colunar Parquet, qualidade de dados e computação da camada Gold via Apache Beam:
 
 ```bash
 python -m src.executar_etapas --etapa todas
 ```
 
-O orquestrador executará de forma encadeada:
-1. **RF24 (Parquet Hive):** Exporta 1.000 registros para partição colunar (`dados/parquet/interacoes/particionado/ano=2026/mes=MM/`).
-2. **RF24 (Benchmark):** Executa o teste comparativo de performance de leitura colunar (Parquet vs CSV vs JSON).
-3. **RF31 (Qualidade de Dados):** Executa os 5 testes corporativos (Completude, Validade, Unicidade, Consistência e Integridade Referencial) com barreira bloqueadora (*Quality Gate*).
-4. **RF25 (Apache Beam):** Agrega os KPIs analíticos mensais e de desempenho via DirectRunner e avalia o cluster Spark, gravando em Parquet analítico.
-5. **RF26 (Camada Gold):** Sincroniza e consolida as tabelas analíticas no PostgreSQL e atualiza as amostras físicas em `dados/gold/`.
+O orquestrador modular executará de forma encadeada:
+1. **RF20 a RF23 (Ingestão Integrada & Quarentena):** Ingesta os dados brutos e avalia simultaneamente a suíte de cenários de teste em `dados/brutos/cenarios_de_teste/`. Os registros inválidos (completude com campos nulos, notas 7.5 ou -1.0, conclusões de 150%, duplicatas de chave e integridade referencial com chaves órfãs) são identificados pelas regras de validação e segregados para a Quarentena (`quarentena.registros` no PostgreSQL e `dados/quarentena/quarentena_RUN_INTEGRADO_BRONZE_SILVER.json`), garantindo que apenas dados 100% limpos cheguem à Silver.
+2. **RF24 (Parquet Hive):** Exporta os registros limpos da Silver para formato colunar particionado (`dados/parquet/interacoes/particionado/ano=2026/mes=MM/`).
+3. **RF24 (Benchmark):** Executa o teste comparativo de performance de leitura colunar (Parquet vs CSV vs JSON com 5 repetições).
+4. **RF31 (Qualidade de Dados / Quality Gate):**
+   - **Camada Silver (Produção):** Avalia as 5 dimensões corporativas (Completude, Validade, Unicidade, Consistência e Integridade Referencial). Resultado: `APROVADO_INTEGRAL` e `bloquear_publicacao_gold = False` (liberando a publicação da camada Gold).
+   - **Cenários de Teste (Governança e Falhas):** Submete os dados brutos defeituosos ao motor de qualidade oficial. Resultado: `REPROVADO_CRITICO` e `bloquear_publicacao_gold = True`, gerando o relatório diagnóstico `dados/processados/qualidade_cenarios_teste.json` e comprovando em tempo de execução que dados corrompidos ativam a barreira de segurança (*Quality Gate*).
+5. **RF32 e RF33 (Proteção de Dados e LGPD):** Demonstra em tempo real as técnicas de privacidade aplicadas aos dados dos cenários: mascaramento dinâmico de nomes de autores, pseudonimização determinística via UUIDv5 e hashing criptográfico irreversível com salt via HMAC-SHA256.
+6. **RF25 (Apache Beam e Runtimes):** Agrega os KPIs analíticos mensais e de desempenho via DirectRunner e avalia o cluster Spark, gravando em Parquet analítico (`dados/parquet/gold/kpis_mensais_categoria.parquet`).
+7. **RF26 (Camada Gold):** Sincroniza e consolida as tabelas analíticas no PostgreSQL (`gold.kpis_mensais_categoria`, `gold.desempenho_conteudos` e visões executivas) e atualiza as amostras físicas em `dados/gold/`.
 
 #### Etapa D: Dados Mestres (MDM) e Governança no OpenMetadata (RF27 a RF30)
 Para consolidar a resolução de conflitos cadastrais e catalogar os metadados técnicos e termos de negócio:
@@ -328,7 +330,7 @@ python -c "from src.config import carregar_config; from src.database.mongo impor
 ```
 
 ### 3. Testes Automatizados da Aplicação
-Execute a suíte com **94 testes automatizados**:
+Execute a suíte com **98 testes automatizados**:
 ```bash
 python -m pytest tests/
 ```
@@ -344,7 +346,7 @@ O Apache Superset é a interface oficial de consumo dos tomadores de decisão pe
 2. **Como Visualizar os Dashboards (Suporte Dual):**
    * No menu superior, clique em **Dashboards**.
    * Estão disponíveis e homologados ambos os painéis analíticos:
-     - **`Dashboard - Desafio 4` (Principal / RF16 a RF18):** Painel executivo oficial do Desafio 4 focado na narrativa de Storytelling pedagógico, retenção por tipo de conteúdo, evasão em cursos, interatividade por filtros cruzados, datasets virtuais do SQL Lab e alertas de negócio. Consome dados agregados das camadas analíticas `gold` (`kpis_mensais_categoria`, `desempenho_conteudos`, `vw_ranking_conteudos_engajamento`) e `silver`, blindando o banco relacional contra consultas analíticas pesadas.
+     - **`Dashboard - Desafio 4` (Principal / RF16 a RF18):** Painel executivo oficial do Desafio 4 focado na narrativa de Storytelling pedagógico, retenção por tipo de conteúdo, evasão em cursos, interatividade por filtros cruzados, datasets virtuais do SQL Lab e alertas de negócio. Consome dados agregados exclusivamente da camada analítica `gold` (`kpis_mensais_categoria`, `desempenho_conteudos`, `vw_ranking_conteudos_engajamento`), blindando o banco relacional contra consultas analíticas nas camadas Bronze e Silver.
      - **`Dashboard - Desafio 3` (Legado):** Painel analítico construído na etapa anterior, preservado para rastreabilidade histórica, consumindo os datasets do schema `public` (`usuarios`, `conteudos`, `interacoes`, `recomendacoes`).
    * **Importação Automatizada:** O script [`dashboard/sync_database.py`](dashboard/sync_database.py) importa automaticamente ambos os pacotes de exportação (`dashboard_desafio_3.zip` e `dashboard_desafio_4.zip`) para a instância do Superset, mantendo os dois disponíveis simultaneamente.
 
@@ -510,7 +512,7 @@ desafio-04-Fundamentos-de-Dados-para-IA/
 │   ├── parquet/             # Exportador particionado e benchmark colunar
 │   ├── qualidade/           # Motor de avaliação das 5 dimensões de qualidade
 │   └── recomendacao/        # Embeddings com SentenceTransformers e busca semântica
-├── tests/                   # Suíte de 94 testes automatizados (Pytest)
+├── tests/                   # Suíte de 98 testes automatizados (Pytest)
 ├── docker-compose.yml       # Orquestração de todos os serviços conteinerizados
 ├── requirements.txt         # Dependências Python versionadas
 ├── .env.example             # Modelo de configuração de variáveis de ambiente
@@ -523,6 +525,8 @@ desafio-04-Fundamentos-de-Dados-para-IA/
 
 Para aprofundamento técnico em cada módulo específico, consulte:
 
+- [`documentacao/roteiro_apresentacao.md`](documentacao/roteiro_apresentacao.md): **Roteiro oficial de apresentação prática (12 a 15 minutos)**, divisão temporal, telas recomendadas e checkpoints ao vivo.
+- [`documentacao/arquitetura_etl_elt.md`](documentacao/arquitetura_etl_elt.md): Fundamentação formal da Arquitetura Híbrida (ETL na borda com Hop e ELT no Core com Beam).
 - [`documentacao/especificacao_tecnica.md`](documentacao/especificacao_tecnica.md): Especificação de modelagem relacional, pgvector e motor de recomendação.
 - [`documentacao/benchmark_parquet.md`](documentacao/benchmark_parquet.md): Metodologia e resultados do benchmark empírico Parquet vs CSV vs JSON.
 - [`documentacao/execucao_beam_spark.md`](documentacao/execucao_beam_spark.md): Comparação de runtimes Apache Beam (DirectRunner vs Spark) e compatibilidade de ambiente.

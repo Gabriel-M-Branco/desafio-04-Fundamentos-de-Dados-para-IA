@@ -27,7 +27,7 @@ graph LR
     subgraph S1["1. Fontes de Origem (Raw Files & NoSQL)"]
         F1["fontes.catalogo_csv<br/>(Arquivo CSV de Catálogo)"]
         F2["fontes.interacoes_json<br/>(Logs JSON de Telemetria)"]
-        F3["fontes.comentarios_mongodb<br/>(Coleção NoSQL MongoDB)"]
+        F3["ficdev_mongodb.comentarios<br/>(Coleção NoSQL MongoDB)"]
     end
 
     subgraph S2["2. Camada Bronze (Ingestão & Auditoria Hop - RF20)"]
@@ -104,7 +104,7 @@ O conceito de **KPI (Key Performance Indicator)** no OpenMetadata atua em três 
 | :-: | :--- | :--- | :--- | :---: |
 | 1 | `fontes.catalogo_csv` | `bronze.catalogo_raw` | Carga de arquivo bruto com carimbo técnico de auditoria (Hop) | RF20 |
 | 2 | `fontes.interacoes_json` | `bronze.interacoes_raw` | Parsing de eventos JSON com geração de UUID de execução (Hop) | RF20 |
-| 3 | `fontes.comentarios_mongodb` | `bronze.comentarios_raw` | Extração da coleção NoSQL e inserção bruta relacional (Hop) | RF20 |
+| 3 | `ficdev_mongodb.public.comentarios` | `bronze.comentarios_raw` | Extração da coleção NoSQL MongoDB e inserção bruta relacional (Hop) | RF20 |
 | 4 | `bronze.catalogo_raw` | `silver.catalogo` | Limpeza, tipagem estrita e reconciliação MDM (Hop / Golden Record) | RF20 / RF30 |
 | 5 | `bronze.interacoes_raw` | `silver.interacoes` | Conversão temporal, validação de intervalos e deduplicação (Hop) | RF20 |
 | 6 | `bronze.comentarios_raw` | `silver.comentarios` | Normalização de notas 1-5 e sanitização de texto livre (Hop) | RF20 |
@@ -206,32 +206,41 @@ Você pode visualizar o grafo completo a partir de múltiplos pontos de entrada:
 
 ---
 
-### Passo 4: Conferir o Preenchimento dos Metadados em Silver e Gold (RF27 a RF29)
+### Passo 4: Conferir o Preenchimento dos Metadados em Todas as Camadas (RF27 a RF29)
 
-Na interface web do OpenMetadata, todos os campos foram enriquecidos e populados:
+Na interface web do OpenMetadata, todos os campos e ativos foram enriquecidos e populados:
 
 #### 1. Atribuição de Proprietário (Owner) e Nível de Criticidade (Tier) (RF27)
 - Em **Explore** $\rightarrow$ **Tables**:
-  - Tabelas **Gold** (`kpis_mensais_categoria`, `desempenho_conteudos`, `vw_ranking_conteudos_engajamento`):
-    - **Owner:** `admin` (Equipe de Engenharia de Dados FIC_DEV).
-    - **Tag de Criticidade:** `Tier.Tier1` (Ativo crítico de verdade única para suporte a decisões de negócio e BI).
-  - Tabelas **Silver** (`catalogo`, `interacoes`, `comentarios`):
+  - **Camada Gold (Tier 1):** Tabelas e visões `kpis_mensais_categoria`, `desempenho_conteudos`, `vw_ranking_conteudos_engajamento` e `dataset_virtual_sqllab`.
+    - **Owner:** `admin` (Equipe de Engenharia e Governança FIC_DEV).
+    - **Tag de Criticidade:** `Tier.Tier1` (Ativos críticos de verdade única para suporte a decisões de negócio e BI executivo).
+  - **Camada Silver (Tier 2):** Tabelas `catalogo`, `interacoes` e `comentarios`.
     - **Owner:** `admin`.
-    - **Tag de Criticidade:** `Tier.Tier2` (Ativo de dados curados, padronizados e homologados).
+    - **Tag de Criticidade:** `Tier.Tier2` (Ativos de dados curados, padronizados, tipados e homologados).
+  - **Camada Bronze (Tier 3):** Tabelas `catalogo_raw`, `interacoes_raw` e `comentarios_raw`.
+    - **Owner:** `admin`.
+    - **Tag de Criticidade:** `Tier.Tier3` (Ingestão bruta com auditoria e campos técnicos do Apache Hop).
+  - **Camada Fontes (Tier 4):** Entidades `catalogo_csv`, `interacoes_json` e `ficdev_mongodb.comentarios`.
+    - **Owner:** `admin`.
+    - **Tag de Criticidade:** `Tier.Tier4` (Fontes brutas de origem e telemetria externa).
+  - **Dashboard e Schemas:**
+    - O dashboard `desafio_4_dashboard`, o banco `ficdev_recomendacao`, os schemas (`gold`, `silver`, `bronze`, `fontes`), os serviços e o glossário possuem **Owner:** `admin`. O dashboard e schema Gold são classificados como `Tier.Tier1`.
 
 #### 2. Vínculo dos Termos de Glossário às Colunas Analíticas (RF28)
 - Abra **`gold.kpis_mensais_categoria`** e inspecione as colunas:
   - `usuarios_ativos`: Tag de Glossário **`Glossario_Educacional_FICDEV.Usuario_Ativo`** vinculada diretamente, exibindo a fórmula `COUNT(DISTINCT usuario_id)` e o responsável didático.
   - `taxa_conclusao_pct`: Tag de Glossário **`Glossario_Educacional_FICDEV.Taxa_Conclusao`**, exibindo a regra `ROUND((SUM(total_conclusoes)::NUMERIC / NULLIF(SUM(total_inicios), 0)) * 100, 2)`.
   - `tempo_medio_min`: Tag de Glossário **`Glossario_Educacional_FICDEV.Tempo_Medio_Consumo`**, detalhando o cômputo da média aritmética em minutos.
-- Abra **`gold.desempenho_conteudos`** e **`gold.vw_ranking_conteudos_engajamento`**:
-  - Ambas com o termo **`Glossario_Educacional_FICDEV.Taxa_Conclusao`** associado à coluna correspondente.
+- Abra **`gold.desempenho_conteudos`**, **`gold.vw_ranking_conteudos_engajamento`** e **`gold.dataset_virtual_sqllab`**:
+  - Ambas com o termo **`Glossario_Educacional_FICDEV.Taxa_Conclusao`** associado à coluna de taxa de conclusão/conversão.
+  - Na coluna `ranking_categoria` de `vw_ranking_conteudos_engajamento`: Termo **`Glossario_Educacional_FICDEV.Conversao_Recomendacao`** vinculado diretamente.
 
 #### 3. Classificação de Privacidade LGPD nas Colunas (RF28 / RF32)
-- Nas tabelas Silver e Gold, as colunas com atributos identificáveis possuem a tag azul **`PII.Sensitive`**:
-  - `silver.catalogo.autor` e `gold.desempenho_conteudos.autor` (Dado pessoal sujeito a mascaramento J*** D**).
-  - `silver.interacoes.usuario_id` e `silver.comentarios.usuario_id` (Dado pessoal pseudonimizado com UUIDv5).
-  - `silver.comentarios.comentario` (Texto livre com possíveis opiniões subjetivas e identificadores indiretos).
+- Em todas as camadas do pipeline (Fontes, Bronze, Silver e Gold), as colunas com atributos identificáveis possuem a tag **`PII.Sensitive`**:
+  - `autor` em `fontes.catalogo_csv`, `bronze.catalogo_raw`, `silver.catalogo` e `gold.desempenho_conteudos` (Dado pessoal sujeito a mascaramento J*** D**).
+  - `usuario_id` em `fontes.interacoes_json`, `bronze.interacoes_raw`, `silver.interacoes`, `ficdev_mongodb.public.comentarios`, `bronze.comentarios_raw` e `silver.comentarios` (Dado pessoal pseudonimizado com UUIDv5).
+  - `comentario` em `ficdev_mongodb.public.comentarios`, `bronze.comentarios_raw` e `silver.comentarios` (Texto livre com possíveis opiniões subjetivas e identificadores indiretos).
 
 #### 4. Grafo de Linhagem Gráfica de 5 Pontas (RF29)
 - Na aba **Lineage** de qualquer tabela Silver, Gold ou do Dashboard Superset, o grafo visual interativo conecta ininterruptamente:
