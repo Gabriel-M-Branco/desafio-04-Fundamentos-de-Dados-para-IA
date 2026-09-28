@@ -10,133 +10,169 @@
 ## 1. Visão Geral e Arquitetura de Governança
 
 O **OpenMetadata** atua como o repositório central de governança, metadados técnicos e semânticos da plataforma FIC_DEV. Ele resolve os problemas de:
-1. **Pântano de Dados (*Data Swamp* — RF27):** Impede o consumo de tabelas desordenadas e fontes não auditadas. Apenas os esquemas homologados (`silver` e `gold`) são catalogados com donos (*owners*) e descrições técnicas obrigatórias.
+1. **Pântano de Dados (*Data Swamp* — RF27):** Impede o consumo de tabelas desordenadas e fontes não auditadas. Todos os esquemas das camadas Medalhão (`fontes`, `bronze`, `silver` e `gold`) são catalogados com donos (*owners*), contratos DDL e descrições técnicas obrigatórias.
 2. **Ambiguidade Semântica (RF28):** Institui o Glossário de Negócio corporativo com 4 termos padronizados, vinculados diretamente às colunas das tabelas da camada Gold.
-3. **Opacidade de Origem e Rastreabilidade (*Lineage* — RF29):** Garante a auditabilidade ponta a ponta por meio de um grafo de linhagem que conecta a origem na camada Silver aos modelos agregados da camada Gold.
+3. **Linhagem Completa Ponta a Ponta (*Data Lineage* — RF29):** Garante a auditabilidade de 5 pontas, mapeando visualmente todo o ciclo de vida da informação:
+   $$\text{Fontes de Origem} \longrightarrow \text{Bronze (Raw)} \longrightarrow \text{Silver (Curated)} \longrightarrow \text{Gold (KPIs/Views)} \longrightarrow \text{Dashboard (Apache Superset)}$$
 4. **Proteção à Privacidade e LGPD (RF32):** Classifica colunas com atributos identificáveis com a taxonomia corporativa `PII.Sensitive`.
 
 ---
 
-## 2. Abordagem de Integração: Por que via API REST (*Metadata as Code*)?
+## 2. Linhagem de Dados Ponta a Ponta (RF29)
 
-### O Desafio de Recursos do Docker e o "Test Connection"
-Ao tentar cadastrar o conector PostgreSQL manualmente clicando no botão **"Test Connection"** da interface web, a interface retorna o erro:
-```text
-Failed to deploy pipeline [...] due to [No response from the test connection. Make sure your service is reachable and accepting connections]
+Em conformidade estrita com o **RF29**, a plataforma mapeia no OpenMetadata a linhagem completa desde os dados de origem até a camada analítica de consumo no Apache Superset:
+
+```mermaid
+graph LR
+    subgraph S1["1. Fontes de Origem (Raw Files & NoSQL)"]
+        F1["fontes.catalogo_csv<br/>(Arquivo CSV de Catálogo)"]
+        F2["fontes.interacoes_json<br/>(Logs JSON de Telemetria)"]
+        F3["fontes.comentarios_mongodb<br/>(Coleção NoSQL MongoDB)"]
+    end
+
+    subgraph S2["2. Camada Bronze (Ingestão & Auditoria Hop - RF20)"]
+        B1["bronze.catalogo_raw<br/>(_origem, _ingestao_em, _run_id)"]
+        B2["bronze.interacoes_raw<br/>(_origem, _ingestao_em, _run_id)"]
+        B3["bronze.comentarios_raw<br/>(_origem, _ingestao_em, _run_id)"]
+    end
+
+    subgraph S3["3. Camada Silver (Curadoria, Tipagem & MDM - RF20/RF30)"]
+        SIL1["silver.catalogo<br/>(Catálogo Homologado / Golden Record)"]
+        SIL2["silver.interacoes<br/>(Eventos Desduplicados e Tipados)"]
+        SIL3["silver.comentarios<br/>(Avaliações Sanitizadas)"]
+    end
+
+    subgraph S4["4. Camada Gold (Modelos Analíticos Beam & Views - RF26)"]
+        G1["gold.kpis_mensais_categoria<br/>(Métricas Mensais Beam/Parquet)"]
+        G2["gold.desempenho_conteudos<br/>(Métricas por Conteúdo Beam/Parquet)"]
+        G3["gold.vw_ranking_conteudos_engajamento<br/>(View Analítica de Ranking)"]
+    end
+
+    subgraph S5["5. Consumo Analítico (Apache Superset - RF16 a RF18)"]
+        DASH["ficdev_superset.desafio_4_dashboard<br/>(Dashboard Executivo FIC_DEV)"]
+    end
+
+    %% Etapa 1 -> 2
+    F1 -->|Ingestão Hop| B1
+    F2 -->|Ingestão Hop| B2
+    F3 -->|Ingestão Hop| B3
+
+    %% Etapa 2 -> 3
+    B1 -->|Padronização Hop| SIL1
+    B2 -->|Validação Hop| SIL2
+    B3 -->|Sanitização Hop| SIL3
+
+    %% Etapa 3 -> 4
+    SIL1 -->|Apache Beam| G1
+    SIL2 -->|Apache Beam| G1
+    SIL1 -->|Consolidação Gold| G2
+    SIL2 -->|Consolidação Gold| G2
+    SIL3 -->|Consolidação Gold| G2
+    SIL1 -->|View Analítica| G3
+    SIL2 -->|View Analítica| G3
+
+    %% Etapa 4 -> 5
+    G1 -->|Consumo Analítico| DASH
+    G2 -->|Consumo Analítico| DASH
+    G3 -->|Consumo Analítico| DASH
 ```
 
-**Diagnóstico Técnico:**
-- A interface web do OpenMetadata não executa testes de conexão diretamente pelo seu servidor Java principal. Ela despacha um DAG para um container auxiliar do **Apache Airflow / Ingestion Framework**.
-- No ambiente deste projeto, para que os estudantes possam executar PostgreSQL, MongoDB, Hop, Beam e Superset simultaneamente sem estourar a memória RAM da máquina (o que exigiria mais de 4 GB adicionais apenas para o Airflow), a ingestão agendada foi desabilitada no `docker-compose.yml` (`PIPELINE_SERVICE_CLIENT_ENABLED: "false"`).
+### Detalhamento das 16 Arestas de Linhagem Registradas
 
-### A Solução Corporativa: *Metadata as Code* via API REST v1
-Adotou-se o padrão da indústria de **Governança como Código (*Metadata as Code*)**. O script Python [`scripts/configurar_openmetadata.py`](../scripts/configurar_openmetadata.py) interage diretamente com a API REST oficial do OpenMetadata (`http://localhost:8585/api/v1`), realizando o provisionamento completo de forma idempotente, auditável e instantânea.
-
----
-
-## 3. Mapeamento das Chamadas à API REST
-
-O script [`scripts/configurar_openmetadata.py`](../scripts/configurar_openmetadata.py) implementa o seguinte fluxo de chamadas HTTP:
-
-| Etapa | Método | Endpoint da API | Ação Executada | Requisito |
-| :--- | :---: | :--- | :--- | :---: |
-| **1. Autenticação** | `POST` | `/api/v1/users/login` | Envia credenciais administrativas (`admin@openmetadata.org` / `admin` em Base64) e obtém token JWT Bearer. | RF15 / RF27 |
-| **2. Serviço Postgres** | `POST` | `/api/v1/services/databaseServices` | Registra o serviço de banco de dados `ficdev_postgres` apontando para o host interno `postgres:5432`. | RF27 |
-| **3. Database** | `POST` | `/api/v1/databases` | Registra a base de dados lógica `ficdev_postgres.ficdev_recomendacao`. | RF27 |
-| **4. Schemas** | `POST` | `/api/v1/databaseSchemas` | Cria os esquemas de dados homologados `silver` e `gold`. | RF27 |
-| **5. Tabelas & Colunas** | `POST` | `/api/v1/tables` | Registra os metadados técnicos de `silver.catalogo`, `gold.kpis_mensais_categoria` e `gold.desempenho_conteudos`, incluindo tipagem e descrições colunares. | RF27 / RF28 |
-| **6. Classificação LGPD** | `PATCH` | `/api/v1/tables/{id}` | Aplica via JSON Patch (`application/json-patch+json`) a tag de governança `PII.Sensitive` na coluna `autor`. | RF28 / RF32 |
-| **7. Linhagem de Dados** | `PUT` | `/api/v1/lineage` | Estabelece as arestas do grafo de linhagem conectando `silver.catalogo` $\rightarrow$ `gold.kpis_mensais_categoria` e `gold.desempenho_conteudos`. | RF29 |
-| **8. Glossário Oficial** | `POST` | `/api/v1/glossaries` | Cadastra o vocabulário de negócio `Glossario_Educacional_FICDEV`. | RF28 |
-| **9. Termos de Negócio** | `POST` | `/api/v1/glossaryTerms` | Registra os 4 termos oficiais: *Usuário Ativo*, *Taxa de Conclusão*, *Tempo Médio de Consumo* e *Conversão de Recomendação*. | RF28 |
+| # | Origem (Upstream) | Destino (Downstream) | Tipo de Transformação / Ferramenta | Requisito |
+| :-: | :--- | :--- | :--- | :---: |
+| 1 | `fontes.catalogo_csv` | `bronze.catalogo_raw` | Carga de arquivo bruto com carimbo técnico de auditoria (Hop) | RF20 |
+| 2 | `fontes.interacoes_json` | `bronze.interacoes_raw` | Parsing de eventos JSON com geração de UUID de execução (Hop) | RF20 |
+| 3 | `fontes.comentarios_mongodb` | `bronze.comentarios_raw` | Extração da coleção NoSQL e inserção bruta relacional (Hop) | RF20 |
+| 4 | `bronze.catalogo_raw` | `silver.catalogo` | Limpeza, tipagem estrita e reconciliação MDM (Hop / Golden Record) | RF20 / RF30 |
+| 5 | `bronze.interacoes_raw` | `silver.interacoes` | Conversão temporal, validação de intervalos e deduplicação (Hop) | RF20 |
+| 6 | `bronze.comentarios_raw` | `silver.comentarios` | Normalização de notas 1-5 e sanitização de texto livre (Hop) | RF20 |
+| 7 | `silver.catalogo` | `gold.kpis_mensais_categoria` | Enriquecimento dimensional por categoria temática via Apache Beam | RF25 / RF26 |
+| 8 | `silver.interacoes` | `gold.kpis_mensais_categoria` | Agregação distribuída temporal (ano/mês) e taxa de conclusão (Beam) | RF25 / RF26 |
+| 9 | `silver.catalogo` | `gold.desempenho_conteudos` | Junção com dimensões de curso, autor e carga horária (Beam) | RF25 / RF26 |
+| 10 | `silver.interacoes` | `gold.desempenho_conteudos` | Cômputo de acessos, inícios, conclusões e taxa de retenção (Beam) | RF25 / RF26 |
+| 11 | `silver.comentarios` | `gold.desempenho_conteudos` | Cálculo da média ponderada de avaliação por conteúdo | RF26 |
+| 12 | `silver.catalogo` | `gold.vw_ranking_conteudos_engajamento` | Projeção descritiva para ordenação de engajamento escolar | RF26 |
+| 13 | `silver.interacoes` | `gold.vw_ranking_conteudos_engajamento` | Janelamento analítico (`DENSE_RANK() OVER (...)`) | RF26 |
+| 14 | `gold.kpis_mensais_categoria` | `dashboard.desafio_4_dashboard` | Visualizações executivas de evolução temporal no Superset | RF16 a RF18 |
+| 15 | `gold.desempenho_conteudos` | `dashboard.desafio_4_dashboard` | Tabela detalhada e cartões de métricas analíticas no Superset | RF16 a RF18 |
+| 16 | `gold.vw_ranking_conteudos_engajamento` | `dashboard.desafio_4_dashboard` | Gráficos de barras horizontais com Top Conteúdos por Categoria | RF16 a RF18 |
 
 ---
 
-## 4. Tutorial Passo a Passo de Execução e Verificação
+## 3. Abordagem de Integração: *Metadata as Code* via API REST v1
 
-### Passo 1: Executar o Script de Automação
-Certifique-se de que o container do OpenMetadata está ativo e execute no terminal:
+O projeto adota o padrão da indústria de **Governança como Código (*Metadata as Code*)**, operando através da API REST oficial do OpenMetadata (`http://localhost:8585/api/v1`).
+
+O script [`scripts/configurar_openmetadata.py`](../scripts/configurar_openmetadata.py) interage diretamente com os endpoints oficiais de forma **idempotente, auditável e segura** (sem credenciais hardcoded, lidas estritamente de variáveis de ambiente do `.env`):
+
+| Endpoint da API | Método | Finalidade Técnica | Requisito |
+| :--- | :---: | :--- | :---: |
+| `/api/v1/users/login` | `POST` | Autenticação administrativa JWT Bearer. | RF15 / RF27 |
+| `/api/v1/services/databaseServices` | `POST` | Registro do conector `ficdev_postgres` (host `postgres:5432`). | RF27 |
+| `/api/v1/services/dashboardServices` | `POST` | Registro do conector `ficdev_superset` (host `http://superset:8088`). | RF27 / RF29 |
+| `/api/v1/databases` | `POST` | Registro do banco lógico `ficdev_postgres.ficdev_recomendacao`. | RF27 |
+| `/api/v1/databaseSchemas` | `POST` | Registro dos 4 esquemas: `fontes`, `bronze`, `silver` e `gold`. | RF27 / RF20 a RF26 |
+| `/api/v1/tables` | `POST` | Cadastro das 12 tabelas com esquemas colunares, tipos DDL e descrições. | RF27 / RF28 |
+| `/api/v1/dashboards` | `POST` | Cadastro da entidade `desafio_4_dashboard` vinculada ao Superset. | RF29 |
+| `/api/v1/tables/{id}` | `PATCH` | Aplicação da tag `PII.Sensitive` nas colunas de dados pessoais (`autor`, `usuario_id`). | RF28 / RF32 |
+| `/api/v1/lineage` | `PUT` | Registro das 16 arestas de linhagem (Tabela $\rightarrow$ Tabela e Tabela $\rightarrow$ Dashboard). | RF29 |
+| `/api/v1/glossaries` | `POST` | Cadastro do vocabulário corporativo `Glossario_Educacional_FICDEV`. | RF28 |
+| `/api/v1/glossaryTerms` | `POST` | Cadastro dos 4 termos formais com fórmulas de cálculo e donos de negócio. | RF28 |
+
+---
+
+## 4. Guia Passo a Passo: Como Executar e Navegar na UI
+
+### Passo 1: Executar o Provisionamento
+Com o OpenMetadata em execução, rode:
 ```bash
 python scripts/configurar_openmetadata.py
 ```
-**Saída Esperada no Terminal:**
-```text
-[1/6] Autenticando no OpenMetadata API (admin@openmetadata.org)...
-      Autenticado com sucesso!
-[2/6] Registrando Servico Postgres, Database e Schemas (silver, gold)...
-      Serviço Postgres 'ficdev_postgres' OK.
-      Database 'ficdev_recomendacao' OK.
-      Schema 'silver' OK.
-      Schema 'gold' OK.
-[3/6] Catalogando Tabelas e Metadados das Camadas Silver e Gold...
-      Tabela 'silver.catalogo' catalogada.
-      Tabela 'gold.kpis_mensais_categoria' catalogada.
-      Tabela 'gold.desempenho_conteudos' catalogada.
-[4/6] Aplicando Classificacoes de Sensibilidade LGPD (PII.Sensitive)...
-      Tag 'PII.Sensitive' aplicada na coluna 'autor' de 'desempenho_conteudos'.
-[5/6] Registrando Grafo de Linhagem Grafica (Lineage)...
-      Linhagem: silver.catalogo -> gold.kpis_mensais_categoria conectada.
-      Linhagem: silver.catalogo -> gold.desempenho_conteudos conectada.
-[6/6] Criando Glossario de Negocio e Termos Oficiais FIC_DEV...
-      Glossário 'Glossario_Educacional_FICDEV' OK.
-      Termo 'Usuario_Ativo' cadastrado.
-      Termo 'Taxa_Conclusao' cadastrado.
-      Termo 'Tempo_Medio_Consumo' cadastrado.
-      Termo 'Conversao_Recomendacao' cadastrado.
-======================================================================
-[SUCESSO] Plataforma OpenMetadata 100% configurada e populada!
-======================================================================
-```
-
----
+O script provisionará todas as 12 entidades nas 4 camadas, o serviço de Dashboard do Superset e conectará as 16 arestas de linhagem gráfica.
 
 ### Passo 2: Acessar a Interface Web
-1. Abra o navegador em: [http://localhost:8585](http://localhost:8585)
-2. Insira as credenciais de administrador:
-   - **Email:** `admin@openmetadata.org`
-   - **Password:** `admin`
-3. Clique em **Login**.
+- **URL:** [http://localhost:8585](http://localhost:8585)
+- **Login:** `admin@openmetadata.org`
+- **Senha:** Conforme configurada na variável `OPENMETADATA_ADMIN_PASSWORD` no arquivo `.env`.
 
 ---
 
-### Passo 3: Onde Conferir Cada Requisito no Navegador (Guia Visual)
+### Passo 3: Visualizar a Linhagem Gráfica de 5 Pontas (RF29)
 
-#### 1. Catálogo e Tabelas (RF27 — Evidência: `01_catalogo_tabelas.png`)
-- No menu lateral esquerdo, clique no ícone de lupa: **Explore** $\rightarrow$ **Tables**.
-- Você verá as tabelas cadastradas:
-  - `ficdev_postgres.ficdev_recomendacao.gold.kpis_mensais_categoria`
-  - `ficdev_postgres.ficdev_recomendacao.gold.desempenho_conteudos`
-  - `ficdev_postgres.ficdev_recomendacao.silver.catalogo`
-- Clique sobre qualquer uma delas para visualizar o dicionário de dados (colunas, tipos SQL, descrições e dono).
+Você pode visualizar o grafo completo a partir de múltiplos pontos de entrada:
 
-#### 2. Glossário de Negócio (RF28 — Evidência: `02_glossario_termos.png`)
-- No menu lateral esquerdo, clique no ícone de livro/governança: **Govern** $\rightarrow$ **Glossary**.
-- Clique em **`Glossario_Educacional_FICDEV`**.
-- Verifique os 4 termos homologados:
-  1. **Usuário Ativo:** Aluno com interação no período de apuração mensal.
-  2. **Taxa de Conclusão:** Razão percentual entre conclusões e inícios de cursos.
-  3. **Tempo Médio de Consumo:** Duração média em minutos despendida nos conteúdos.
-  4. **Conversão de Recomendação:** Taxa de aceite dos materiais recomendados pelo motor de IA.
+#### Opção A: A partir do Dashboard Executivo (Visão Global de Consumo)
+1. No menu lateral esquerdo, clique no ícone de gráficos: **Explore** $\rightarrow$ **Dashboards**.
+2. Clique no dashboard **`Desafio 4 - Dashboard Executivo FIC_DEV`** (`desafio_4_dashboard`).
+3. Clique na aba **Lineage** no topo da tela.
+4. O OpenMetadata exibirá o nó do Dashboard conectado a todas as tabelas e views da camada Gold:
+   - `gold.kpis_mensais_categoria`
+   - `gold.desempenho_conteudos`
+   - `gold.vw_ranking_conteudos_engajamento`
+5. Clique no ícone de expansão ($\leftarrow$ ou $\rightarrow$) em qualquer uma das tabelas Gold para abrir os níveis upstream até chegar na camada Silver, Bronze e Fontes Brutas.
 
-#### 3. Classificação de Privacidade LGPD (RF28 e RF32 — Evidência: `03_classificacao_pii.png`)
-- No menu esquerdo, vá em **Explore** $\rightarrow$ **Tables** $\rightarrow$ abra **`desempenho_conteudos`**.
-- Role até a linha da coluna **`autor`**.
-- Observe a tag azul **`PII.Sensitive`** aplicada diretamente na coluna, indicando dado pessoal protegido pela política de minimização e anonimização da LGPD.
-
-#### 4. Grafo de Linhagem Gráfica (RF29 — Evidência: `04_linhagem_grafica.png`)
-- Abra a tabela **`kpis_mensais_categoria`** (ou `desempenho_conteudos`).
-- Na barra de abas superior (ao lado de *Schema*, *Sample Data*, etc.), clique em **Lineage**.
-- O OpenMetadata renderizará o diagrama visual interativo demonstrando a tabela `silver.catalogo` com uma seta conectando-se diretamente à tabela `gold.kpis_mensais_categoria`.
+#### Opção B: A partir da Camada Gold ou Silver
+1. Vá em **Explore** $\rightarrow$ **Tables**.
+2. Abra a tabela `gold.desempenho_conteudos`.
+3. Clique na aba **Lineage**.
+4. Você verá:
+   - **Upstream:** As tabelas `silver.catalogo`, `silver.interacoes` e `silver.comentarios` alimentando a tabela Gold.
+   - **Downstream:** A tabela Gold alimentando o dashboard analítico `desafio_4_dashboard`.
+5. Ao clicar no nó de `silver.catalogo` e expandir o upstream, você verá `bronze.catalogo_raw` e, antes dela, `fontes.catalogo_csv`.
 
 ---
 
-## 5. Relação de Evidências Oficiais (RF34)
+### Passo 4: Conferir os Demais Requisitos
 
-As evidências fotográficas da governança devem ser salvas no diretório `openmetadata/evidencias/` com os seguintes nomes padronizados:
+1. **Catálogo de Tabelas (RF27):** Em **Explore** $\rightarrow$ **Tables**, verifique os esquemas `fontes`, `bronze`, `silver` e `gold`.
+2. **Glossário de Negócio (RF28):** Em **Govern** $\rightarrow$ **Glossary**, abra `Glossario_Educacional_FICDEV` e inspecione os 4 termos cadastrados com suas fórmulas de cálculo e vínculos.
+3. **Classificação de Privacidade LGPD (RF32):** Em **Explore** $\rightarrow$ **Tables** $\rightarrow$ `gold.desempenho_conteudos`, verifique a tag azul `PII.Sensitive` na coluna `autor`.
 
-| Arquivo | Descrição da Captura de Tela | Requisito Comprovado |
-| :--- | :--- | :---: |
-| `01_catalogo_tabelas.png` | Tela de listagem em *Explore -> Tables* com os esquemas `silver` e `gold`. | RF27 |
-| `02_glossario_termos.png` | Tela de *Govern -> Glossary* com os 4 termos de negócio cadastrados. | RF28 |
-| `03_classificacao_pii.png` | Detalhe da coluna `autor` na tabela `desempenho_conteudos` com a tag `PII.Sensitive`. | RF28, RF32 |
-| `04_linhagem_grafica.png` | Aba *Lineage* exibindo o fluxo visual `silver.catalogo` $\rightarrow$ Camada Gold. | RF29 |
+---
+
+## 5. Dossiê Oficial de Auditoria
+
+A execução do script gera automaticamente o dossiê formal consolidado em JSON para auditoria técnica:
+- **Caminho:** [`openmetadata/dossie_metadados_oficial.json`](../openmetadata/dossie_metadados_oficial.json)
+- **Conteúdo:** Versão da plataforma, serviços catalogados, esquemas, glossário com fórmulas, taxonomia LGPD e a relação completa das 16 arestas de linhagem RF29.

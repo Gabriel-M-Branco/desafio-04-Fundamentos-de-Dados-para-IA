@@ -242,13 +242,13 @@ Para consolidar a resolução de conflitos cadastrais e catalogar os metadados t
    ```
    *Evidência gerada:* `dados/processados/resultado_dados_mestres.json` e documentação técnica em [`documentacao/dados_mestres.md`](documentacao/dados_mestres.md).
 
-2. **Configuração e Dossiê do OpenMetadata (RF27 a RF29):**
-   Conecta na API REST do OpenMetadata, autentica com a credencial administrativa, sincroniza o glossário e exporta o dossiê formal de governança:
+2. **Configuração, Governança e Linhagem no OpenMetadata (RF27 a RF29):**
+   Conecta na API REST oficial do OpenMetadata via *Metadata as Code*, autentica de forma segura via credenciais do `.env`, cataloga as 12 entidades nas 4 camadas (`fontes`, `bronze`, `silver`, `gold`), o serviço de dashboard do Apache Superset (`ficdev_superset`), estabelece o grafo com as 16 arestas de linhagem de 5 pontas (**Fontes $\rightarrow$ Bronze $\rightarrow$ Silver $\rightarrow$ Gold $\rightarrow$ Dashboard — RF29**), sincroniza o glossário de negócio (RF28) e exporta o dossiê formal de auditoria:
    ```bash
    python scripts/configurar_openmetadata.py
    ```
-   *Evidência gerada:* `openmetadata/dossie_metadados_oficial.json`.  
-   *Acesso Web:* [http://localhost:8585](http://localhost:8585) (Login: **`admin@openmetadata.org`** / Senha: **`admin`**).
+   *Evidência gerada:* `openmetadata/dossie_metadados_oficial.json` e documentação técnica em [`documentacao/governanca_openmetadata.md`](documentacao/governanca_openmetadata.md).  
+   *Acesso Web:* [http://localhost:8585](http://localhost:8585) (Login: **`admin@openmetadata.org`** / Senha: valor de `OPENMETADATA_ADMIN_PASSWORD` no `.env`).
 
 ---
 
