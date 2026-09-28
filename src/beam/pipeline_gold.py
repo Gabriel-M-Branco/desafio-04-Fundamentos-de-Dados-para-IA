@@ -14,7 +14,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from src.config import caminho_absoluto, carregar_config
+from src.config import agora_iso as obter_agora_iso, agora_projeto, caminho_absoluto, carregar_config
 from src.beam.transformacoes import (
     ConsolidarMetricasCategoria,
     ExtrairChaveCategoriaMes,
@@ -81,8 +81,8 @@ def executar_pipeline_gold_beam(
             "Execute a etapa de exportação Parquet (RF24) antes do Beam."
         )
 
-    lote = lote_id or f"LOTE_BEAM_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
-    agora_iso = datetime.now(timezone.utc).isoformat()
+    lote = lote_id or f"LOTE_BEAM_{agora_projeto().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+    agora_iso = obter_agora_iso()
 
     if logger:
         logger.info("Iniciando Pipeline Apache Beam | Runner: %s | Lote: %s", runner, lote)

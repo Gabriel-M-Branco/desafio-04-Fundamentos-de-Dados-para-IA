@@ -11,9 +11,11 @@ from __future__ import annotations
 import difflib
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from src.config import agora_iso
 
 NAMESPACE_MDM = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
 
@@ -92,7 +94,7 @@ def reconciliar_registros_conflitantes(
         "carga_horaria_min": carga_curada,
         "autor": autor_curado,
         "status_mdm": "GOLDEN_RECORD_UNIFICADO",
-        "data_reconciliacao": datetime.now(timezone.utc).isoformat(),
+        "data_reconciliacao": agora_iso(),
     }
 
     # 3. Tabela de Correspondência (XREF)

@@ -13,7 +13,7 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
-from src.config import caminho_absoluto
+from src.config import agora_iso as obter_agora_iso, agora_projeto, caminho_absoluto
 from src.parquet.esquema import obter_esquema_interacoes
 
 
@@ -52,8 +52,8 @@ def preparar_tabela_interacoes_arrow(
     if not registros:
         raise ValueError("A lista de registros para exportação Parquet não pode estar vazia.")
 
-    agora_iso = timestamp_ingestao or datetime.now(timezone.utc).isoformat()
-    lote = lote_id or f"LOTE_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+    agora_iso = timestamp_ingestao or obter_agora_iso()
+    lote = lote_id or f"LOTE_{agora_projeto().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
 
     linhas_preparadas = []
     for idx, reg in enumerate(registros):

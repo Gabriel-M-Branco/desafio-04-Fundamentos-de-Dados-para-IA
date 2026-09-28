@@ -1,4 +1,12 @@
 -- Estrutura relacional mínima do Desafio Prático 1
+SET timezone TO 'America/Cuiaba';
+DO $$ BEGIN
+    PERFORM 1 FROM pg_database WHERE datname = 'ficdev_analitico';
+    IF FOUND THEN
+        ALTER DATABASE ficdev_analitico SET timezone TO 'America/Cuiaba';
+    END IF;
+END $$;
+
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS usuarios (

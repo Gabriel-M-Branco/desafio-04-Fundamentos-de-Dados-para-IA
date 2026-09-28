@@ -8,10 +8,9 @@ Este documento registra a metodologia, medições empíricas, análise de desemp
 
 ### 1.1 Configuração do Ambiente de Teste
 - **Sistema Operacional:** `Windows-11-10.0.26200-SP0`
-- **Processador:** `AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD`
+- **Processador:** `AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD`
 - **Python:** `3.14.7`
 - **PyArrow:** `25.0.1`
-- **Pandas:** `3.0.6`
 - **Pandas:** `3.0.6`
 
 ### 1.2 Metodologia
@@ -27,10 +26,10 @@ Este documento registra a metodologia, medições empíricas, análise de desemp
 
 | Formato | Tamanho em Disco (KB) | Redução vs JSON (%) | Redução vs CSV (%) | Tempo de Escrita (ms) | Leitura Full Scan (ms) | Leitura com Projeção (ms) | Leitura com Filtro Partição (ms) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Parquet Consolidado** | **36.0 KB** | **89.44%** | **72.16%** | 3.946 ms | 1.39 ms | **1.222 ms** | 1.717 ms |
-| **Parquet Particionado** | 94.3 KB | 72.34% | 27.06% | 7.105 ms | 3.854 ms | --- | **2.994 ms** |
-| **CSV** | 129.28 KB | 62.08% | 0.00% | 5.313 ms | 2.438 ms | 1.661 ms | 2.929 ms |
-| **JSON** | 340.98 KB | 0.00% | -163.75% | 71.824 ms | 1.794 ms | 1.935 ms | 1.962 ms |
+| **Parquet Consolidado** | **36.0 KB** | **89.44%** | **72.16%** | 4.997 ms | 1.469 ms | **1.143 ms** | 1.769 ms |
+| **Parquet Particionado** | 94.3 KB | 72.34% | 27.06% | 15.022 ms | 3.972 ms | --- | **2.87 ms** |
+| **CSV** | 129.28 KB | 62.08% | 0.00% | 5.407 ms | 2.85 ms | 1.626 ms | 3.1 ms |
+| **JSON** | 340.98 KB | 0.00% | -163.75% | 72.718 ms | 1.934 ms | 2.004 ms | 1.948 ms |
 
 ---
 

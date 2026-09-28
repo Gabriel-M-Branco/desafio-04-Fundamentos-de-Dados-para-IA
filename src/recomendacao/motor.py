@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 import numpy as np
 
-from src.config import caminho_absoluto
+from src.config import agora_projeto, caminho_absoluto
 from src.recomendacao.embeddings import carregar_catalogo, obter_embeddings_cache
 
 
@@ -68,7 +68,7 @@ def gerar_recomendacoes_usuario(
     if data_corte:
         data_geracao = str(data_corte)
     else:
-        data_geracao = datetime.now().isoformat(timespec="seconds")
+        data_geracao = agora_projeto().strftime("%Y-%m-%d %H:%M:%S")
     itens_catalogo = catalogo if catalogo is not None else carregar_catalogo(config)
     embeddings = obter_embeddings_cache(config)
 

@@ -2,6 +2,12 @@
 -- Ingestão, validação, workflow, quarentena e recuperação.
 BEGIN;
 SET timezone TO 'America/Cuiaba';
+DO $$ BEGIN
+    PERFORM 1 FROM pg_database WHERE datname = 'ficdev_analitico';
+    IF FOUND THEN
+        ALTER DATABASE ficdev_analitico SET timezone TO 'America/Cuiaba';
+    END IF;
+END $$;
 
 CREATE SCHEMA IF NOT EXISTS bronze;
 CREATE SCHEMA IF NOT EXISTS silver;

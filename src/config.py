@@ -2,13 +2,52 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import yaml
 from dotenv import load_dotenv
 
 RAIZ_PROJETO = Path(__file__).resolve().parents[1]
+
+
+def obter_timezone_projeto() -> ZoneInfo:
+    """Retorna o objeto ZoneInfo oficial do projeto (padrão: America/Cuiaba)."""
+    tz_nome = os.environ.get("TZ", "America/Cuiaba")
+    try:
+        return ZoneInfo(tz_nome)
+    except Exception:
+        return ZoneInfo("America/Cuiaba")
+
+
+def agora_projeto() -> datetime:
+    """Retorna datetime ciente de fuso horário no fuso oficial do projeto (America/Cuiaba)."""
+    return datetime.now(obter_timezone_projeto())
+
+
+def agora_iso() -> str:
+    """Retorna string ISO-8601 no fuso horário oficial do projeto (America/Cuiaba)."""
+    return agora_projeto().isoformat()
+
+
+def converter_para_horario_local(dt_val: Any) -> datetime:
+    """Converte qualquer string ISO ou datetime para o fuso oficial do projeto (America/Cuiaba)."""
+    tz = obter_timezone_projeto()
+    if isinstance(dt_val, str):
+        try:
+            dt = datetime.fromisoformat(dt_val)
+            if dt.tzinfo is not None:
+                return dt.astimezone(tz)
+            return dt.replace(tzinfo=tz)
+        except Exception:
+            return agora_projeto()
+    elif isinstance(dt_val, datetime):
+        if dt_val.tzinfo is not None:
+            return dt_val.astimezone(tz)
+        return dt_val.replace(tzinfo=tz)
+    return agora_projeto()
 
 
 def carregar_config(caminho: str | Path = "config/config.yaml") -> dict[str, Any]:
