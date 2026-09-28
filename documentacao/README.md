@@ -26,3 +26,10 @@
 - [execucao_beam_spark.md](execucao_beam_spark.md): Comparação de runtimes do Apache Beam (DirectRunner vs Apache Spark), diagnóstico de ambiente e instruções reproduzíveis (RF25).
 - [qualidade_dados.md](qualidade_dados.md): Especificação formal das 5 dimensões corporativas de qualidade de dados avaliadas, limites, severidades e histórico (RF31).
 - [camada_gold.md](camada_gold.md): Modelagem dimensional da camada Gold, granularidade, medidas pré-agregadas e visões analíticas para consumo no Superset (RF26).
+
+---
+
+## 4. Governança, Proteção de Dados e Catálogo (OpenMetadata)
+- [governanca_openmetadata.md](governanca_openmetadata.md): Guia de governança, tutorial de catálogo via API REST (*Metadata as Code*), glossário, classificação LGPD e linhagem gráfica (RF27 a RF30, RF32).
+- [dados_mestres.md](dados_mestres.md): Especificação de Master Data Management (MDM), correspondência de entidades (Matching Rules) e Golden Record para conteúdos educacionais (RF30).
+
