@@ -86,5 +86,17 @@ Disponibilizados no painel lateral esquerdo (*Filter Bar*):
       ORDER BY ano DESC, mes DESC 
       LIMIT 1
   )
-  GROUP BY ano, mes, categoria
   HAVING AVG(tempo_total_consumido_min) < 500;
+  ```
+
+---
+
+## 📁 Localização dos Pacotes e Evidências
+
+Todos os pacotes de exportação e capturas de tela foram consolidados e padronizados no diretório [`dashboard/`](../dashboard/):
+- **Pacotes ZIP de Exportação:**
+  - [`dashboard/dashboard_desafio_4.zip`](../dashboard/dashboard_desafio_4.zip): Pacote oficial de importação do Desafio 4 (Storytelling, SQL Lab e Alertas).
+  - [`dashboard/dashboard_desafio_3.zip`](../dashboard/dashboard_desafio_3.zip): Pacote legado do Desafio 3 (Schema `public`).
+- **Evidências Visuais (Screenshots):**
+  - [`dashboard/evidencias/desafio_4/`](../dashboard/evidencias/desafio_4/): Capturas de tela do Dashboard Desafio 4 e Alerta Crítico.
+  - [`dashboard/evidencias/desafio_3/`](../dashboard/evidencias/desafio_3/): Capturas de tela do painel e filtros do Desafio 3.

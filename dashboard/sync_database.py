@@ -77,18 +77,19 @@ with app.app_context():
     db.session.commit()
     print(f"[Superset] Conexão '{db_name}' ({db_uuid}) sincronizada com sucesso: {user}@postgres:5432/{database}")
 
-    # 2. Importa automaticamente o dashboard zip se presente
-    if arquivo_zip:
-        print(f"[Superset] Importando dashboard automaticamente a partir de {arquivo_zip}...")
+    # 2. Importa automaticamente todos os dashboards ZIP presentes na pasta
+    pacotes_zip = sorted(diretorio_dashboard.glob("*.zip"))
+    for pacote in pacotes_zip:
+        print(f"[Superset] Importando dashboard automaticamente a partir de {pacote.name}...")
         res = subprocess.run(
-            ["superset", "import-dashboards", "-p", str(arquivo_zip), "-u", admin_user],
+            ["superset", "import-dashboards", "-p", str(pacote), "-u", admin_user],
             capture_output=True,
             text=True,
         )
         if res.returncode == 0:
-            print("[Superset] Dashboard importado com sucesso via CLI!")
+            print(f"[Superset] Dashboard {pacote.name} importado com sucesso via CLI!")
         else:
-            print(f"[Superset] Resultado da importação CLI: {res.stdout}\n{res.stderr}")
+            print(f"[Superset] Resultado da importação CLI ({pacote.name}): {res.stdout}\n{res.stderr}")
 
     # 3. Garante que todos os dashboards estejam publicados (published=True)
     dashboards = db.session.query(Dashboard).all()
