@@ -525,7 +525,6 @@ desafio-04-Fundamentos-de-Dados-para-IA/
 
 Para aprofundamento técnico em cada módulo específico, consulte:
 
-- [`documentacao/roteiro_apresentacao.md`](documentacao/roteiro_apresentacao.md): **Roteiro oficial de apresentação prática (12 a 15 minutos)**, divisão temporal, telas recomendadas e checkpoints ao vivo.
 - [`documentacao/arquitetura_etl_elt.md`](documentacao/arquitetura_etl_elt.md): Fundamentação formal da Arquitetura Híbrida (ETL na borda com Hop e ELT no Core com Beam).
 - [`documentacao/especificacao_tecnica.md`](documentacao/especificacao_tecnica.md): Especificação de modelagem relacional, pgvector e motor de recomendação.
 - [`documentacao/benchmark_parquet.md`](documentacao/benchmark_parquet.md): Metodologia e resultados do benchmark empírico Parquet vs CSV vs JSON.
