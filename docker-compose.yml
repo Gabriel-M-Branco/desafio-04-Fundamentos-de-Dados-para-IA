@@ -9,6 +9,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      TZ: ${TZ:-America/Cuiaba}
+      PGTZ: ${TZ:-America/Cuiaba}
 
     ports:
       - "${POSTGRES_PORT}:5432"
@@ -67,6 +69,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=${TZ:-America/Cuiaba}
     volumes:
       - ./hop:/files
       - ./hop:/usr/local/tomcat/webapps/ROOT/config/projects/default
