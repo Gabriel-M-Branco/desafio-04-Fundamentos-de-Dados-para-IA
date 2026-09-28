@@ -7,7 +7,19 @@ import uuid
 import zipfile
 import yaml
 from pathlib import Path
-from superset.app import create_app
+try:
+    from superset.app import create_app
+except ModuleNotFoundError:
+    # Quando executado no host (fora do container), delega automaticamente a execução para o container do Superset
+    import sys
+    print("[Host] Pacote 'superset' não instalado no ambiente Python local.")
+    print("[Host] Delegando execução automaticamente para o contêiner Docker 'superset'...")
+    try:
+        res = subprocess.run(["docker", "exec", "-i", "superset", "python", "/app/dashboard/sync_database.py"])
+        sys.exit(res.returncode)
+    except FileNotFoundError:
+        print("[Erro] O executável 'docker' não foi encontrado no PATH do sistema.", file=sys.stderr)
+        sys.exit(1)
 
 
 def extrair_banco_do_zip(caminho_zip: str | Path) -> tuple[uuid.UUID, str]:
@@ -91,7 +103,28 @@ with app.app_context():
         else:
             print(f"[Superset] Resultado da importação CLI ({pacote.name}): {res.stdout}\n{res.stderr}")
 
-    # 3. Garante que todos os dashboards estejam publicados (published=True)
+    # 3. Garante que todos os datasets do Desafio 4 consultem estritamente a camada Gold (RF26)
+    from superset.connectors.sqla.models import SqlaTable
+    t_vis = db.session.query(SqlaTable).filter(SqlaTable.table_name.like("%Visualiza%")).first()
+    if t_vis and (t_vis.schema != "gold" or "silver" in (t_vis.sql or "").lower()):
+        t_vis.schema = "gold"
+        t_vis.sql = (
+            "SELECT\n"
+            "    MAKE_DATE(k.ano, k.mes, 1) AS data,\n"
+            "    k.categoria,\n"
+            "    SUM(k.total_visualizacoes) AS total_visualizacoes\n"
+            "FROM gold.kpis_mensais_categoria k\n"
+            "GROUP BY\n"
+            "    k.ano,\n"
+            "    k.mes,\n"
+            "    k.categoria\n"
+            "ORDER BY\n"
+            "    data;"
+        )
+        db.session.commit()
+        print("[Superset] Dataset 'SQLab - Visualizações por Categoria' alinhado para a Camada Gold.")
+
+    # 4. Garante que todos os dashboards estejam publicados (published=True)
     dashboards = db.session.query(Dashboard).all()
     for d in dashboards:
         d.published = True

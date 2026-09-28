@@ -102,12 +102,23 @@
       "gold.kpis_mensais_categoria",
       "gold.desempenho_conteudos",
       "gold.vw_ranking_conteudos_engajamento",
-      "gold.dataset_virtual_sqllab"
+      "gold.dataset_virtual_sqllab",
+      "dashboard.desafio_4_dashboard"
     ],
     "tier_2_silver_curado": [
       "silver.catalogo",
       "silver.interacoes",
       "silver.comentarios"
+    ],
+    "tier_3_bronze_ingestao": [
+      "bronze.catalogo_raw",
+      "bronze.interacoes_raw",
+      "bronze.comentarios_raw"
+    ],
+    "tier_4_fontes_origem": [
+      "fontes.catalogo_csv",
+      "fontes.interacoes_json",
+      "fontes.comentarios_mongodb"
     ]
   },
   "termos_glossario_vinculados_colunas": {
@@ -115,7 +126,9 @@
     "gold.kpis_mensais_categoria.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
     "gold.kpis_mensais_categoria.tempo_medio_min": "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo",
     "gold.desempenho_conteudos.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
-    "gold.vw_ranking_conteudos_engajamento.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao"
+    "gold.vw_ranking_conteudos_engajamento.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+    "gold.vw_ranking_conteudos_engajamento.ranking_categoria": "Glossario_Educacional_FICDEV.Conversao_Recomendacao",
+    "gold.dataset_virtual_sqllab.taxa_conversao_inicio_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao"
   },
   "controles_anti_data_swamp": [
     "Esquemas estritamente tipados com contratos DDL nas camadas Silver e Gold.",

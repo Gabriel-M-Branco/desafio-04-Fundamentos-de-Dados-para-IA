@@ -9,19 +9,19 @@
     "carga_horaria_min": 22,
     "autor": "Dr. Fernando Zanin Pacheco (Original) / Eng. Rodrigo Alves Mendonça (Revisão)",
     "status_mdm": "GOLDEN_RECORD_UNIFICADO",
-    "data_reconciliacao": "2026-09-28T13:52:06.320613+00:00"
+    "data_reconciliacao": "2026-09-28T22:09:48.520778+00:00"
   },
   "tabela_xref": [
     {
       "master_id": "MDM_CONTEUDO_bc8872383fef5e14",
-      "sistema_origem": "CATALOGO_CSV_ID588",
+      "sistema_origem": "POSTGRES_SILVER_CATALOGO_ID588",
       "id_origem": "588",
       "score_matching": 1.0,
       "regra_aplicada": "MATCH_TITULO_NORMALIZADO_SURVIVORSHIP_CURADO"
     },
     {
       "master_id": "MDM_CONTEUDO_bc8872383fef5e14",
-      "sistema_origem": "CATALOGO_CSV_ID919",
+      "sistema_origem": "POSTGRES_SILVER_CATALOGO_ID919",
       "id_origem": "919",
       "score_matching": 1.0,
       "regra_aplicada": "MATCH_ORIGEM_HOMOLOGADA_SURVIVORSHIP_RECENTE"
