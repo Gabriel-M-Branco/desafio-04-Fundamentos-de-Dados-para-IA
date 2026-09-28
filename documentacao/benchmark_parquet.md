@@ -26,10 +26,10 @@ Este documento registra a metodologia, medições empíricas, análise de desemp
 
 | Formato | Tamanho em Disco (KB) | Redução vs JSON (%) | Redução vs CSV (%) | Tempo de Escrita (ms) | Leitura Full Scan (ms) | Leitura com Projeção (ms) | Leitura com Filtro Partição (ms) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Parquet Consolidado** | **36.0 KB** | **89.44%** | **72.16%** | 4.997 ms | 1.469 ms | **1.143 ms** | 1.769 ms |
-| **Parquet Particionado** | 94.3 KB | 72.34% | 27.06% | 15.022 ms | 3.972 ms | --- | **2.87 ms** |
-| **CSV** | 129.28 KB | 62.08% | 0.00% | 5.407 ms | 2.85 ms | 1.626 ms | 3.1 ms |
-| **JSON** | 340.98 KB | 0.00% | -163.75% | 72.718 ms | 1.934 ms | 2.004 ms | 1.948 ms |
+| **Parquet Consolidado** | **36.0 KB** | **89.44%** | **72.16%** | 3.446 ms | 1.43 ms | **1.152 ms** | 1.676 ms |
+| **Parquet Particionado** | 94.3 KB | 72.34% | 27.06% | 7.592 ms | 3.802 ms | --- | **2.959 ms** |
+| **CSV** | 129.28 KB | 62.08% | 0.00% | 5.237 ms | 2.238 ms | 1.488 ms | 2.809 ms |
+| **JSON** | 340.98 KB | 0.00% | -163.75% | 69.713 ms | 1.729 ms | 1.993 ms | 1.89 ms |
 
 ---
 
