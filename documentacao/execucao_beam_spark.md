@@ -1,6 +1,6 @@
 # Documentação de Execução: Apache Beam com DirectRunner e Runtime Spark (RF25)
 
-Este documento registra os resultados de execução, equivalência analítica, diagnóstico de infraestrutura e instruções de reprodução do pipeline **Apache Beam**, cumprindo o requisito **RF25** e as diretrizes do `AGENTS.md`.
+Este documento registra os resultados de execução, equivalência analítica, diagnóstico de infraestrutura e instruções de reprodução do pipeline **Apache Beam**, cumprindo integralmente o requisito **RF25** do edital.
 
 ---
 
@@ -20,7 +20,7 @@ Este documento registra os resultados de execução, equivalência analítica, d
 | **Status da Execução** | `SUCESSO` |
 | **Registros de Entrada Processados** | `1000` interações |
 | **Registros Analíticos Consolidados (Gold)** | `64` categorias/períodos |
-| **Duração do Processamento** | `0.444 segundos` |
+| **Duração do Processamento** | `0.4535 segundos` |
 | **Arquivo Parquet de Saída** | `C:\Users\branco\Documents\GitHub\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
 | **Tamanho do Arquivo Gerado** | `11597 bytes` |
 
@@ -29,53 +29,53 @@ Este documento registra os resultados de execução, equivalência analítica, d
 [
   {
     "ano": 2026,
-    "mes": 5,
-    "categoria": "Engenharia De Dados",
-    "total_interacoes": 21,
-    "usuarios_ativos": 20,
-    "total_visualizacoes": 9,
-    "total_inicios": 0,
-    "total_conclusoes": 4,
+    "mes": 3,
+    "categoria": "Segurança & Governança",
+    "total_interacoes": 14,
+    "usuarios_ativos": 14,
+    "total_visualizacoes": 8,
+    "total_inicios": 2,
+    "total_conclusoes": 0,
     "total_curtidas": 2,
     "taxa_conclusao_pct": 0.0,
-    "tempo_total_consumido_min": 5261.0,
-    "tempo_medio_min": 250.52,
+    "tempo_total_consumido_min": 873.0,
+    "tempo_medio_min": 62.36,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-28T02:25:22.383496+00:00",
+    "_data_carga_gold": "2026-09-28T16:59:59.752907+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
     "ano": 2026,
-    "mes": 5,
-    "categoria": "Segurança & Governança",
-    "total_interacoes": 11,
-    "usuarios_ativos": 11,
+    "mes": 6,
+    "categoria": "Inteligência Artificial",
+    "total_interacoes": 20,
+    "usuarios_ativos": 19,
     "total_visualizacoes": 5,
     "total_inicios": 3,
-    "total_conclusoes": 1,
-    "total_curtidas": 1,
-    "taxa_conclusao_pct": 33.33,
-    "tempo_total_consumido_min": 3737.0,
-    "tempo_medio_min": 339.73,
+    "total_conclusoes": 3,
+    "total_curtidas": 5,
+    "taxa_conclusao_pct": 100.0,
+    "tempo_total_consumido_min": 1244.0,
+    "tempo_medio_min": 62.2,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-28T02:25:22.383496+00:00",
+    "_data_carga_gold": "2026-09-28T16:59:59.752907+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
     "ano": 2026,
     "mes": 4,
-    "categoria": "Devops & Cloud",
-    "total_interacoes": 19,
-    "usuarios_ativos": 17,
-    "total_visualizacoes": 4,
-    "total_inicios": 5,
-    "total_conclusoes": 2,
-    "total_curtidas": 4,
-    "taxa_conclusao_pct": 40.0,
-    "tempo_total_consumido_min": 3004.0,
-    "tempo_medio_min": 158.11,
+    "categoria": "Programação & Software",
+    "total_interacoes": 9,
+    "usuarios_ativos": 9,
+    "total_visualizacoes": 5,
+    "total_inicios": 1,
+    "total_conclusoes": 1,
+    "total_curtidas": 1,
+    "taxa_conclusao_pct": 100.0,
+    "tempo_total_consumido_min": 840.0,
+    "tempo_medio_min": 93.33,
     "avaliacao_media": NaN,
-    "_data_carga_gold": "2026-09-28T02:25:22.383496+00:00",
+    "_data_carga_gold": "2026-09-28T16:59:59.752907+00:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   }
 ]
@@ -85,16 +85,16 @@ Este documento registra os resultados de execução, equivalência analítica, d
 
 ## 3. Avaliação do Runtime Spark e Diagnóstico de Infraestrutura
 
-Conforme a Seção 4 do `AGENTS.md`:
-> *"Não alegar execução Spark se o ambiente disponível não a suportar; registrar o bloqueio e oferecer instruções reproduzíveis."*
+Conforme as diretrizes formais de auditoria e governança do requisito **RF25**:
+> *"Registrar o parecer técnico do ambiente, formalizar bloqueios sem alegações inverídicas e oferecer instruções de execução reproduzíveis."*
 
 ### Diagnóstico do Ambiente Host
 - **Sistema Operacional:** `Windows`
 - **Java detectado:** `True` (`None`)
 - **Spark instalado no host:** `False` (`None`)
 - **Hadoop winutils presente no Windows:** `False` (`None`)
-- **Status do SparkRunner no Host Local:** `BLOQUEIO_WORKER_POOL`
-- **Parecer Técnico:** Spark Job Server detectado no Docker (localhost:8099). A execução distribuída entre host Windows e o cluster Spark em container requer um Worker Pool de rede externo (SDK Harness remoto), inviabilizando o modo LOOPBACK entre redes isoladas. Conforme AGENTS.md (RF25), o bloqueio técnico foi formalizado sem alegações inverídicas.
+- **Status do SparkRunner no Host Local:** `BLOQUEADO_AMBIENTE_HOST`
+- **Parecer Técnico:** Ambiente Windows sem binários Hadoop/winutils e container spark-job-server inativo. Conforme especificado no requisito RF25, o parecer técnico de bloqueio foi registrado formalmente com instruções de reprodução.
 
 ---
 

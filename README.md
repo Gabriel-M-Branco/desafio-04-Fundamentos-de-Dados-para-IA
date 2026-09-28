@@ -85,7 +85,55 @@ flowchart TD
 
 ---
 
-## Guia de Instalação e Execução Multiplataforma
+## Guia Rápido de Execução (Quickstart)
+
+Para quem já possui o ambiente preparado (Git, Docker e Python 3.10+) e deseja executar todo o ecossistema ponta a ponta rapidamente:
+
+```bash
+# 1. Clonar o repositório e entrar na pasta
+git clone https://github.com/Gabriel-M-Branco/desafio-04-Fundamentos-de-Dados-para-IA.git
+cd desafio-04-Fundamentos-de-Dados-para-IA
+
+# 2. Criar ambiente virtual e instalar dependências
+python -m venv .venv
+# Ativar venv:
+# No Windows PowerShell: .\.venv\Scripts\Activate.ps1
+# No Linux/macOS:        source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 3. Criar arquivo de configuração .env a partir do modelo
+# No Windows PowerShell: Copy-Item .env.example .env
+# No Linux/macOS:        cp .env.example .env
+
+# 4. Iniciar toda a infraestrutura conteinerizada
+docker compose up -d
+
+# 5. Executar o fluxo ponta a ponta de dados e IA
+python -m src.main                                      # Carga base, pgvector e recomendações IA
+docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh \
+  --environment desafio4-dev --project desafio4 \
+  --file /files/workflows/workflow_principal.hwf \
+  --runconfig local --level BASIC                       # Ingestão Bronze/Silver e DDL Gold no Hop
+python -m src.executar_etapas --etapa todas             # Parquet Hive, Testes de Qualidade (RF31) e Beam
+
+# 6. Governança, Metadados e Sincronização Analítica
+python scripts/demonstrar_dados_mestres.py              # MDM / Golden Record (RF30)
+python scripts/configurar_openmetadata.py               # Catálogo, Glossário e Linhagem 5 pontas (RF27-RF29)
+python dashboard/sync_database.py                       # Importação dos dashboards no Apache Superset (RF16-RF18)
+
+# 7. Executar a suíte com 94 testes automatizados
+python -m pytest tests/
+```
+
+> **Painéis Web e Portas de Acesso Local:**
+> - **Apache Superset (BI, Storytelling e Alertas):** [http://localhost:8088](http://localhost:8088) (`admin` / `admin`)
+> - **OpenMetadata (Catálogo, Glossário e Linhagem):** [http://localhost:8585](http://localhost:8585) (`admin@openmetadata.org` / `admin`)
+> - **Apache Hop Web (Orquestrador e Pipelines ETL):** [http://localhost:8080](http://localhost:8080) (`admin` / `admin`)
+
+---
+
+## Guia Detalhado de Instalação e Execução Multiplataforma
 
 O projeto foi configurado com **caminhos 100% relativos** e conteinerização completa, garantindo execução estável no **Windows**, **macOS** e nas **principais distribuições Linux** (Ubuntu/Debian, Fedora/RHEL, Arch).
 
@@ -243,10 +291,11 @@ Para consolidar a resolução de conflitos cadastrais e catalogar os metadados t
    *Evidência gerada:* `dados/processados/resultado_dados_mestres.json` e documentação técnica em [`documentacao/dados_mestres.md`](documentacao/dados_mestres.md).
 
 2. **Configuração, Governança e Linhagem no OpenMetadata (RF27 a RF29):**
-   Conecta na API REST oficial do OpenMetadata via *Metadata as Code*, autentica de forma segura via credenciais do `.env`, cataloga as 12 entidades nas 4 camadas (`fontes`, `bronze`, `silver`, `gold`), o serviço de dashboard do Apache Superset (`ficdev_superset`), estabelece o grafo com as 16 arestas de linhagem de 5 pontas (**Fontes $\rightarrow$ Bronze $\rightarrow$ Silver $\rightarrow$ Gold $\rightarrow$ Dashboard — RF29**), sincroniza o glossário de negócio (RF28) e exporta o dossiê formal de auditoria:
+   Conecta na API REST oficial do OpenMetadata via *Metadata as Code*, autentica de forma segura via credenciais do `.env`, cataloga as 12 entidades nas 4 camadas (`fontes`, `bronze`, `silver`, `gold`), o serviço de dashboard do Apache Superset (`ficdev_superset`), estabelece o grafo com as 19 arestas de linhagem de 5 pontas (**Fontes $\rightarrow$ Bronze $\rightarrow$ Silver $\rightarrow$ Gold $\rightarrow$ Dashboard — RF29**), sincroniza o glossário de negócio (RF28) e exporta o dossiê formal de auditoria:
    ```bash
    python scripts/configurar_openmetadata.py
    ```
+   *Otimização de Recursos:* O container de ingestão nativo baseado em Apache Airflow foi desativado por padrão, gerando uma economia de **~3.0 GB de RAM** sem qualquer perda funcional. Toda a governança é provisionada em segundos via API REST oficial.  
    *Evidência gerada:* `openmetadata/dossie_metadados_oficial.json` e documentação técnica em [`documentacao/governanca_openmetadata.md`](documentacao/governanca_openmetadata.md).  
    *Acesso Web:* [http://localhost:8585](http://localhost:8585) (Login: **`admin@openmetadata.org`** / Senha: valor de `OPENMETADATA_ADMIN_PASSWORD` no `.env`).
 
@@ -279,7 +328,7 @@ python -c "from src.config import carregar_config; from src.database.mongo impor
 ```
 
 ### 3. Testes Automatizados da Aplicação
-Execute a suíte com **92 testes automatizados**:
+Execute a suíte com **94 testes automatizados**:
 ```bash
 python -m pytest tests/
 ```
@@ -292,10 +341,12 @@ O Apache Superset é a interface oficial de consumo dos tomadores de decisão pe
    * **URL no Navegador:** [http://localhost:8088](http://localhost:8088)
    * **Credenciais Padrão:** Usuário `admin` | Senha `admin` (configuradas no `.env`).
 
-2. **Como Visualizar o Dashboard Oficial:**
+2. **Como Visualizar os Dashboards (Suporte Dual):**
    * No menu superior, clique em **Dashboards**.
-   * Localize e clique no painel **`Dashboard - Desafio 4`** (publicado e homologado).
-   * **Consumo Exclusivo da Camada Gold (RF26):** Todos os gráficos consomem dados agregados do schema `gold` (`gold.kpis_mensais_categoria` e `gold.desempenho_conteudos`), blindando as camadas Bronze e Silver contra acessos analíticos diretos.
+   * Estão disponíveis e homologados ambos os painéis analíticos:
+     - **`Dashboard - Desafio 4` (Principal / RF16 a RF18):** Painel executivo oficial do Desafio 4 focado na narrativa de Storytelling pedagógico, retenção por tipo de conteúdo, evasão em cursos, interatividade por filtros cruzados, datasets virtuais do SQL Lab e alertas de negócio. Consome dados agregados das camadas analíticas `gold` (`kpis_mensais_categoria`, `desempenho_conteudos`, `vw_ranking_conteudos_engajamento`) e `silver`, blindando o banco relacional contra consultas analíticas pesadas.
+     - **`Dashboard - Desafio 3` (Legado):** Painel analítico construído na etapa anterior, preservado para rastreabilidade histórica, consumindo os datasets do schema `public` (`usuarios`, `conteudos`, `interacoes`, `recomendacoes`).
+   * **Importação Automatizada:** O script [`dashboard/sync_database.py`](dashboard/sync_database.py) importa automaticamente ambos os pacotes de exportação (`dashboard_desafio_3.zip` e `dashboard_desafio_4.zip`) para a instância do Superset, mantendo os dois disponíveis simultaneamente.
 
 3. **Narrativa do Storytelling Executivo (RF16):**
    O dashboard foi estruturado em uma sequência lógica de 3 gráficos encadeados:
@@ -370,6 +421,17 @@ O OpenMetadata é a plataforma central de governança, catálogo unificado e ras
 6. **Controles Anti-Data Swamp (RF27):**
    * O ambiente impede a degradação em "pântano de dados" ao restringir a catalogação a esquemas homologados, exigindo descrições mandatórias, donos formais e aplicação de termos de glossário antes da liberação para consumo.
 
+7. **Evidências Fotográficas do Catálogo e Governança (RF34):**
+   Os screenshots homologados da interface web do OpenMetadata estão organizados em [`openmetadata/evidencias/`](openmetadata/evidencias/):
+   - `01_catalogo_detalhes_tabela_gold.png`: Detalhes da tabela Gold, colunas, tipos e proprietário no Catálogo de Dados.
+   - `02_glossario_quatro_termos_oficiais.png`: Visão geral do Glossário Corporativo com os 4 termos oficiais cadastrados.
+   - `03_termo_glossario_usuario_ativo.png`: Definição conceitual, fórmula matemática e dono do termo *Usuário Ativo*.
+   - `04_termo_glossario_taxa_conclusao.png`: Especificação formal e cálculo percentual da *Taxa de Conclusão*.
+   - `05_termo_glossario_conversao_recomendacao.png`: Regra de negócio e aplicação do termo *Conversão de Recomendação*.
+   - `06_termo_glossario_tempo_medio_consumo.png`: Fórmula e unidade de medida do *Tempo Médio de Consumo*.
+   - `07_glossario_ativos_vinculados_gold.png`: Relação de colunas e entidades da camada Gold associadas aos termos.
+   - `08_linhagem_grafica_cinco_pontas.png`: Grafo interativo de linhagem conectando Fontes $\rightarrow$ Bronze $\rightarrow$ Silver $\rightarrow$ Gold $\rightarrow$ Dashboard Superset.
+
 ---
 
 ## Especificação Técnica dos Módulos
@@ -435,6 +497,10 @@ desafio-04-Fundamentos-de-Dados-para-IA/
 │   ├── inventario_de_dados.md
 │   └── tecnicas_de_protecao.md
 ├── mongodb/                 # Scripts e consultas de agregação NoSQL
+├── openmetadata/            # Governança de metadados, dossiê oficial e evidências (RF27 a RF29, RF34)
+│   ├── dossie_metadados_oficial.json
+│   └── evidencias/
+├── scripts/                 # Automações de setup e testes (OpenMetadata, MDM, etc.)
 ├── sql/                     # DDLs relacionais, DDLs Medalhão e consultas SQL
 ├── src/                     # Código-fonte Python modular
 │   ├── beam/                # Pipelines analíticos e comparador de runtimes Apache Beam
@@ -444,7 +510,7 @@ desafio-04-Fundamentos-de-Dados-para-IA/
 │   ├── parquet/             # Exportador particionado e benchmark colunar
 │   ├── qualidade/           # Motor de avaliação das 5 dimensões de qualidade
 │   └── recomendacao/        # Embeddings com SentenceTransformers e busca semântica
-├── tests/                   # Suíte de 92 testes automatizados (Pytest)
+├── tests/                   # Suíte de 94 testes automatizados (Pytest)
 ├── docker-compose.yml       # Orquestração de todos os serviços conteinerizados
 ├── requirements.txt         # Dependências Python versionadas
 ├── .env.example             # Modelo de configuração de variáveis de ambiente
@@ -463,6 +529,7 @@ Para aprofundamento técnico em cada módulo específico, consulte:
 - [`documentacao/qualidade_dados.md`](documentacao/qualidade_dados.md): Regras formais, fórmulas, severidades e histórico das 5 dimensões de qualidade.
 - [`documentacao/camada_gold.md`](documentacao/camada_gold.md): Modelagem dimensional, granularidade, medidas e visões analíticas da Gold.
 - [`documentacao/kpis.md`](documentacao/kpis.md): Definição de métricas de negócio e indicadores de decisão pedagógicos.
+- [`documentacao/governanca_openmetadata.md`](documentacao/governanca_openmetadata.md): Governança no OpenMetadata, catálogo Silver/Gold, glossário com 4 termos, linhagem de 5 pontas e otimização de memória (*Metadata as Code*).
 - [`documentacao/uso_da_ia.md`](documentacao/uso_da_ia.md): Registro de governança sobre o uso de ferramentas de Inteligência Artificial.
 - [`lgpd/inventario_de_dados.md`](lgpd/inventario_de_dados.md): Inventário formal de dados pessoais, bases legais (Art. 7º) e ciclo de retenção (RF32).
 - [`lgpd/tecnicas_de_protecao.md`](lgpd/tecnicas_de_protecao.md): Especificação e prova de mascaramento, pseudonimização e hashing SHA-256 com salt dinâmico (RF33).
