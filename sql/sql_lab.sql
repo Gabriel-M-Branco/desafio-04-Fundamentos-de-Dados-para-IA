@@ -1,19 +1,5 @@
--- =============================================================================
--- CONSULTAS ANALÍTICAS DO SQL LAB E DATASETS VIRTUAIS (RF17)
--- Plataforma Educacional FIC_DEV - Desafio Prático 2
--- Integrado à Camada Gold (RF26) e Dashboards do Apache Superset (RF16-RF18)
--- =============================================================================
--- Este arquivo consolida as consultas virtuais modeladas no SQL Lab para alimentar
--- os gráficos do Storytelling Executivo e os painéis de monitoramento do Superset.
---
--- Requisitos técnicos atendidos:
---   [x] Junção (JOIN) entre tabelas/visões da camada Gold
---   [x] Agregação com GROUP BY, SUM, AVG, COUNT, ROUND
---   [x] Expressão condicional com CASE WHEN
---   [x] Funções de data (MAKE_DATE, DATE_TRUNC, EXTRACT, INTERVAL)
---   [x] Documentação da finalidade e campos calculados
---   [x] Reprodutibilidade a partir do schema gold no PostgreSQL
--- =============================================================================
+-- Consultas analíticas para criação de datasets virtuais no Apache Superset (SQL Lab),
+-- alimentadas a partir das tabelas e visões agregadas da camada Gold.
 
 
 -- -----------------------------------------------------------------------------

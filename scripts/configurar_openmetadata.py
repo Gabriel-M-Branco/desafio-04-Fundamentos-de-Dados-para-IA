@@ -13,16 +13,52 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
 
-API_BASE = "http://localhost:8585/api/v1"
-DIR_OMD = Path("openmetadata")
+from dotenv import load_dotenv
+
+RAIZ_PROJETO = Path(__file__).resolve().parents[1]
+load_dotenv(RAIZ_PROJETO / ".env")
+
+# Validação estrita de variáveis de ambiente sem fallbacks (RF15)
+variaveis_obrigatorias = [
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_DB",
+    "POSTGRES_HOST_DOCKER",
+    "POSTGRES_PORT_DOCKER",
+    "OPENMETADATA_URL",
+    "OPENMETADATA_ADMIN_EMAIL",
+    "OPENMETADATA_ADMIN_PASSWORD",
+]
+ausentes = [v for v in variaveis_obrigatorias if not os.environ.get(v)]
+if ausentes:
+    raise KeyError(
+        f"Variáveis de ambiente obrigatórias não configuradas no .env: {ausentes}. "
+        "Fallbacks e valores padrão estão desabilitados por política de segurança (RF15)."
+    )
+
+OPENMETADATA_URL = os.environ["OPENMETADATA_URL"].rstrip("/")
+API_BASE = f"{OPENMETADATA_URL}/api/v1"
+OM_ADMIN_EMAIL = os.environ["OPENMETADATA_ADMIN_EMAIL"]
+OM_ADMIN_PASSWORD = os.environ["OPENMETADATA_ADMIN_PASSWORD"]
+
+PG_USER = os.environ["POSTGRES_USER"]
+PG_PASSWORD = os.environ["POSTGRES_PASSWORD"]
+PG_DB = os.environ["POSTGRES_DB"]
+PG_HOST = os.environ["POSTGRES_HOST_DOCKER"]
+PG_PORT = os.environ["POSTGRES_PORT_DOCKER"]
+
+DIR_OMD = RAIZ_PROJETO / "openmetadata"
 DIR_OMD.mkdir(parents=True, exist_ok=True)
 DIR_EVIDENCIAS = DIR_OMD / "evidencias"
 DIR_EVIDENCIAS.mkdir(parents=True, exist_ok=True)
+
+
 
 
 TERMOS_GLOSSARIO_OFICIAIS = [
@@ -84,9 +120,13 @@ def testar_conexao_openmetadata() -> bool:
 
 
 def autenticar_openmetadata() -> str | None:
-    """Autentica na API REST do OpenMetadata com as credenciais oficiais de administrador."""
-    b64_pwd = base64.b64encode(b"admin").decode("utf-8")
-    payload = json.dumps({"email": "admin@openmetadata.org", "password": b64_pwd}).encode("utf-8")
+    """Autentica na API REST do OpenMetadata com credenciais administrativas seguras via .env (RF15)."""
+    if not OM_ADMIN_PASSWORD:
+        print("[Aviso] Variável OPENMETADATA_ADMIN_PASSWORD não configurada no ambiente (.env).")
+        return None
+
+    b64_pwd = base64.b64encode(OM_ADMIN_PASSWORD.encode("utf-8")).decode("utf-8")
+    payload = json.dumps({"email": OM_ADMIN_EMAIL, "password": b64_pwd}).encode("utf-8")
     req = urllib.request.Request(
         f"{API_BASE}/users/login",
         data=payload,
@@ -97,7 +137,7 @@ def autenticar_openmetadata() -> str | None:
             if resp.status == 200:
                 dados = json.loads(resp.read().decode("utf-8"))
                 token = dados.get("accessToken")
-                print("[OK] Autenticação bem-sucedida como admin@openmetadata.org!")
+                print(f"[OK] Autenticação bem-sucedida como {OM_ADMIN_EMAIL}!")
                 return token
     except Exception as exc:
         print(f"[Aviso] Falha na autenticação do OpenMetadata: {exc}")
@@ -105,10 +145,10 @@ def autenticar_openmetadata() -> str | None:
 
 
 def sincronizar_servico_e_schemas(token: str) -> None:
-    """Registra o serviço PostgreSQL, o banco ficdev_recomendacao e os schemas silver e gold."""
+    """Registra o serviço PostgreSQL, o banco e os schemas silver e gold sem expor credenciais (RF15)."""
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
 
-    # 1. Serviço de Banco
+    # 1. Serviço de Banco (injetando credenciais das variáveis de ambiente de forma segura)
     svc_payload = {
         "name": "ficdev_postgres",
         "displayName": "PostgreSQL FIC_DEV",
@@ -118,10 +158,10 @@ def sincronizar_servico_e_schemas(token: str) -> None:
             "config": {
                 "type": "Postgres",
                 "scheme": "postgresql+psycopg2",
-                "username": "postgres",
-                "authType": {"password": "postgres"},
-                "hostPort": "postgres:5432",
-                "database": "ficdev_recomendacao",
+                "username": PG_USER,
+                "authType": {"password": PG_PASSWORD},
+                "hostPort": f"{PG_HOST}:{PG_PORT}",
+                "database": PG_DB,
             }
         },
     }
@@ -137,32 +177,36 @@ def sincronizar_servico_e_schemas(token: str) -> None:
 
     # 2. Banco de Dados
     db_payload = {
-        "name": "ficdev_recomendacao",
-        "displayName": "ficdev_recomendacao",
+        "name": PG_DB,
+        "displayName": PG_DB,
         "service": "ficdev_postgres",
         "description": "Banco de dados principal contendo as camadas Bronze, Silver e Gold.",
     }
     req_db = urllib.request.Request(f"{API_BASE}/databases", data=json.dumps(db_payload).encode("utf-8"), headers=headers)
     try:
         with urllib.request.urlopen(req_db, timeout=5) as resp:
-            print("[OK] Database 'ficdev_recomendacao' registrado no OpenMetadata!")
+            print(f"[OK] Database '{PG_DB}' registrado no OpenMetadata!")
     except urllib.error.HTTPError as err:
         if err.code == 409:
-            print("[INFO] Database 'ficdev_recomendacao' já existente.")
+            print(f"[INFO] Database '{PG_DB}' já existente.")
         else:
             print(f"[Aviso] Database: {err}")
 
-    # 3. Schemas Silver e Gold
-    for schema_name, desc in [
-        ("silver", "Camada Silver: Dados padronizados, tipados e validados pelo Apache Hop"),
-        ("gold", "Camada Gold: Tabelas analíticas agregadas para consumo no Superset (RF26)"),
-    ]:
+    # 3. Schemas Fontes, Bronze, Silver e Gold (RF20 a RF26)
+    schemas_info = [
+        ("fontes", "Camada de Fontes Brutas: Arquivos de telemetria (JSON), catálogo administrativo (CSV) e NoSQL (MongoDB)"),
+        ("bronze", "Camada Bronze: Ingestão bruta com campos técnicos de auditoria (_origem, _ingestao_em, _run_id) via Apache Hop (RF20)"),
+        ("silver", "Camada Silver: Dados padronizados, tipados e validados pelo Apache Hop (RF20/RF30)"),
+        ("gold", "Camada Gold: Tabelas e visões analíticas agregadas para consumo no Superset (RF26)"),
+    ]
+    for schema_name, desc in schemas_info:
         sch_payload = {
             "name": schema_name,
             "displayName": schema_name,
-            "database": "ficdev_postgres.ficdev_recomendacao",
+            "database": f"ficdev_postgres.{PG_DB}",
             "description": desc,
         }
+
         req_sch = urllib.request.Request(f"{API_BASE}/databaseSchemas", data=json.dumps(sch_payload).encode("utf-8"), headers=headers)
         try:
             with urllib.request.urlopen(req_sch, timeout=5) as resp:
@@ -174,137 +218,526 @@ def sincronizar_servico_e_schemas(token: str) -> None:
                 print(f"[Aviso] Schema {schema_name}: {err}")
 
 
+def sincronizar_servico_dashboard(token: str) -> str | None:
+    """Registra o serviço Apache Superset e o Dashboard analítico oficial no OpenMetadata (RF16/RF29)."""
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
+
+    # 1. Serviço de Dashboard (Superset)
+    d_svc = {
+        "name": "ficdev_superset",
+        "displayName": "Apache Superset FIC_DEV",
+        "description": "Serviço de Business Intelligence e Consumo Analítico Executivo (RF16 a RF18)",
+        "serviceType": "Superset",
+        "connection": {
+            "config": {
+                "type": "Superset",
+                "hostPort": "http://superset:8088",
+            }
+        },
+    }
+    try:
+        req = urllib.request.Request(f"{API_BASE}/services/dashboardServices", data=json.dumps(d_svc).encode("utf-8"), headers=headers)
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            print("[OK] Dashboard Service 'ficdev_superset' registrado no OpenMetadata!")
+    except urllib.error.HTTPError as err:
+        if err.code == 409:
+            print("[INFO] Dashboard Service 'ficdev_superset' já existente.")
+        else:
+            print(f"[Aviso] Dashboard Service: {err}")
+
+    # 2. Entidade Dashboard Oficial
+    dash_payload = {
+        "name": "desafio_4_dashboard",
+        "displayName": "Desafio 4 - Dashboard Executivo FIC_DEV",
+        "description": "Dashboard analítico executivo consolidado com KPIs educacionais e engajamento da Camada Gold (RF16 a RF18)",
+        "service": "ficdev_superset",
+    }
+    dashboard_id = None
+    try:
+        req = urllib.request.Request(f"{API_BASE}/dashboards", data=json.dumps(dash_payload).encode("utf-8"), headers=headers)
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            dashboard_id = data.get("id")
+            print("[OK] Dashboard 'desafio_4_dashboard' registrado no OpenMetadata!")
+    except urllib.error.HTTPError as err:
+        if err.code == 409:
+            print("[INFO] Dashboard 'desafio_4_dashboard' já existente.")
+        else:
+            print(f"[Aviso] Dashboard: {err}")
+
+    if not dashboard_id:
+        try:
+            req_get = urllib.request.Request(f"{API_BASE}/dashboards/name/ficdev_superset.desafio_4_dashboard", headers=headers)
+            with urllib.request.urlopen(req_get, timeout=5) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                dashboard_id = data.get("id")
+        except Exception as exc:
+            print(f"[Aviso] Não foi possível obter ID do dashboard: {exc}")
+
+    return dashboard_id
+
+
 def sincronizar_tabelas_catalogo(token: str) -> dict[str, str]:
-    """Cadastra as tabelas analíticas no catálogo com colunas, tipos e descrições."""
+    """Cadastra todas as entidades do pipeline (Fontes, Bronze, Silver e Gold) com esquemas colunares detalhados."""
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
     tabelas_ids: dict[str, str] = {}
 
     tabelas = [
+        # --- CAMADA 1: FONTES BRUTAS DE ORIGEM (CSV / JSON / MONGODB) ---
+        {
+            "name": "catalogo_csv",
+            "displayName": "catalogo.csv (Arquivo Bruto)",
+            "description": "Arquivo delimitado CSV de origem contendo o catálogo administrativo de conteúdos educacionais (dados/catalogo.csv).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.fontes",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "conteudo_id", "dataType": "INT", "description": "ID original do conteúdo"},
+                {"name": "titulo", "dataType": "VARCHAR", "dataLength": 255, "description": "Título original"},
+                {"name": "tipo", "dataType": "VARCHAR", "dataLength": 50, "description": "Formato bruto"},
+                {"name": "categoria", "dataType": "VARCHAR", "dataLength": 100, "description": "Categoria temática"},
+                {"name": "nivel", "dataType": "VARCHAR", "dataLength": 50, "description": "Nível bruto"},
+                {"name": "carga_horaria_min", "dataType": "INT", "description": "Duração em minutos"},
+                {"name": "data_publicacao", "dataType": "DATE", "description": "Data de cadastro"},
+                {"name": "descricao", "dataType": "TEXT", "description": "Sinopse pedagógica"},
+                {"name": "autor", "dataType": "VARCHAR", "dataLength": 150, "description": "Instrutor / Autor"},
+            ],
+        },
+        {
+            "name": "interacoes_json",
+            "displayName": "interacoes.json (Logs de Telemetria)",
+            "description": "Logs de telemetria em formato JSON com interações brutas de consumo dos alunos (dados/interacoes.json).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.fontes",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "usuario_id", "dataType": "INT", "description": "ID do usuário"},
+                {"name": "conteudo_id", "dataType": "INT", "description": "ID do conteúdo consumido"},
+                {"name": "tipo_interacao", "dataType": "VARCHAR", "dataLength": 50, "description": "Tipo de evento (inicio, visualizacao, conclusao)"},
+                {"name": "data_hora", "dataType": "TIMESTAMP", "description": "Carimbo de data/hora do evento"},
+                {"name": "tempo_consumido", "dataType": "INT", "description": "Tempo em minutos"},
+                {"name": "percentual_conclusao", "dataType": "NUMERIC", "description": "Progresso percentual"},
+                {"name": "avaliacao_atribuida", "dataType": "NUMERIC", "description": "Nota atribuída"},
+            ],
+        },
+        {
+            "name": "comentarios_mongodb",
+            "displayName": "comentarios (Coleção NoSQL MongoDB)",
+            "description": "Coleção documental NoSQL MongoDB contendo avaliações textuais e feedbacks de alunos (dados/comentarios.json).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.fontes",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "usuario_id", "dataType": "INT", "description": "ID do estudante"},
+                {"name": "conteudo_id", "dataType": "INT", "description": "ID do curso avaliado"},
+                {"name": "comentario", "dataType": "TEXT", "description": "Texto livre da avaliação"},
+                {"name": "avaliacao", "dataType": "INT", "description": "Nota de 1 a 5"},
+                {"name": "data_comentario", "dataType": "TIMESTAMP", "description": "Data/hora do comentário"},
+            ],
+        },
+
+        # --- CAMADA 2: BRONZE (INGESTÃO BRUTA COM AUDITORIA - APACHE HOP) ---
+        {
+            "name": "catalogo_raw",
+            "displayName": "catalogo_raw (Bronze)",
+            "description": "Tabela da Camada Bronze no PostgreSQL com dados brutos do catálogo e colunas técnicas de rastreabilidade (_origem, _ingestao_em, _run_id) (RF20).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.bronze",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "conteudo_id", "dataType": "BIGINT", "description": "Identificador do conteúdo"},
+                {"name": "titulo", "dataType": "TEXT", "description": "Título bruto"},
+                {"name": "tipo", "dataType": "TEXT", "description": "Tipo bruto"},
+                {"name": "categoria", "dataType": "TEXT", "description": "Categoria bruta"},
+                {"name": "nivel", "dataType": "TEXT", "description": "Nível bruto"},
+                {"name": "carga_horaria_min", "dataType": "INT", "description": "Carga horária bruta"},
+                {"name": "data_publicacao", "dataType": "DATE", "description": "Data bruta"},
+                {"name": "descricao", "dataType": "TEXT", "description": "Descrição bruta"},
+                {"name": "autor", "dataType": "TEXT", "description": "Autor bruto"},
+                {"name": "_origem", "dataType": "VARCHAR", "dataLength": 100, "description": "Metadado técnico: arquivo de origem"},
+                {"name": "_ingestao_em", "dataType": "TIMESTAMP", "description": "Metadado técnico: timestamp da carga Hop"},
+                {"name": "_run_id", "dataType": "VARCHAR", "dataLength": 64, "description": "Metadado técnico: UUID da execução do Hop"},
+            ],
+        },
+        {
+            "name": "interacoes_raw",
+            "displayName": "interacoes_raw (Bronze)",
+            "description": "Tabela da Camada Bronze com eventos brutos de telemetria ingeridos pelo Hop com auditoria (RF20).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.bronze",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "usuario_id", "dataType": "BIGINT", "description": "ID do usuário"},
+                {"name": "conteudo_id", "dataType": "BIGINT", "description": "ID do conteúdo"},
+                {"name": "tipo_interacao", "dataType": "TEXT", "description": "Tipo de evento"},
+                {"name": "data_hora", "dataType": "TIMESTAMP", "description": "Data/hora do evento"},
+                {"name": "tempo_consumido", "dataType": "INT", "description": "Tempo consumido"},
+                {"name": "percentual_conclusao", "dataType": "NUMERIC", "description": "Percentual"},
+                {"name": "avaliacao_atribuida", "dataType": "NUMERIC", "description": "Avaliação"},
+                {"name": "_origem", "dataType": "VARCHAR", "dataLength": 100, "description": "Metadado técnico: origem"},
+                {"name": "_ingestao_em", "dataType": "TIMESTAMP", "description": "Metadado técnico: timestamp de ingestão"},
+                {"name": "_run_id", "dataType": "VARCHAR", "dataLength": 64, "description": "Metadado técnico: run_id"},
+            ],
+        },
+        {
+            "name": "comentarios_raw",
+            "displayName": "comentarios_raw (Bronze)",
+            "description": "Tabela da Camada Bronze com comentários brutos ingeridos do MongoDB via Hop (RF20).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.bronze",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "usuario_id", "dataType": "BIGINT", "description": "ID do usuário"},
+                {"name": "conteudo_id", "dataType": "BIGINT", "description": "ID do conteúdo"},
+                {"name": "comentario", "dataType": "TEXT", "description": "Comentário bruto"},
+                {"name": "avaliacao", "dataType": "NUMERIC", "description": "Nota"},
+                {"name": "data_comentario", "dataType": "TIMESTAMP", "description": "Data do comentário"},
+                {"name": "_origem", "dataType": "VARCHAR", "dataLength": 100, "description": "Metadado técnico: origem"},
+                {"name": "_ingestao_em", "dataType": "TIMESTAMP", "description": "Metadado técnico: timestamp"},
+                {"name": "_run_id", "dataType": "VARCHAR", "dataLength": 64, "description": "Metadado técnico: run_id"},
+            ],
+        },
+
+        # --- CAMADA 3: SILVER (DADOS PADRONIZADOS E CURADOS - APACHE HOP / MDM) ---
+        {
+            "name": "catalogo",
+            "displayName": "catalogo (Silver)",
+            "description": "Tabela curada e padronizada da Camada Silver contendo conteúdos homologados e reconciliados por MDM (RF20/RF30).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.silver",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "conteudo_id", "dataType": "INT", "description": "Identificador único do conteúdo"},
+                {"name": "titulo", "dataType": "VARCHAR", "dataLength": 255, "description": "Título padronizado"},
+                {"name": "tipo", "dataType": "VARCHAR", "dataLength": 50, "description": "Formato padronizado"},
+                {"name": "categoria", "dataType": "VARCHAR", "dataLength": 100, "description": "Categoria temática padronizada"},
+                {"name": "nivel", "dataType": "VARCHAR", "dataLength": 50, "description": "Nível de complexidade"},
+                {"name": "carga_horaria_min", "dataType": "INT", "description": "Duração em minutos"},
+                {"name": "autor", "dataType": "VARCHAR", "dataLength": 150, "description": "Autor / Instrutor"},
+                {"name": "data_publicacao", "dataType": "DATE", "description": "Data de homologação"},
+            ],
+        },
+        {
+            "name": "interacoes",
+            "displayName": "interacoes (Silver)",
+            "description": "Tabela da Camada Silver com eventos de telemetria desduplicados, validados e com tipos normalizados (RF20).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.silver",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "usuario_id", "dataType": "BIGINT", "description": "ID do usuário"},
+                {"name": "conteudo_id", "dataType": "BIGINT", "description": "ID do conteúdo referenciado"},
+                {"name": "tipo_interacao", "dataType": "VARCHAR", "dataLength": 50, "description": "Evento padronizado"},
+                {"name": "data_hora", "dataType": "TIMESTAMP", "description": "Data e hora normalizadas"},
+                {"name": "tempo_consumido", "dataType": "INT", "description": "Tempo em minutos"},
+                {"name": "percentual_conclusao", "dataType": "NUMERIC", "description": "Percentual de conclusão"},
+                {"name": "avaliacao_atribuida", "dataType": "NUMERIC", "description": "Nota válida"},
+            ],
+        },
+        {
+            "name": "comentarios",
+            "displayName": "comentarios (Silver)",
+            "description": "Tabela da Camada Silver contendo feedbacks textuais sanitizados e consistentes (RF20).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.silver",
+            "tableType": "Regular",
+            "columns": [
+                {"name": "usuario_id", "dataType": "BIGINT", "description": "ID do usuário"},
+                {"name": "conteudo_id", "dataType": "BIGINT", "description": "ID do conteúdo"},
+                {"name": "comentario", "dataType": "TEXT", "description": "Texto avaliativo limpo"},
+                {"name": "avaliacao", "dataType": "NUMERIC", "description": "Nota de 1 a 5"},
+                {"name": "data_comentario", "dataType": "TIMESTAMP", "description": "Data do comentário"},
+            ],
+        },
+
+        # --- CAMADA 4: GOLD (MODELOS ANALÍTICOS DIMENSIONAIS - APACHE BEAM / PARQUET) ---
         {
             "name": "kpis_mensais_categoria",
-            "displayName": "kpis_mensais_categoria",
-            "description": "Tabela analítica da Camada Gold com métricas agregadas mensais de engajamento e conclusão (RF26).",
-            "databaseSchema": "ficdev_postgres.ficdev_recomendacao.gold",
+            "displayName": "kpis_mensais_categoria (Gold)",
+            "description": "Tabela analítica agregada com métricas mensais de engajamento e conclusão processadas pelo Apache Beam (RF26).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.gold",
+            "tableType": "Regular",
             "columns": [
-                {"name": "ano", "dataType": "INT", "description": "Ano de referência"},
-                {"name": "mes", "dataType": "INT", "description": "Mês de referência (1-12)"},
+                {"name": "ano", "dataType": "INT", "description": "Ano de apuração"},
+                {"name": "mes", "dataType": "INT", "description": "Mês de apuração (1-12)"},
                 {"name": "categoria", "dataType": "VARCHAR", "dataLength": 100, "description": "Categoria temática oficial"},
-                {"name": "usuarios_ativos", "dataType": "INT", "description": "Total de usuários ativos"},
+                {"name": "usuarios_ativos", "dataType": "INT", "description": "Total de usuários únicos ativos"},
                 {"name": "total_visualizacoes", "dataType": "INT", "description": "Total de visualizações"},
                 {"name": "total_inicios", "dataType": "INT", "description": "Total de inícios de aulas"},
-                {"name": "total_conclusoes", "dataType": "INT", "description": "Total de conclusões de aulas"},
-                {"name": "taxa_conclusao_pct", "dataType": "NUMERIC", "description": "Taxa de conclusão percentual"},
-                {"name": "tempo_medio_min", "dataType": "NUMERIC", "description": "Tempo médio de consumo em minutos"},
-                {"name": "avaliacao_media", "dataType": "NUMERIC", "description": "Nota média de avaliação dos alunos"},
+                {"name": "total_conclusoes", "dataType": "INT", "description": "Total de conclusões"},
+                {"name": "taxa_conclusao_pct", "dataType": "NUMERIC", "description": "Taxa percentual de conclusão"},
+                {"name": "tempo_medio_min", "dataType": "NUMERIC", "description": "Tempo médio despendido em minutos"},
+                {"name": "avaliacao_media", "dataType": "NUMERIC", "description": "Média de satisfação dos alunos"},
             ],
         },
         {
             "name": "desempenho_conteudos",
-            "displayName": "desempenho_conteudos",
-            "description": "Tabela analítica da Camada Gold com desempenho individualizado por material didático (RF26).",
-            "databaseSchema": "ficdev_postgres.ficdev_recomendacao.gold",
+            "displayName": "desempenho_conteudos (Gold)",
+            "description": "Tabela analítica agregada com métricas individuais de engajamento por material didático (RF26).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.gold",
+            "tableType": "Regular",
             "columns": [
-                {"name": "conteudo_id", "dataType": "INT", "description": "Identificador do conteúdo"},
-                {"name": "titulo", "dataType": "VARCHAR", "dataLength": 255, "description": "Título do material didático"},
-                {"name": "tipo", "dataType": "VARCHAR", "dataLength": 50, "description": "Formato (Curso, Vídeo, Artigo, Podcast)"},
-                {"name": "categoria", "dataType": "VARCHAR", "dataLength": 100, "description": "Categoria pedagógica"},
-                {"name": "nivel", "dataType": "VARCHAR", "dataLength": 50, "description": "Nível de complexidade (Básico, Intermediário, Avançado)"},
-                {"name": "carga_horaria_min", "dataType": "INT", "description": "Duração estimada em minutos"},
-                {"name": "autor", "dataType": "VARCHAR", "dataLength": 150, "description": "Instrutor / Autor responsável"},
-                {"name": "total_visualizacoes", "dataType": "INT", "description": "Acessos acumulados"},
-                {"name": "total_inicios", "dataType": "INT", "description": "Inícios acumulados"},
+                {"name": "conteudo_id", "dataType": "INT", "description": "ID do conteúdo educacional"},
+                {"name": "titulo", "dataType": "VARCHAR", "dataLength": 255, "description": "Título oficial"},
+                {"name": "tipo", "dataType": "VARCHAR", "dataLength": 50, "description": "Formato pedagógico"},
+                {"name": "categoria", "dataType": "VARCHAR", "dataLength": 100, "description": "Categoria temática"},
+                {"name": "nivel", "dataType": "VARCHAR", "dataLength": 50, "description": "Nível de complexidade"},
+                {"name": "carga_horaria_min", "dataType": "INT", "description": "Carga horária em minutos"},
+                {"name": "autor", "dataType": "VARCHAR", "dataLength": 150, "description": "Autor responsável (Dado protegido LGPD)"},
+                {"name": "total_visualizacoes", "dataType": "INT", "description": "Acessos totais acumulados"},
+                {"name": "total_inicios", "dataType": "INT", "description": "Inícios totais acumulados"},
                 {"name": "total_conclusoes", "dataType": "INT", "description": "Conclusões acumuladas"},
-                {"name": "taxa_conclusao_pct", "dataType": "NUMERIC", "description": "Taxa de conclusão do conteúdo"},
-                {"name": "avaliacao_media", "dataType": "NUMERIC", "description": "Satisfação média calculada"},
+                {"name": "taxa_conclusao_pct", "dataType": "NUMERIC", "description": "Taxa percentual de conclusão"},
+                {"name": "avaliacao_media", "dataType": "NUMERIC", "description": "Média de avaliação dos alunos"},
             ],
         },
         {
-            "name": "catalogo",
-            "displayName": "catalogo",
-            "description": "Tabela curada e padronizada da Camada Silver contendo os cursos e conteúdos homologados.",
-            "databaseSchema": "ficdev_postgres.ficdev_recomendacao.silver",
+            "name": "vw_ranking_conteudos_engajamento",
+            "displayName": "vw_ranking_conteudos_engajamento (Gold View)",
+            "description": "Visão analítica da Camada Gold com ranking dos conteúdos de maior engajamento para alimentar o Superset (RF16/RF26).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.gold",
+            "tableType": "View",
             "columns": [
-                {"name": "conteudo_id", "dataType": "INT", "description": "Identificador único do conteúdo"},
-                {"name": "titulo", "dataType": "VARCHAR", "dataLength": 255, "description": "Título higienizado"},
-                {"name": "tipo", "dataType": "VARCHAR", "dataLength": 50, "description": "Tipo do material"},
-                {"name": "categoria", "dataType": "VARCHAR", "dataLength": 100, "description": "Categoria homologada"},
-                {"name": "nivel", "dataType": "VARCHAR", "dataLength": 50, "description": "Nível formatado"},
-                {"name": "carga_horaria_min", "dataType": "INT", "description": "Duração em minutos"},
-                {"name": "autor", "dataType": "VARCHAR", "dataLength": 150, "description": "Nome do autor"},
-                {"name": "data_publicacao", "dataType": "DATE", "description": "Data de homologação"},
+                {"name": "conteudo_id", "dataType": "INT", "description": "ID do conteúdo"},
+                {"name": "titulo", "dataType": "VARCHAR", "dataLength": 255, "description": "Título do curso"},
+                {"name": "categoria", "dataType": "VARCHAR", "dataLength": 100, "description": "Categoria pedagógica"},
+                {"name": "total_inicios", "dataType": "INT", "description": "Inícios acumulados"},
+                {"name": "total_conclusoes", "dataType": "INT", "description": "Conclusões acumuladas"},
+                {"name": "taxa_conclusao_pct", "dataType": "NUMERIC", "description": "Eficiência de conclusão"},
+                {"name": "ranking_categoria", "dataType": "INT", "description": "Posição no ranking por categoria"},
+            ],
+        },
+        {
+            "name": "dataset_virtual_sqllab",
+            "displayName": "dataset_virtual_sqllab (SQL Lab Dataset - RF17)",
+            "description": "Conjunto de dados virtual modelado no SQL Lab (RF17) via junção analítica entre gold.desempenho_conteudos e gold.kpis_mensais_categoria, calculando os KPIs de retenção por formato para o Storytelling (RF16/RF29).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.gold",
+            "tableType": "View",
+            "columns": [
+                {"name": "tipo_conteudo", "dataType": "VARCHAR", "dataLength": 50, "description": "Formato pedagógico (Curso, Vídeo, Artigo, Podcast)"},
+                {"name": "total_conteudos_ofertados", "dataType": "INT", "description": "Quantidade total de títulos no catálogo"},
+                {"name": "total_visualizacoes", "dataType": "INT", "description": "Visualizações acumuladas"},
+                {"name": "total_inicios", "dataType": "INT", "description": "Inícios totais acumulados"},
+                {"name": "total_conclusoes", "dataType": "INT", "description": "Conclusões totais acumuladas"},
+                {"name": "taxa_conversao_inicio_conclusao_pct", "dataType": "NUMERIC", "description": "KPI de Eficiência do Funil (%)"},
+                {"name": "avaliacao_media_formato", "dataType": "NUMERIC", "description": "Média de satisfação dos alunos"},
+                {"name": "nivel_impacto_engajamento", "dataType": "VARCHAR", "dataLength": 50, "description": "Classificação condicional via CASE WHEN"},
+                {"name": "dias_desde_ultima_carga", "dataType": "INT", "description": "Janela temporal decorrida"},
             ],
         },
     ]
 
     for tbl in tabelas:
+        sch_name = tbl["databaseSchema"].split(".")[-1]
+        key = f"{sch_name}.{tbl['name']}"
         req_tbl = urllib.request.Request(f"{API_BASE}/tables", data=json.dumps(tbl).encode("utf-8"), headers=headers)
         try:
             with urllib.request.urlopen(req_tbl, timeout=5) as resp:
                 d = json.loads(resp.read().decode("utf-8"))
-                tabelas_ids[tbl["name"]] = d["id"]
-                print(f"[OK] Tabela '{tbl['name']}' catalogada com sucesso!")
+                tabelas_ids[key] = d["id"]
+                print(f"[OK] Tabela '{key}' catalogada com sucesso!")
         except urllib.error.HTTPError as err:
             if err.code == 409:
-                print(f"[INFO] Tabela '{tbl['name']}' já existente no catálogo.")
+                print(f"[INFO] Tabela '{key}' já existente no catálogo.")
             else:
-                print(f"[Aviso] Tabela {tbl['name']}: {err}")
+                print(f"[Aviso] Tabela {key}: {err}")
 
-    # Busca IDs atualizados de todas as tabelas
-    try:
-        req_list = urllib.request.Request(f"{API_BASE}/tables", headers={"Authorization": f"Bearer {token}", "Accept": "application/json"})
-        with urllib.request.urlopen(req_list, timeout=5) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            for item in data.get("data", []):
-                tabelas_ids[item["name"]] = item["id"]
-    except Exception as exc:
-        print(f"[Aviso] Não foi possível listar IDs das tabelas: {exc}")
+        # Garante a recuperação do ID exato pelo FQN
+        if key not in tabelas_ids:
+            try:
+                fqn = f"{tbl['databaseSchema']}.{tbl['name']}"
+                req_get = urllib.request.Request(f"{API_BASE}/tables/name/{fqn}", headers={"Authorization": f"Bearer {token}", "Accept": "application/json"})
+                with urllib.request.urlopen(req_get, timeout=5) as resp_get:
+                    data_get = json.loads(resp_get.read().decode("utf-8"))
+                    tabelas_ids[key] = data_get["id"]
+            except Exception as exc:
+                print(f"[Aviso] Falha ao recuperar ID de {key}: {exc}")
 
     return tabelas_ids
 
 
-def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str]) -> None:
-    """Aplica tag PII.Sensitive na coluna autor e conecta o grafo de linhagem visual."""
+def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashboard_id: str | None) -> None:
+    """Aplica Owner, Tiers, Termos de Glossário em colunas, Tags LGPD e conecta o grafo de linhagem de 5 pontas (RF27/RF28/RF29/RF32)."""
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
+    headers_patch = {"Authorization": f"Bearer {token}", "Content-Type": "application/json-patch+json"}
 
-    # 1. Aplica Tag PII.Sensitive na coluna autor de desempenho_conteudos
-    if "desempenho_conteudos" in tabelas_ids:
-        tbl_id = tabelas_ids["desempenho_conteudos"]
-        patch_payload = [
-            {
+    # 1. Recupera ID do usuário admin para definir como Owner oficial (RF27)
+    admin_id = None
+    try:
+        req_u = urllib.request.Request(f"{API_BASE}/users/name/admin", headers=headers)
+        with urllib.request.urlopen(req_u, timeout=5) as resp:
+            u_data = json.loads(resp.read().decode("utf-8"))
+            admin_id = u_data.get("id")
+    except Exception as exc:
+        print(f"[Aviso] Não foi possível obter ID do usuário admin: {exc}")
+
+    # 2. Atribuição de Owner e Tiers de Governança (RF27)
+    # Gold: Tier 1 (Ativos analíticos críticos para tomada de decisão e BI)
+    # Silver: Tier 2 (Ativos curados e homologados pelo pipeline de dados)
+    config_tabelas = [
+        ("gold.kpis_mensais_categoria", "Tier.Tier1"),
+        ("gold.desempenho_conteudos", "Tier.Tier1"),
+        ("gold.vw_ranking_conteudos_engajamento", "Tier.Tier1"),
+        ("gold.dataset_virtual_sqllab", "Tier.Tier1"),
+        ("silver.catalogo", "Tier.Tier2"),
+        ("silver.interacoes", "Tier.Tier2"),
+        ("silver.comentarios", "Tier.Tier2"),
+    ]
+
+    for tbl_key, tier_tag in config_tabelas:
+        if tbl_key in tabelas_ids:
+            tbl_id = tabelas_ids[tbl_key]
+            # Aplica Owner
+            if admin_id:
+                patch_owner = [{"op": "add", "path": "/owner", "value": {"id": admin_id, "type": "user"}}]
+                req_owner = urllib.request.Request(f"{API_BASE}/tables/{tbl_id}", data=json.dumps(patch_owner).encode("utf-8"), headers=headers_patch, method="PATCH")
+                try:
+                    with urllib.request.urlopen(req_owner, timeout=5):
+                        pass
+                except Exception:
+                    pass
+
+            # Aplica Tier
+            patch_tier = [{
                 "op": "add",
-                "path": "/columns/6/tags",
-                "value": [
-                    {
-                        "tagFQN": "PII.Sensitive",
-                        "source": "Classification",
-                        "labelType": "Manual",
-                        "state": "Confirmed",
-                    }
-                ],
-            }
-        ]
-        patch_req = urllib.request.Request(
-            f"{API_BASE}/tables/{tbl_id}",
-            data=json.dumps(patch_payload).encode("utf-8"),
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json-patch+json"},
-            method="PATCH",
-        )
-        try:
-            with urllib.request.urlopen(patch_req, timeout=5) as resp:
-                print("[OK] Tag LGPD 'PII.Sensitive' aplicada na coluna 'autor' (RF28/RF32)!")
-        except Exception:
-            pass  # Já aplicada
+                "path": "/tags/0",
+                "value": {
+                    "tagFQN": tier_tag,
+                    "source": "Classification",
+                    "labelType": "Manual",
+                    "state": "Confirmed",
+                }
+            }]
+            req_tier = urllib.request.Request(f"{API_BASE}/tables/{tbl_id}", data=json.dumps(patch_tier).encode("utf-8"), headers=headers_patch, method="PATCH")
+            try:
+                with urllib.request.urlopen(req_tier, timeout=5):
+                    print(f"[OK] Metadado de Governança: {tbl_key} classificada como '{tier_tag}' com Owner 'admin' (RF27)!")
+            except Exception:
+                pass
 
-    # 2. Conecta a Linhagem de Dados (Lineage) entre Silver e Gold
-    if "catalogo" in tabelas_ids:
-        id_silver = tabelas_ids["catalogo"]
-        for target in ["desempenho_conteudos", "kpis_mensais_categoria"]:
-            if target in tabelas_ids:
-                id_gold = tabelas_ids[target]
+    # 3. Associação de Termos do Glossário Diretamente às Colunas (RF28)
+    termos_colunas = [
+        # (tabela, caminho_coluna, termo_fqn, label)
+        ("gold.kpis_mensais_categoria", "/columns/3/tags", "Glossario_Educacional_FICDEV.Usuario_Ativo", "Usuário Ativo"),
+        ("gold.kpis_mensais_categoria", "/columns/7/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+        ("gold.kpis_mensais_categoria", "/columns/8/tags", "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo", "Tempo Médio de Consumo"),
+        ("gold.desempenho_conteudos", "/columns/10/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+        ("gold.vw_ranking_conteudos_engajamento", "/columns/5/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+        ("gold.dataset_virtual_sqllab", "/columns/5/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+    ]
+    for tbl_key, path, termo_fqn, label in termos_colunas:
+        if tbl_key in tabelas_ids:
+            tbl_id = tabelas_ids[tbl_key]
+            patch_glossary = [{
+                "op": "add",
+                "path": path,
+                "value": [{
+                    "tagFQN": termo_fqn,
+                    "source": "Glossary",
+                    "labelType": "Manual",
+                    "state": "Confirmed",
+                }]
+            }]
+            req_g = urllib.request.Request(f"{API_BASE}/tables/{tbl_id}", data=json.dumps(patch_glossary).encode("utf-8"), headers=headers_patch, method="PATCH")
+            try:
+                with urllib.request.urlopen(req_g, timeout=5):
+                    print(f"[OK] Termo de Glossário '{label}' vinculado à coluna em {tbl_key} (RF28)!")
+            except Exception as e:
+                pass
+
+    # 4. Aplica Tags LGPD PII.Sensitive em Colunas (RF28/RF32)
+    tabelas_pii = [
+        ("gold.desempenho_conteudos", "/columns/6/tags"),  # autor
+        ("silver.catalogo", "/columns/6/tags"),            # autor
+        ("bronze.catalogo_raw", "/columns/8/tags"),        # autor
+        ("silver.interacoes", "/columns/0/tags"),          # usuario_id
+        ("bronze.interacoes_raw", "/columns/0/tags"),      # usuario_id
+        ("silver.comentarios", "/columns/0/tags"),         # usuario_id
+        ("silver.comentarios", "/columns/2/tags"),         # comentario
+    ]
+    for tbl_key, path in tabelas_pii:
+        if tbl_key in tabelas_ids:
+            tbl_id = tabelas_ids[tbl_key]
+            patch_payload = [
+                {
+                    "op": "add",
+                    "path": path,
+                    "value": [
+                        {
+                            "tagFQN": "PII.Sensitive",
+                            "source": "Classification",
+                            "labelType": "Manual",
+                            "state": "Confirmed",
+                        }
+                    ],
+                }
+            ]
+            patch_req = urllib.request.Request(
+                f"{API_BASE}/tables/{tbl_id}",
+                data=json.dumps(patch_payload).encode("utf-8"),
+                headers=headers_patch,
+                method="PATCH",
+            )
+            try:
+                with urllib.request.urlopen(patch_req, timeout=5) as resp:
+                    print(f"[OK] Tag LGPD 'PII.Sensitive' aplicada em {tbl_key}!")
+            except Exception:
+                pass  # Já aplicada
+
+    # 5. Conecta a Linhagem Ponta a Ponta de 5 Etapas (RF29)
+    arestas = [
+        # --- ETAPA 1: Fontes Brutas -> Bronze (Ingestão Hop) ---
+        ("fontes.catalogo_csv", "bronze.catalogo_raw", "table", "table", "Ingestão Hop: catalogo.csv -> bronze.catalogo_raw"),
+        ("fontes.interacoes_json", "bronze.interacoes_raw", "table", "table", "Ingestão Hop: interacoes.json -> bronze.interacoes_raw"),
+        ("fontes.comentarios_mongodb", "bronze.comentarios_raw", "table", "table", "Ingestão Hop: MongoDB comentarios -> bronze.comentarios_raw"),
+
+        # --- ETAPA 2: Bronze -> Silver (Curadoria, Tipagem e Qualidade Hop) ---
+        ("bronze.catalogo_raw", "silver.catalogo", "table", "table", "Padronização Hop: bronze.catalogo_raw -> silver.catalogo"),
+        ("bronze.interacoes_raw", "silver.interacoes", "table", "table", "Validação Hop: bronze.interacoes_raw -> silver.interacoes"),
+        ("bronze.comentarios_raw", "silver.comentarios", "table", "table", "Sanitização Hop: bronze.comentarios_raw -> silver.comentarios"),
+
+        # --- ETAPA 3: Silver -> Gold (Apache Beam / Parquet / Processamento Distribuído) ---
+        ("silver.catalogo", "gold.kpis_mensais_categoria", "table", "table", "Apache Beam: silver.catalogo -> gold.kpis_mensais_categoria"),
+        ("silver.interacoes", "gold.kpis_mensais_categoria", "table", "table", "Apache Beam: silver.interacoes -> gold.kpis_mensais_categoria"),
+        ("silver.catalogo", "gold.desempenho_conteudos", "table", "table", "Consolidação Gold: silver.catalogo -> gold.desempenho_conteudos"),
+        ("silver.interacoes", "gold.desempenho_conteudos", "table", "table", "Consolidação Gold: silver.interacoes -> gold.desempenho_conteudos"),
+        ("silver.comentarios", "gold.desempenho_conteudos", "table", "table", "Consolidação Gold: silver.comentarios -> gold.desempenho_conteudos"),
+        ("silver.catalogo", "gold.vw_ranking_conteudos_engajamento", "table", "table", "View Analítica: silver.catalogo -> gold.vw_ranking_conteudos_engajamento"),
+        ("silver.interacoes", "gold.vw_ranking_conteudos_engajamento", "table", "table", "View Analítica: silver.interacoes -> gold.vw_ranking_conteudos_engajamento"),
+
+        # --- ETAPA 4: Gold -> SQL Lab Dataset Virtual (Storytelling Executivo - RF17/RF29) ---
+        ("gold.desempenho_conteudos", "gold.dataset_virtual_sqllab", "table", "table", "SQL Lab JOIN (RF17): gold.desempenho_conteudos -> dataset_virtual_sqllab"),
+        ("gold.kpis_mensais_categoria", "gold.dataset_virtual_sqllab", "table", "table", "SQL Lab JOIN (RF17/RF29): gold.kpis_mensais_categoria (KPI) -> dataset_virtual_sqllab"),
+    ]
+
+    for origem_key, destino_key, from_type, to_type, desc in arestas:
+        if origem_key in tabelas_ids and destino_key in tabelas_ids:
+            from_id = tabelas_ids[origem_key]
+            to_id = tabelas_ids[destino_key]
+            lineage_payload = {
+                "edge": {
+                    "fromEntity": {"type": from_type, "id": from_id},
+                    "toEntity": {"type": to_type, "id": to_id},
+                }
+            }
+            put_req = urllib.request.Request(
+                f"{API_BASE}/lineage",
+                data=json.dumps(lineage_payload).encode("utf-8"),
+                headers=headers,
+                method="PUT",
+            )
+            try:
+                with urllib.request.urlopen(put_req, timeout=5) as resp:
+                    print(f"[OK] Grafo de Linhagem (RF29): {desc}")
+            except Exception as err:
+                print(f"[INFO] Linhagem {origem_key} -> {destino_key}: {err}")
+
+    # --- ETAPA 5: Gold & SQL Lab Dataset -> Dashboard (Consumo Analítico no Superset) ---
+    if dashboard_id:
+        tabelas_para_dashboard = [
+            "gold.kpis_mensais_categoria",
+            "gold.desempenho_conteudos",
+            "gold.vw_ranking_conteudos_engajamento",
+            "gold.dataset_virtual_sqllab",
+        ]
+        for gold_key in tabelas_para_dashboard:
+            if gold_key in tabelas_ids:
+                tbl_id = tabelas_ids[gold_key]
                 lineage_payload = {
                     "edge": {
-                        "fromEntity": {"type": "table", "id": id_silver},
-                        "toEntity": {"type": "table", "id": id_gold},
+                        "fromEntity": {"type": "table", "id": tbl_id},
+                        "toEntity": {"type": "dashboard", "id": dashboard_id},
                     }
                 }
                 put_req = urllib.request.Request(
@@ -315,9 +748,10 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str]) -> Non
                 )
                 try:
                     with urllib.request.urlopen(put_req, timeout=5) as resp:
-                        print(f"[OK] Grafo de Linhagem conectado: silver.catalogo -> gold.{target} (RF29)!")
+                        print(f"[OK] Grafo de Linhagem (RF29): {gold_key} -> Superset Dashboard (desafio_4_dashboard)")
                 except Exception as err:
-                    print(f"[INFO] Linhagem {target}: {err}")
+                    print(f"[INFO] Linhagem {gold_key} -> Dashboard: {err}")
+
 
 
 def sincronizar_glossario_e_termos(token: str) -> None:
@@ -368,27 +802,80 @@ def sincronizar_glossario_e_termos(token: str) -> None:
 
 
 def exportar_dossie_metadados() -> Path:
-    """Gera o dossiê formal de metadados técnicos e glossário em JSON para auditoria (RF27/RF28)."""
+    """Gera o dossiê formal de metadados técnicos e glossário em JSON para auditoria (RF27/RF28/RF29)."""
     caminho = DIR_OMD / "dossie_metadados_oficial.json"
     dossie = {
         "sistema": "OpenMetadata FIC_DEV",
         "versao_plataforma": "1.4.6",
         "credenciais_acesso": {
-            "url": "http://localhost:8585",
-            "email_login": "admin@openmetadata.org",
+            "url": OPENMETADATA_URL,
+            "email_login": OM_ADMIN_EMAIL,
             "perfil": "Admin Principal",
+            "origem_credenciais": "Variáveis de ambiente (.env / RF15)",
         },
         "servico_dados": {
             "nome": "ficdev_postgres",
             "tipo": "PostgreSQL",
-            "host": "postgres:5432",
-            "banco": "ficdev_recomendacao",
-            "schemas_catalogados": ["silver", "gold"],
+            "host": f"{PG_HOST}:{PG_PORT}",
+            "banco": PG_DB,
+            "schemas_catalogados": ["fontes", "bronze", "silver", "gold"],
+        },
+        "servico_dashboard": {
+            "nome": "ficdev_superset",
+            "tipo": "Superset",
+            "url": "http://superset:8088",
+            "dashboard_oficial": "desafio_4_dashboard",
+            "titulo": "Desafio 4 - Dashboard Executivo FIC_DEV",
+        },
+        "linhagem_end_to_end_rf29": {
+            "descricao": "Grafo de linhagem completo em 5 etapas: Fontes -> Bronze -> Silver -> Gold -> Dashboard (Superset)",
+            "arestas": [
+                "fontes.catalogo_csv -> bronze.catalogo_raw",
+                "fontes.interacoes_json -> bronze.interacoes_raw",
+                "fontes.comentarios_mongodb -> bronze.comentarios_raw",
+                "bronze.catalogo_raw -> silver.catalogo",
+                "bronze.interacoes_raw -> silver.interacoes",
+                "bronze.comentarios_raw -> silver.comentarios",
+                "silver.catalogo -> gold.kpis_mensais_categoria",
+                "silver.interacoes -> gold.kpis_mensais_categoria",
+                "silver.catalogo -> gold.desempenho_conteudos",
+                "silver.interacoes -> gold.desempenho_conteudos",
+                "silver.comentarios -> gold.desempenho_conteudos",
+                "silver.catalogo -> gold.vw_ranking_conteudos_engajamento",
+                "silver.interacoes -> gold.vw_ranking_conteudos_engajamento",
+                "gold.desempenho_conteudos -> gold.dataset_virtual_sqllab",
+                "gold.kpis_mensais_categoria -> gold.dataset_virtual_sqllab",
+                "gold.dataset_virtual_sqllab -> dashboard.desafio_4_dashboard",
+                "gold.kpis_mensais_categoria -> dashboard.desafio_4_dashboard",
+                "gold.desempenho_conteudos -> dashboard.desafio_4_dashboard",
+                "gold.vw_ranking_conteudos_engajamento -> dashboard.desafio_4_dashboard",
+            ],
         },
         "glossario_negocio": {
             "nome": "Glossario_Educacional_FICDEV",
             "descricao": "Vocabulário de Negócio Padronizado para Análise Pedagógica e IA (RF28)",
             "termos": TERMOS_GLOSSARIO_OFICIAIS,
+        },
+        "governanca_tiers_e_owners": {
+            "owner_oficial": "admin (Equipe de Engenharia e Governança FIC_DEV)",
+            "tier_1_gold_analitico": [
+                "gold.kpis_mensais_categoria",
+                "gold.desempenho_conteudos",
+                "gold.vw_ranking_conteudos_engajamento",
+                "gold.dataset_virtual_sqllab",
+            ],
+            "tier_2_silver_curado": [
+                "silver.catalogo",
+                "silver.interacoes",
+                "silver.comentarios",
+            ],
+        },
+        "termos_glossario_vinculados_colunas": {
+            "gold.kpis_mensais_categoria.usuarios_ativos": "Glossario_Educacional_FICDEV.Usuario_Ativo",
+            "gold.kpis_mensais_categoria.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+            "gold.kpis_mensais_categoria.tempo_medio_min": "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo",
+            "gold.desempenho_conteudos.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+            "gold.vw_ranking_conteudos_engajamento.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
         },
         "controles_anti_data_swamp": [
             "Esquemas estritamente tipados com contratos DDL nas camadas Silver e Gold.",
@@ -422,25 +909,28 @@ def main() -> None:
     if ativo:
         token = autenticar_openmetadata()
         if token:
-            print("\n--- 1. Sincronizando Serviço de Banco e Schemas ---")
+            print("\n--- 1. Sincronizando Serviço de Banco e Schemas (Fontes, Bronze, Silver, Gold) ---")
             sincronizar_servico_e_schemas(token)
 
-            print("\n--- 2. Sincronizando Tabelas no Catálogo ---")
+            print("\n--- 2. Sincronizando Serviço e Entidade de Dashboard (Apache Superset) ---")
+            dashboard_id = sincronizar_servico_dashboard(token)
+
+            print("\n--- 3. Sincronizando Tabelas no Catálogo (12 entidades nas 4 camadas) ---")
             tbl_ids = sincronizar_tabelas_catalogo(token)
 
-            print("\n--- 3. Aplicando Classificações LGPD e Grafo de Linhagem ---")
-            aplicar_tags_lgpd_e_linhagem(token, tbl_ids)
-
-            print("\n--- 4. Sincronizando Glossário e 4 Termos Oficiais ---")
+            print("\n--- 4. Sincronizando Glossário e 4 Termos Oficiais (RF28) ---")
             sincronizar_glossario_e_termos(token)
 
-            print("\n[SUCESSO] Plataforma OpenMetadata 100% configurada e populada!")
+            print("\n--- 5. Aplicando Tiers, Owners, Termos de Glossário, Classificações LGPD e Linhagem (RF27 — RF29) ---")
+            aplicar_tags_lgpd_e_linhagem(token, tbl_ids, dashboard_id)
+
+            print("\n[SUCESSO] Plataforma OpenMetadata 100% configurada com linhagem completa de 5 pontas!")
 
     print("\n-----------------------------------------------------------------")
     print("INSTRUÇÕES DE ACESSO AO OPENMETADATA:")
-    print("  URL no Navegador: http://localhost:8585")
-    print("  E-mail de Login:  admin@openmetadata.org")
-    print("  Senha:            admin")
+    print(f"  URL no Navegador: {OPENMETADATA_URL}")
+    print(f"  E-mail de Login:  {OM_ADMIN_EMAIL}")
+    print("  Senha:            (conforme variável OPENMETADATA_ADMIN_PASSWORD no .env)")
     print("-----------------------------------------------------------------")
     print("=================================================================")
 

@@ -67,13 +67,20 @@ def normalize_nulls(value: Any) -> Any:
 def db_connect():
     if psycopg is None:
         raise RuntimeError("psycopg não está instalado. Rode pip install -r requirements.txt")
+    from dotenv import load_dotenv
+    load_dotenv()
+    variaveis_obrigatorias = ["POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"]
+    ausentes = [v for v in variaveis_obrigatorias if not os.environ.get(v)]
+    if ausentes:
+        raise KeyError(f"Variáveis de ambiente obrigatórias não configuradas no .env: {ausentes}. Fallbacks desabilitados (RF15).")
     return psycopg.connect(
-        host=os.getenv("POSTGRES_HOST", "localhost"),
-        port=int(os.getenv("POSTGRES_PORT", "5432")),
-        dbname=os.getenv("POSTGRES_DB", "ficdev"),
-        user=os.getenv("POSTGRES_USER", "ficdev"),
-        password=os.getenv("POSTGRES_PASSWORD", ""),
+        host=os.environ["POSTGRES_HOST"],
+        port=int(os.environ["POSTGRES_PORT"]),
+        dbname=os.environ["POSTGRES_DB"],
+        user=os.environ["POSTGRES_USER"],
+        password=os.environ["POSTGRES_PASSWORD"],
     )
+
 
 
 DDL = {

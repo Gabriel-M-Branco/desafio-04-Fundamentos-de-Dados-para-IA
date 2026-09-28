@@ -35,7 +35,7 @@ with app.app_context():
     user = os.environ["POSTGRES_USER"]
     password = os.environ["POSTGRES_PASSWORD"]
     database = os.environ["POSTGRES_DB"]
-    admin_user = os.environ.get("SUPERSET_ADMIN_USERNAME", "admin")
+    admin_user = os.environ["SUPERSET_ADMIN_USERNAME"]
 
     diretorio_dashboard = Path(__file__).resolve().parent
     arquivo_zip = localizar_zip_dashboard(diretorio_dashboard)

@@ -11,7 +11,7 @@ Este documento registra a metodologia, medições empíricas, análise de desemp
 - **Processador:** `AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD`
 - **Python:** `3.14.7`
 - **PyArrow:** `25.0.1`
-- **Pandas:** `3.0.5`
+- **Pandas:** `3.0.6`
 
 ### 1.2 Metodologia
 - **Volume avaliado:** `1000` registros reais de interações da camada Silver.
@@ -26,10 +26,10 @@ Este documento registra a metodologia, medições empíricas, análise de desemp
 
 | Formato | Tamanho em Disco (KB) | Redução vs JSON (%) | Redução vs CSV (%) | Tempo de Escrita (ms) | Leitura Full Scan (ms) | Leitura com Projeção (ms) | Leitura com Filtro Partição (ms) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Parquet Consolidado** | **36.0 KB** | **89.44%** | **72.16%** | 4.506 ms | 1.473 ms | **1.289 ms** | 1.68 ms |
-| **Parquet Particionado** | 94.3 KB | 72.34% | 27.06% | 7.003 ms | 3.983 ms | --- | **2.859 ms** |
-| **CSV** | 129.28 KB | 62.08% | 0.00% | 6.081 ms | 2.651 ms | 1.832 ms | 2.765 ms |
-| **JSON** | 340.98 KB | 0.00% | -163.75% | 71.441 ms | 1.895 ms | 2.002 ms | 1.851 ms |
+| **Parquet Consolidado** | **36.0 KB** | **89.44%** | **72.16%** | 4.378 ms | 1.626 ms | **1.249 ms** | 2.65 ms |
+| **Parquet Particionado** | 94.3 KB | 72.34% | 27.06% | 8.073 ms | 4.672 ms | --- | **3.24 ms** |
+| **CSV** | 129.28 KB | 62.08% | 0.00% | 5.195 ms | 3.066 ms | 2.18 ms | 4.615 ms |
+| **JSON** | 340.98 KB | 0.00% | -163.75% | 78.12 ms | 1.958 ms | 2.103 ms | 1.965 ms |
 
 ---
 
