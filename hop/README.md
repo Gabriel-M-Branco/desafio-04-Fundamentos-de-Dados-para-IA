@@ -60,6 +60,7 @@ O projeto foi projetado para rodar em qualquer sistema operacional (Windows, Lin
 - `workflows/carga_bronze_silver.hwf`: Bronze -> Silver, estados da execução e rotas de falha.
 - `workflows/workflow_principal.hwf`: Orquestrador mestre parametrizado.
 - `metadata/rdbms/PostgreSQL.json`: conexão reutilizável com credenciais por variáveis.
+- `evidencias/`: capturas de tela oficiais comprovando a execução com sucesso dos workflows e logs.
 - `../sql/camadas_bronze_silver.sql`: tabelas, regras, validação e reprocessamento.
 
 ## Integração da equipe
