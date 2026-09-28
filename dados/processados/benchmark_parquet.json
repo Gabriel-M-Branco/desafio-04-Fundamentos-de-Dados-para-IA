@@ -2,7 +2,7 @@
   "ambiente": {
     "sistema_operacional": "Windows-11-10.0.26200-SP0",
     "python_versao": "3.14.7",
-    "processador": "AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD",
+    "processador": "AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD",
     "pyarrow_versao": "25.0.1",
     "pandas_versao": "3.0.6"
   },
