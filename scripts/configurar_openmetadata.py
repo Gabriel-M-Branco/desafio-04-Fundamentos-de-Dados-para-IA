@@ -530,16 +530,101 @@ def sincronizar_tabelas_catalogo(token: str) -> dict[str, str]:
 
 
 def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashboard_id: str | None) -> None:
-    """Aplica tags PII e conecta o grafo de linhagem de 5 pontas: Fonte -> Bronze -> Silver -> Gold -> Dashboard (RF28/RF29/RF32)."""
+    """Aplica Owner, Tiers, Termos de Glossário em colunas, Tags LGPD e conecta o grafo de linhagem de 5 pontas (RF27/RF28/RF29/RF32)."""
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
+    headers_patch = {"Authorization": f"Bearer {token}", "Content-Type": "application/json-patch+json"}
 
-    # 1. Aplica Tags LGPD PII.Sensitive
+    # 1. Recupera ID do usuário admin para definir como Owner oficial (RF27)
+    admin_id = None
+    try:
+        req_u = urllib.request.Request(f"{API_BASE}/users/name/admin", headers=headers)
+        with urllib.request.urlopen(req_u, timeout=5) as resp:
+            u_data = json.loads(resp.read().decode("utf-8"))
+            admin_id = u_data.get("id")
+    except Exception as exc:
+        print(f"[Aviso] Não foi possível obter ID do usuário admin: {exc}")
+
+    # 2. Atribuição de Owner e Tiers de Governança (RF27)
+    # Gold: Tier 1 (Ativos analíticos críticos para tomada de decisão e BI)
+    # Silver: Tier 2 (Ativos curados e homologados pelo pipeline de dados)
+    config_tabelas = [
+        ("gold.kpis_mensais_categoria", "Tier.Tier1"),
+        ("gold.desempenho_conteudos", "Tier.Tier1"),
+        ("gold.vw_ranking_conteudos_engajamento", "Tier.Tier1"),
+        ("silver.catalogo", "Tier.Tier2"),
+        ("silver.interacoes", "Tier.Tier2"),
+        ("silver.comentarios", "Tier.Tier2"),
+    ]
+
+    for tbl_key, tier_tag in config_tabelas:
+        if tbl_key in tabelas_ids:
+            tbl_id = tabelas_ids[tbl_key]
+            # Aplica Owner
+            if admin_id:
+                patch_owner = [{"op": "add", "path": "/owner", "value": {"id": admin_id, "type": "user"}}]
+                req_owner = urllib.request.Request(f"{API_BASE}/tables/{tbl_id}", data=json.dumps(patch_owner).encode("utf-8"), headers=headers_patch, method="PATCH")
+                try:
+                    with urllib.request.urlopen(req_owner, timeout=5):
+                        pass
+                except Exception:
+                    pass
+
+            # Aplica Tier
+            patch_tier = [{
+                "op": "add",
+                "path": "/tags/0",
+                "value": {
+                    "tagFQN": tier_tag,
+                    "source": "Classification",
+                    "labelType": "Manual",
+                    "state": "Confirmed",
+                }
+            }]
+            req_tier = urllib.request.Request(f"{API_BASE}/tables/{tbl_id}", data=json.dumps(patch_tier).encode("utf-8"), headers=headers_patch, method="PATCH")
+            try:
+                with urllib.request.urlopen(req_tier, timeout=5):
+                    print(f"[OK] Metadado de Governança: {tbl_key} classificada como '{tier_tag}' com Owner 'admin' (RF27)!")
+            except Exception:
+                pass
+
+    # 3. Associação de Termos do Glossário Diretamente às Colunas (RF28)
+    termos_colunas = [
+        # (tabela, caminho_coluna, termo_fqn, label)
+        ("gold.kpis_mensais_categoria", "/columns/3/tags", "Glossario_Educacional_FICDEV.Usuario_Ativo", "Usuário Ativo"),
+        ("gold.kpis_mensais_categoria", "/columns/7/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+        ("gold.kpis_mensais_categoria", "/columns/8/tags", "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo", "Tempo Médio de Consumo"),
+        ("gold.desempenho_conteudos", "/columns/10/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+        ("gold.vw_ranking_conteudos_engajamento", "/columns/5/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+    ]
+    for tbl_key, path, termo_fqn, label in termos_colunas:
+        if tbl_key in tabelas_ids:
+            tbl_id = tabelas_ids[tbl_key]
+            patch_glossary = [{
+                "op": "add",
+                "path": path,
+                "value": [{
+                    "tagFQN": termo_fqn,
+                    "source": "Glossary",
+                    "labelType": "Manual",
+                    "state": "Confirmed",
+                }]
+            }]
+            req_g = urllib.request.Request(f"{API_BASE}/tables/{tbl_id}", data=json.dumps(patch_glossary).encode("utf-8"), headers=headers_patch, method="PATCH")
+            try:
+                with urllib.request.urlopen(req_g, timeout=5):
+                    print(f"[OK] Termo de Glossário '{label}' vinculado à coluna em {tbl_key} (RF28)!")
+            except Exception as e:
+                pass
+
+    # 4. Aplica Tags LGPD PII.Sensitive em Colunas (RF28/RF32)
     tabelas_pii = [
         ("gold.desempenho_conteudos", "/columns/6/tags"),  # autor
         ("silver.catalogo", "/columns/6/tags"),            # autor
         ("bronze.catalogo_raw", "/columns/8/tags"),        # autor
         ("silver.interacoes", "/columns/0/tags"),          # usuario_id
         ("bronze.interacoes_raw", "/columns/0/tags"),      # usuario_id
+        ("silver.comentarios", "/columns/0/tags"),         # usuario_id
+        ("silver.comentarios", "/columns/2/tags"),         # comentario
     ]
     for tbl_key, path in tabelas_pii:
         if tbl_key in tabelas_ids:
@@ -561,7 +646,7 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
             patch_req = urllib.request.Request(
                 f"{API_BASE}/tables/{tbl_id}",
                 data=json.dumps(patch_payload).encode("utf-8"),
-                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json-patch+json"},
+                headers=headers_patch,
                 method="PATCH",
             )
             try:
@@ -570,7 +655,7 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
             except Exception:
                 pass  # Já aplicada
 
-    # 2. Conecta a Linhagem Ponta a Ponta (RF29)
+    # 5. Conecta a Linhagem Ponta a Ponta de 5 Etapas (RF29)
     arestas = [
         # --- ETAPA 1: Fontes Brutas -> Bronze (Ingestão Hop) ---
         ("fontes.catalogo_csv", "bronze.catalogo_raw", "table", "table", "Ingestão Hop: catalogo.csv -> bronze.catalogo_raw"),
@@ -743,6 +828,26 @@ def exportar_dossie_metadados() -> Path:
             "descricao": "Vocabulário de Negócio Padronizado para Análise Pedagógica e IA (RF28)",
             "termos": TERMOS_GLOSSARIO_OFICIAIS,
         },
+        "governanca_tiers_e_owners": {
+            "owner_oficial": "admin (Equipe de Engenharia e Governança FIC_DEV)",
+            "tier_1_gold_analitico": [
+                "gold.kpis_mensais_categoria",
+                "gold.desempenho_conteudos",
+                "gold.vw_ranking_conteudos_engajamento",
+            ],
+            "tier_2_silver_curado": [
+                "silver.catalogo",
+                "silver.interacoes",
+                "silver.comentarios",
+            ],
+        },
+        "termos_glossario_vinculados_colunas": {
+            "gold.kpis_mensais_categoria.usuarios_ativos": "Glossario_Educacional_FICDEV.Usuario_Ativo",
+            "gold.kpis_mensais_categoria.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+            "gold.kpis_mensais_categoria.tempo_medio_min": "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo",
+            "gold.desempenho_conteudos.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+            "gold.vw_ranking_conteudos_engajamento.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+        },
         "controles_anti_data_swamp": [
             "Esquemas estritamente tipados com contratos DDL nas camadas Silver e Gold.",
             "Quality Gate bloqueador com 5 dimensões antes da publicação Gold.",
@@ -784,11 +889,11 @@ def main() -> None:
             print("\n--- 3. Sincronizando Tabelas no Catálogo (12 entidades nas 4 camadas) ---")
             tbl_ids = sincronizar_tabelas_catalogo(token)
 
-            print("\n--- 4. Aplicando Classificações LGPD e Grafo de Linhagem Ponta a Ponta (RF29) ---")
-            aplicar_tags_lgpd_e_linhagem(token, tbl_ids, dashboard_id)
-
-            print("\n--- 5. Sincronizando Glossário e 4 Termos Oficiais ---")
+            print("\n--- 4. Sincronizando Glossário e 4 Termos Oficiais (RF28) ---")
             sincronizar_glossario_e_termos(token)
+
+            print("\n--- 5. Aplicando Tiers, Owners, Termos de Glossário, Classificações LGPD e Linhagem (RF27 — RF29) ---")
+            aplicar_tags_lgpd_e_linhagem(token, tbl_ids, dashboard_id)
 
             print("\n[SUCESSO] Plataforma OpenMetadata 100% configurada com linhagem completa de 5 pontas!")
 

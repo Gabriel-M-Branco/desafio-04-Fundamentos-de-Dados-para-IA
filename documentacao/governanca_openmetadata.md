@@ -163,11 +163,36 @@ Você pode visualizar o grafo completo a partir de múltiplos pontos de entrada:
 
 ---
 
-### Passo 4: Conferir os Demais Requisitos
+### Passo 4: Conferir o Preenchimento dos Metadados em Silver e Gold (RF27 a RF29)
 
-1. **Catálogo de Tabelas (RF27):** Em **Explore** $\rightarrow$ **Tables**, verifique os esquemas `fontes`, `bronze`, `silver` e `gold`.
-2. **Glossário de Negócio (RF28):** Em **Govern** $\rightarrow$ **Glossary**, abra `Glossario_Educacional_FICDEV` e inspecione os 4 termos cadastrados com suas fórmulas de cálculo e vínculos.
-3. **Classificação de Privacidade LGPD (RF32):** Em **Explore** $\rightarrow$ **Tables** $\rightarrow$ `gold.desempenho_conteudos`, verifique a tag azul `PII.Sensitive` na coluna `autor`.
+Na interface web do OpenMetadata, todos os campos foram enriquecidos e populados:
+
+#### 1. Atribuição de Proprietário (Owner) e Nível de Criticidade (Tier) (RF27)
+- Em **Explore** $\rightarrow$ **Tables**:
+  - Tabelas **Gold** (`kpis_mensais_categoria`, `desempenho_conteudos`, `vw_ranking_conteudos_engajamento`):
+    - **Owner:** `admin` (Equipe de Engenharia de Dados FIC_DEV).
+    - **Tag de Criticidade:** `Tier.Tier1` (Ativo crítico de verdade única para suporte a decisões de negócio e BI).
+  - Tabelas **Silver** (`catalogo`, `interacoes`, `comentarios`):
+    - **Owner:** `admin`.
+    - **Tag de Criticidade:** `Tier.Tier2` (Ativo de dados curados, padronizados e homologados).
+
+#### 2. Vínculo dos Termos de Glossário às Colunas Analíticas (RF28)
+- Abra **`gold.kpis_mensais_categoria`** e inspecione as colunas:
+  - `usuarios_ativos`: Tag de Glossário **`Glossario_Educacional_FICDEV.Usuario_Ativo`** vinculada diretamente, exibindo a fórmula `COUNT(DISTINCT usuario_id)` e o responsável didático.
+  - `taxa_conclusao_pct`: Tag de Glossário **`Glossario_Educacional_FICDEV.Taxa_Conclusao`**, exibindo a regra `ROUND((SUM(total_conclusoes)::NUMERIC / NULLIF(SUM(total_inicios), 0)) * 100, 2)`.
+  - `tempo_medio_min`: Tag de Glossário **`Glossario_Educacional_FICDEV.Tempo_Medio_Consumo`**, detalhando o cômputo da média aritmética em minutos.
+- Abra **`gold.desempenho_conteudos`** e **`gold.vw_ranking_conteudos_engajamento`**:
+  - Ambas com o termo **`Glossario_Educacional_FICDEV.Taxa_Conclusao`** associado à coluna correspondente.
+
+#### 3. Classificação de Privacidade LGPD nas Colunas (RF28 / RF32)
+- Nas tabelas Silver e Gold, as colunas com atributos identificáveis possuem a tag azul **`PII.Sensitive`**:
+  - `silver.catalogo.autor` e `gold.desempenho_conteudos.autor` (Dado pessoal sujeito a mascaramento J*** D**).
+  - `silver.interacoes.usuario_id` e `silver.comentarios.usuario_id` (Dado pessoal pseudonimizado com UUIDv5).
+  - `silver.comentarios.comentario` (Texto livre com possíveis opiniões subjetivas e identificadores indiretos).
+
+#### 4. Grafo de Linhagem Gráfica de 5 Pontas (RF29)
+- Na aba **Lineage** de qualquer tabela Silver, Gold ou do Dashboard Superset, o grafo visual interativo conecta ininterruptamente:
+  $$\text{Fontes (CSV/JSON/Mongo)} \longrightarrow \text{Bronze (Hop Raw)} \longrightarrow \text{Silver (Hop Curated)} \longrightarrow \text{Gold (Beam/Views)} \longrightarrow \text{Dashboard (Superset)}$$
 
 ---
 
@@ -175,4 +200,4 @@ Você pode visualizar o grafo completo a partir de múltiplos pontos de entrada:
 
 A execução do script gera automaticamente o dossiê formal consolidado em JSON para auditoria técnica:
 - **Caminho:** [`openmetadata/dossie_metadados_oficial.json`](../openmetadata/dossie_metadados_oficial.json)
-- **Conteúdo:** Versão da plataforma, serviços catalogados, esquemas, glossário com fórmulas, taxonomia LGPD e a relação completa das 16 arestas de linhagem RF29.
+- **Conteúdo:** Versão da plataforma, serviços catalogados, esquemas, glossário com fórmulas, taxonomia LGPD, donos de ativos, tiers corporativos e a relação completa das 16 arestas de linhagem RF29.

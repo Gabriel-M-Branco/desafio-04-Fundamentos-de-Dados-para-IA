@@ -93,6 +93,26 @@
       }
     ]
   },
+  "governanca_tiers_e_owners": {
+    "owner_oficial": "admin (Equipe de Engenharia e Governança FIC_DEV)",
+    "tier_1_gold_analitico": [
+      "gold.kpis_mensais_categoria",
+      "gold.desempenho_conteudos",
+      "gold.vw_ranking_conteudos_engajamento"
+    ],
+    "tier_2_silver_curado": [
+      "silver.catalogo",
+      "silver.interacoes",
+      "silver.comentarios"
+    ]
+  },
+  "termos_glossario_vinculados_colunas": {
+    "gold.kpis_mensais_categoria.usuarios_ativos": "Glossario_Educacional_FICDEV.Usuario_Ativo",
+    "gold.kpis_mensais_categoria.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+    "gold.kpis_mensais_categoria.tempo_medio_min": "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo",
+    "gold.desempenho_conteudos.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+    "gold.vw_ranking_conteudos_engajamento.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao"
+  },
   "controles_anti_data_swamp": [
     "Esquemas estritamente tipados com contratos DDL nas camadas Silver e Gold.",
     "Quality Gate bloqueador com 5 dimensões antes da publicação Gold.",
