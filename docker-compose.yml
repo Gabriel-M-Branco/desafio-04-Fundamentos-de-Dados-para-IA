@@ -208,7 +208,9 @@ services:
       ELASTICSEARCH_SCHEME: http
       SEARCH_TYPE: elasticsearch
       OPENMETADATA_HEAP_OPTS: "-Xmx1G -Xms1G"
-      PIPELINE_SERVICE_CLIENT_ENABLED: "false"
+      PIPELINE_SERVICE_CLIENT_ENABLED: "true"
+      PIPELINE_SERVICE_CLIENT_ENDPOINT: "http://ingestion:8080"
+      SERVER_HOST_API_URL: "http://openmetadata-server:8585/api"
     depends_on:
       postgres:
         condition: service_healthy
@@ -220,11 +222,46 @@ services:
       - backend
 
 
+  ingestion:
+    image: docker.getcollate.io/openmetadata/ingestion:1.4.6
+    container_name: openmetadata_ingestion
+    restart: unless-stopped
+    environment:
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__OPENMETADATA_AIRFLOW_APIS__DAG_GENERATED_CONFIGS: "/opt/airflow/dag_generated_configs"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      AIRFLOW_DB: airflow_db
+      DB_SCHEME: postgresql+psycopg2
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    entrypoint: /bin/bash
+    command:
+      - "/opt/airflow/ingestion_dependency.sh"
+    ports:
+      - "8082:8080"
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openmetadata-server:
+        condition: service_started
+    volumes:
+      - ingestion_volume_dag_airflow:/opt/airflow/dag_generated_configs
+      - ingestion_volume_dags:/opt/airflow/dags
+      - ingestion_volume_tmp:/tmp
+
+
 volumes:
   postgres_data:
   mongo_data:
   superset_home:
   openmetadata_es_data:
+  ingestion_volume_dag_airflow:
+  ingestion_volume_dags:
+  ingestion_volume_tmp:
 
 
 networks:

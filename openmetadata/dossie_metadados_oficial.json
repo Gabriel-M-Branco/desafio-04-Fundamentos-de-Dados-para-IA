@@ -4,7 +4,8 @@
   "credenciais_acesso": {
     "url": "http://localhost:8585",
     "email_login": "admin@openmetadata.org",
-    "perfil": "Admin Principal"
+    "perfil": "Admin Principal",
+    "origem_credenciais": "Variáveis de ambiente (.env / RF15)"
   },
   "servico_dados": {
     "nome": "ficdev_postgres",
@@ -12,8 +13,41 @@
     "host": "postgres:5432",
     "banco": "ficdev_recomendacao",
     "schemas_catalogados": [
+      "fontes",
+      "bronze",
       "silver",
       "gold"
+    ]
+  },
+  "servico_dashboard": {
+    "nome": "ficdev_superset",
+    "tipo": "Superset",
+    "url": "http://superset:8088",
+    "dashboard_oficial": "desafio_4_dashboard",
+    "titulo": "Desafio 4 - Dashboard Executivo FIC_DEV"
+  },
+  "linhagem_end_to_end_rf29": {
+    "descricao": "Grafo de linhagem completo em 5 etapas: Fontes -> Bronze -> Silver -> Gold -> Dashboard (Superset)",
+    "arestas": [
+      "fontes.catalogo_csv -> bronze.catalogo_raw",
+      "fontes.interacoes_json -> bronze.interacoes_raw",
+      "fontes.comentarios_mongodb -> bronze.comentarios_raw",
+      "bronze.catalogo_raw -> silver.catalogo",
+      "bronze.interacoes_raw -> silver.interacoes",
+      "bronze.comentarios_raw -> silver.comentarios",
+      "silver.catalogo -> gold.kpis_mensais_categoria",
+      "silver.interacoes -> gold.kpis_mensais_categoria",
+      "silver.catalogo -> gold.desempenho_conteudos",
+      "silver.interacoes -> gold.desempenho_conteudos",
+      "silver.comentarios -> gold.desempenho_conteudos",
+      "silver.catalogo -> gold.vw_ranking_conteudos_engajamento",
+      "silver.interacoes -> gold.vw_ranking_conteudos_engajamento",
+      "gold.desempenho_conteudos -> gold.dataset_virtual_sqllab",
+      "gold.kpis_mensais_categoria -> gold.dataset_virtual_sqllab",
+      "gold.dataset_virtual_sqllab -> dashboard.desafio_4_dashboard",
+      "gold.kpis_mensais_categoria -> dashboard.desafio_4_dashboard",
+      "gold.desempenho_conteudos -> dashboard.desafio_4_dashboard",
+      "gold.vw_ranking_conteudos_engajamento -> dashboard.desafio_4_dashboard"
     ]
   },
   "glossario_negocio": {
@@ -61,6 +95,27 @@
         "classificacao_lgpd": "Métrica Comportamental Algorítmica"
       }
     ]
+  },
+  "governanca_tiers_e_owners": {
+    "owner_oficial": "admin (Equipe de Engenharia e Governança FIC_DEV)",
+    "tier_1_gold_analitico": [
+      "gold.kpis_mensais_categoria",
+      "gold.desempenho_conteudos",
+      "gold.vw_ranking_conteudos_engajamento",
+      "gold.dataset_virtual_sqllab"
+    ],
+    "tier_2_silver_curado": [
+      "silver.catalogo",
+      "silver.interacoes",
+      "silver.comentarios"
+    ]
+  },
+  "termos_glossario_vinculados_colunas": {
+    "gold.kpis_mensais_categoria.usuarios_ativos": "Glossario_Educacional_FICDEV.Usuario_Ativo",
+    "gold.kpis_mensais_categoria.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+    "gold.kpis_mensais_categoria.tempo_medio_min": "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo",
+    "gold.desempenho_conteudos.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao",
+    "gold.vw_ranking_conteudos_engajamento.taxa_conclusao_pct": "Glossario_Educacional_FICDEV.Taxa_Conclusao"
   },
   "controles_anti_data_swamp": [
     "Esquemas estritamente tipados com contratos DDL nas camadas Silver e Gold.",

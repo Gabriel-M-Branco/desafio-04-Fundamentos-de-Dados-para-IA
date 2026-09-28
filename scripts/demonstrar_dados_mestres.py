@@ -135,13 +135,18 @@ def main() -> None:
         import psycopg2
         from dotenv import load_dotenv
         load_dotenv()
+        variaveis_obrigatorias = ["POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST", "POSTGRES_PORT"]
+        ausentes = [v for v in variaveis_obrigatorias if not os.environ.get(v)]
+        if ausentes:
+            raise KeyError(f"Variáveis obrigatórias ausentes no .env: {ausentes}. Fallbacks desabilitados (RF15).")
         conn = psycopg2.connect(
-            dbname=os.getenv("POSTGRES_DB", "ficdev_recomendacao"),
-            user=os.getenv("POSTGRES_USER", "postgres"),
-            password=os.getenv("POSTGRES_PASSWORD", "postgres"),
-            host=os.getenv("POSTGRES_HOST", "localhost"),
-            port=int(os.getenv("POSTGRES_PORT", "5432")),
+            dbname=os.environ["POSTGRES_DB"],
+            user=os.environ["POSTGRES_USER"],
+            password=os.environ["POSTGRES_PASSWORD"],
+            host=os.environ["POSTGRES_HOST"],
+            port=int(os.environ["POSTGRES_PORT"]),
         )
+
         cur = conn.cursor()
         cur.execute(
             """
