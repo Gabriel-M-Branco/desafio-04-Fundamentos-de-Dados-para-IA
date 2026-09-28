@@ -42,6 +42,9 @@
       "silver.comentarios -> gold.desempenho_conteudos",
       "silver.catalogo -> gold.vw_ranking_conteudos_engajamento",
       "silver.interacoes -> gold.vw_ranking_conteudos_engajamento",
+      "gold.desempenho_conteudos -> gold.dataset_virtual_sqllab",
+      "gold.kpis_mensais_categoria -> gold.dataset_virtual_sqllab",
+      "gold.dataset_virtual_sqllab -> dashboard.desafio_4_dashboard",
       "gold.kpis_mensais_categoria -> dashboard.desafio_4_dashboard",
       "gold.desempenho_conteudos -> dashboard.desafio_4_dashboard",
       "gold.vw_ranking_conteudos_engajamento -> dashboard.desafio_4_dashboard"
@@ -98,7 +101,8 @@
     "tier_1_gold_analitico": [
       "gold.kpis_mensais_categoria",
       "gold.desempenho_conteudos",
-      "gold.vw_ranking_conteudos_engajamento"
+      "gold.vw_ranking_conteudos_engajamento",
+      "gold.dataset_virtual_sqllab"
     ],
     "tier_2_silver_curado": [
       "silver.catalogo",

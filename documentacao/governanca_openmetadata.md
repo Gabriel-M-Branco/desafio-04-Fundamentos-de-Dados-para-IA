@@ -18,9 +18,9 @@ O **OpenMetadata** atua como o repositório central de governança, metadados t�
 
 ---
 
-## 2. Linhagem de Dados Ponta a Ponta (RF29)
+## 2. Linhagem de Dados Ponta a Ponta com KPIs e SQL Lab Dataset (RF29)
 
-Em conformidade estrita com o **RF29**, a plataforma mapeia no OpenMetadata a linhagem completa desde os dados de origem até a camada analítica de consumo no Apache Superset:
+Em conformidade estrita com o **RF29**, a plataforma mapeia no OpenMetadata a linhagem completa desde os dados de origem até a camada analítica de consumo no Apache Superset, **incluindo explicitamente os KPIs de negócio e o conjunto de dados virtual modelado no SQL Lab**:
 
 ```mermaid
 graph LR
@@ -42,13 +42,17 @@ graph LR
         SIL3["silver.comentarios<br/>(Avaliações Sanitizadas)"]
     end
 
-    subgraph S4["4. Camada Gold (Modelos Analíticos Beam & Views - RF26)"]
-        G1["gold.kpis_mensais_categoria<br/>(Métricas Mensais Beam/Parquet)"]
+    subgraph S4["4. Camada Gold (KPIs & Modelos Analíticos Beam - RF26)"]
+        G1["gold.kpis_mensais_categoria<br/>(KPIs Mensais: Taxa Conclusão, Usuários Ativos)"]
         G2["gold.desempenho_conteudos<br/>(Métricas por Conteúdo Beam/Parquet)"]
         G3["gold.vw_ranking_conteudos_engajamento<br/>(View Analítica de Ranking)"]
     end
 
-    subgraph S5["5. Consumo Analítico (Apache Superset - RF16 a RF18)"]
+    subgraph S5["5. Conjunto de Dados Virtual SQL Lab (RF17/RF29)"]
+        SQLV["gold.dataset_virtual_sqllab<br/>(Dataset Virtual Storytelling Retenção)"]
+    end
+
+    subgraph S6["6. Consumo Analítico (Apache Superset - RF16 a RF18)"]
         DASH["ficdev_superset.desafio_4_dashboard<br/>(Dashboard Executivo FIC_DEV)"]
     end
 
@@ -71,13 +75,30 @@ graph LR
     SIL1 -->|View Analítica| G3
     SIL2 -->|View Analítica| G3
 
-    %% Etapa 4 -> 5
+    %% Etapa 4 -> 5 (SQL Lab Virtual Dataset)
+    G1 -->|JOIN SQL Lab| SQLV
+    G2 -->|JOIN SQL Lab| SQLV
+
+    %% Etapa 5 -> 6 (Dashboard Superset)
     G1 -->|Consumo Analítico| DASH
     G2 -->|Consumo Analítico| DASH
     G3 -->|Consumo Analítico| DASH
+    SQLV -->|Storytelling Executivo| DASH
 ```
 
-### Detalhamento das 16 Arestas de Linhagem Registradas
+### Onde e Como se Define um KPI no OpenMetadata (RF28 / RF29)
+
+O conceito de **KPI (Key Performance Indicator)** no OpenMetadata atua em três níveis complementares:
+
+| Nível no OpenMetadata | Onde Localizar na UI | Como é Definido | Finalidade no Projeto |
+| :--- | :--- | :--- | :--- |
+| **1. Ativo de Dados Analítico (Linhagem RF29)** | **Explore $\rightarrow$ Tables $\rightarrow$ `kpis_mensais_categoria`** | Tabela dimensional que materializa as agregações de negócio calculadas pelo Apache Beam (`taxa_conclusao_pct`, `tempo_medio_min`, `usuarios_ativos`). | Permite rastrear visualmente de onde veio o KPI (upstream) e quais relatórios do Superset ele alimenta (downstream). |
+| **2. Termo Formal de Negócio (Glossário RF28)** | **Govern $\rightarrow$ Glossary $\rightarrow$ `Glossario_Educacional_FICDEV`** | Cada KPI possui um termo formal com fórmula matemática (`ROUND(...)`), responsável (Data Owner) e vínculo à coluna física. | Elimina ambiguidade de cálculo e padroniza a semântica corporativa das métricas. |
+| **3. Metas de Governança da Plataforma (Data Insights)** | **Govern $\rightarrow$ KPIs** (`/kpi`) | Ferramenta nativa do OpenMetadata para definir metas de qualidade e cobertura de metadados da governança (ex.: 80% das tabelas com descrição). | Monitorar a maturidade da governança e integridade do catálogo contra o *Data Swamp*. |
+
+---
+
+### Detalhamento das 19 Arestas de Linhagem Registradas
 
 | # | Origem (Upstream) | Destino (Downstream) | Tipo de Transformação / Ferramenta | Requisito |
 | :-: | :--- | :--- | :--- | :---: |
@@ -94,9 +115,12 @@ graph LR
 | 11 | `silver.comentarios` | `gold.desempenho_conteudos` | Cálculo da média ponderada de avaliação por conteúdo | RF26 |
 | 12 | `silver.catalogo` | `gold.vw_ranking_conteudos_engajamento` | Projeção descritiva para ordenação de engajamento escolar | RF26 |
 | 13 | `silver.interacoes` | `gold.vw_ranking_conteudos_engajamento` | Janelamento analítico (`DENSE_RANK() OVER (...)`) | RF26 |
-| 14 | `gold.kpis_mensais_categoria` | `dashboard.desafio_4_dashboard` | Visualizações executivas de evolução temporal no Superset | RF16 a RF18 |
-| 15 | `gold.desempenho_conteudos` | `dashboard.desafio_4_dashboard` | Tabela detalhada e cartões de métricas analíticas no Superset | RF16 a RF18 |
-| 16 | `gold.vw_ranking_conteudos_engajamento` | `dashboard.desafio_4_dashboard` | Gráficos de barras horizontais com Top Conteúdos por Categoria | RF16 a RF18 |
+| 14 | `gold.desempenho_conteudos` | `gold.dataset_virtual_sqllab` | Junção analítica no SQL Lab entre desempenho e KPIs | RF17 / RF29 |
+| 15 | `gold.kpis_mensais_categoria` | `gold.dataset_virtual_sqllab` | Consolidação do KPI de eficiência e janela temporal no SQL Lab | RF17 / RF29 |
+| 16 | `gold.kpis_mensais_categoria` | `dashboard.desafio_4_dashboard` | Visualizações executivas de evolução temporal no Superset | RF16 a RF18 |
+| 17 | `gold.desempenho_conteudos` | `dashboard.desafio_4_dashboard` | Tabela detalhada e cartões de métricas analíticas no Superset | RF16 a RF18 |
+| 18 | `gold.vw_ranking_conteudos_engajamento` | `dashboard.desafio_4_dashboard` | Gráficos de barras horizontais com Top Conteúdos por Categoria | RF16 a RF18 |
+| 19 | `gold.dataset_virtual_sqllab` | `dashboard.desafio_4_dashboard` | Gráficos de retenção e diagnóstico de evasão do Storytelling | RF16 / RF29 |
 
 ---
 

@@ -498,6 +498,24 @@ def sincronizar_tabelas_catalogo(token: str) -> dict[str, str]:
                 {"name": "ranking_categoria", "dataType": "INT", "description": "Posição no ranking por categoria"},
             ],
         },
+        {
+            "name": "dataset_virtual_sqllab",
+            "displayName": "dataset_virtual_sqllab (SQL Lab Dataset - RF17)",
+            "description": "Conjunto de dados virtual modelado no SQL Lab (RF17) via junção analítica entre gold.desempenho_conteudos e gold.kpis_mensais_categoria, calculando os KPIs de retenção por formato para o Storytelling (RF16/RF29).",
+            "databaseSchema": f"ficdev_postgres.{PG_DB}.gold",
+            "tableType": "View",
+            "columns": [
+                {"name": "tipo_conteudo", "dataType": "VARCHAR", "dataLength": 50, "description": "Formato pedagógico (Curso, Vídeo, Artigo, Podcast)"},
+                {"name": "total_conteudos_ofertados", "dataType": "INT", "description": "Quantidade total de títulos no catálogo"},
+                {"name": "total_visualizacoes", "dataType": "INT", "description": "Visualizações acumuladas"},
+                {"name": "total_inicios", "dataType": "INT", "description": "Inícios totais acumulados"},
+                {"name": "total_conclusoes", "dataType": "INT", "description": "Conclusões totais acumuladas"},
+                {"name": "taxa_conversao_inicio_conclusao_pct", "dataType": "NUMERIC", "description": "KPI de Eficiência do Funil (%)"},
+                {"name": "avaliacao_media_formato", "dataType": "NUMERIC", "description": "Média de satisfação dos alunos"},
+                {"name": "nivel_impacto_engajamento", "dataType": "VARCHAR", "dataLength": 50, "description": "Classificação condicional via CASE WHEN"},
+                {"name": "dias_desde_ultima_carga", "dataType": "INT", "description": "Janela temporal decorrida"},
+            ],
+        },
     ]
 
     for tbl in tabelas:
@@ -551,6 +569,7 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
         ("gold.kpis_mensais_categoria", "Tier.Tier1"),
         ("gold.desempenho_conteudos", "Tier.Tier1"),
         ("gold.vw_ranking_conteudos_engajamento", "Tier.Tier1"),
+        ("gold.dataset_virtual_sqllab", "Tier.Tier1"),
         ("silver.catalogo", "Tier.Tier2"),
         ("silver.interacoes", "Tier.Tier2"),
         ("silver.comentarios", "Tier.Tier2"),
@@ -595,6 +614,7 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
         ("gold.kpis_mensais_categoria", "/columns/8/tags", "Glossario_Educacional_FICDEV.Tempo_Medio_Consumo", "Tempo Médio de Consumo"),
         ("gold.desempenho_conteudos", "/columns/10/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
         ("gold.vw_ranking_conteudos_engajamento", "/columns/5/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
+        ("gold.dataset_virtual_sqllab", "/columns/5/tags", "Glossario_Educacional_FICDEV.Taxa_Conclusao", "Taxa de Conclusão"),
     ]
     for tbl_key, path, termo_fqn, label in termos_colunas:
         if tbl_key in tabelas_ids:
@@ -675,6 +695,10 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
         ("silver.comentarios", "gold.desempenho_conteudos", "table", "table", "Consolidação Gold: silver.comentarios -> gold.desempenho_conteudos"),
         ("silver.catalogo", "gold.vw_ranking_conteudos_engajamento", "table", "table", "View Analítica: silver.catalogo -> gold.vw_ranking_conteudos_engajamento"),
         ("silver.interacoes", "gold.vw_ranking_conteudos_engajamento", "table", "table", "View Analítica: silver.interacoes -> gold.vw_ranking_conteudos_engajamento"),
+
+        # --- ETAPA 4: Gold -> SQL Lab Dataset Virtual (Storytelling Executivo - RF17/RF29) ---
+        ("gold.desempenho_conteudos", "gold.dataset_virtual_sqllab", "table", "table", "SQL Lab JOIN (RF17): gold.desempenho_conteudos -> dataset_virtual_sqllab"),
+        ("gold.kpis_mensais_categoria", "gold.dataset_virtual_sqllab", "table", "table", "SQL Lab JOIN (RF17/RF29): gold.kpis_mensais_categoria (KPI) -> dataset_virtual_sqllab"),
     ]
 
     for origem_key, destino_key, from_type, to_type, desc in arestas:
@@ -699,12 +723,13 @@ def aplicar_tags_lgpd_e_linhagem(token: str, tabelas_ids: dict[str, str], dashbo
             except Exception as err:
                 print(f"[INFO] Linhagem {origem_key} -> {destino_key}: {err}")
 
-    # --- ETAPA 4: Gold -> Dashboard (Consumo Analítico no Superset) ---
+    # --- ETAPA 5: Gold & SQL Lab Dataset -> Dashboard (Consumo Analítico no Superset) ---
     if dashboard_id:
         tabelas_para_dashboard = [
             "gold.kpis_mensais_categoria",
             "gold.desempenho_conteudos",
             "gold.vw_ranking_conteudos_engajamento",
+            "gold.dataset_virtual_sqllab",
         ]
         for gold_key in tabelas_para_dashboard:
             if gold_key in tabelas_ids:
@@ -818,6 +843,9 @@ def exportar_dossie_metadados() -> Path:
                 "silver.comentarios -> gold.desempenho_conteudos",
                 "silver.catalogo -> gold.vw_ranking_conteudos_engajamento",
                 "silver.interacoes -> gold.vw_ranking_conteudos_engajamento",
+                "gold.desempenho_conteudos -> gold.dataset_virtual_sqllab",
+                "gold.kpis_mensais_categoria -> gold.dataset_virtual_sqllab",
+                "gold.dataset_virtual_sqllab -> dashboard.desafio_4_dashboard",
                 "gold.kpis_mensais_categoria -> dashboard.desafio_4_dashboard",
                 "gold.desempenho_conteudos -> dashboard.desafio_4_dashboard",
                 "gold.vw_ranking_conteudos_engajamento -> dashboard.desafio_4_dashboard",
@@ -834,6 +862,7 @@ def exportar_dossie_metadados() -> Path:
                 "gold.kpis_mensais_categoria",
                 "gold.desempenho_conteudos",
                 "gold.vw_ranking_conteudos_engajamento",
+                "gold.dataset_virtual_sqllab",
             ],
             "tier_2_silver_curado": [
                 "silver.catalogo",
