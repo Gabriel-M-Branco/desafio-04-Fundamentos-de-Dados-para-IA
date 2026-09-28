@@ -24,7 +24,7 @@ def criar_estrutura_gold(config: dict[str, Any] | None = None) -> None:
     if config is None:
         config = carregar_config()
 
-    caminho_script = caminho_absoluto("sql/criar_camada_gold.sql")
+    caminho_script = caminho_absoluto("sql/camada_gold.sql")
     sql_script = caminho_script.read_text(encoding="utf-8")
 
     params = obter_parametros_conexao_postgres(config)

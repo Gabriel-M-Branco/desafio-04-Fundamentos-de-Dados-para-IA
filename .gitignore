@@ -6,7 +6,7 @@ __pycache__/
 venv/
 .pytest_cache/
 
-# Ambiente e credenciais sensíveis (RF01)
+# Ambiente e credenciais sensíveis (RF15)
 .env
 
 # IDE e Sistema Operacional
@@ -23,34 +23,7 @@ PLANO_EXECUCAO_DESAFIO2.md
 logs/*
 !logs/.gitkeep
 
-# Entregáveis de dados processados e resumo obrigatório da ingestão (RF05/RF24/RF25/RF31)
-dados/processados/*
-!dados/processados/.gitkeep
-!dados/processados/resumo_ingestao.json
-!dados/processados/catalogo_processado.csv
-!dados/processados/interacoes_processadas.json
-!dados/processados/comentarios_processados.json
-!dados/processados/recomendacoes.json
-!dados/processados/embeddings.json
-!dados/processados/benchmark_parquet.json
-!dados/processados/historico_qualidade.json
-!dados/processados/resultado_execucao_beam.json
-!dados/processados/resultado_dados_mestres.json
-
-# Dados intermediários de runtime (preservar apenas README/gitkeep da estrutura)
-dados/bronze/*
-!dados/bronze/README.md
-!dados/bronze/.gitkeep
-
-dados/silver/*
-!dados/silver/README.md
-!dados/silver/.gitkeep
-
-dados/quarentena/*
-!dados/quarentena/README.md
-!dados/quarentena/.gitkeep
-
-dados/resumo_*.json
-
-# Apache Superset
+# Arquivos temporários do Apache Superset e pipelines
 dashboard/superset/
+dados/processados/*_temp*/
+*_temp/

@@ -162,9 +162,9 @@ Já foram capturadas e versionadas no GitHub:
 
 O workflow foi validado no Apache Hop com o fluxo **START → Bronze → Silver → SUCESSO**.
 
-### Caminhos usados na validação local
+### Portabilidade e Caminhos Relativos
 
-Na validação realizada neste computador, os pipelines e o workflow usam caminhos absolutos de `/home/diego/Documentos/...`. Essa configuração foi mantida porque o transform `DataGrid` usado para montar os argumentos do `ExecProcess` não expandiu as variáveis internas do Apache Hop durante a execução. Para executar em outro computador, os caminhos devem ser ajustados no ambiente/projeto Hop antes da execução.
+Na versão final integrada do projeto, todos os pipelines e workflows foram refatorados para utilizar variáveis relativas nativas do Apache Hop (`${Internal.Workflow.Filename.Folder}` e `${Internal.Pipeline.Filename.Folder}`), garantindo portabilidade multiplataforma sem caminhos absolutos fixados.
 
 ### Situação das evidências
 
