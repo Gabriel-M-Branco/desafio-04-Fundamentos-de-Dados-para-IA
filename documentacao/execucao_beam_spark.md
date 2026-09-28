@@ -90,7 +90,7 @@ Conforme as diretrizes formais de auditoria e governança do requisito **RF25**:
 
 ### Diagnóstico do Ambiente Host
 - **Sistema Operacional:** `Windows`
-- **Java detectado:** `True` (`None`)
+- **Java detectado:** `False` (`None`)
 - **Spark instalado no host:** `False` (`None`)
 - **Hadoop winutils presente no Windows:** `False` (`None`)
 - **Status do SparkRunner no Host Local:** `BLOQUEADO_AMBIENTE_HOST`

@@ -69,7 +69,7 @@
   "diagnostico_infraestrutura": {
     "sistema_operacional": "Windows",
     "java_home": null,
-    "java_encontrado": true,
+    "java_encontrado": false,
     "spark_home": null,
     "spark_submit_encontrado": false,
     "hadoop_home": null,

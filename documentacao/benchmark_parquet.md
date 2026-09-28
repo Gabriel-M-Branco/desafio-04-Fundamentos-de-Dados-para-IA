@@ -8,9 +8,10 @@ Este documento registra a metodologia, medições empíricas, análise de desemp
 
 ### 1.1 Configuração do Ambiente de Teste
 - **Sistema Operacional:** `Windows-11-10.0.26200-SP0`
-- **Processador:** `AMD64 Family 25 Model 97 Stepping 2, AuthenticAMD`
+- **Processador:** `AMD64 Family 23 Model 113 Stepping 0, AuthenticAMD`
 - **Python:** `3.14.7`
 - **PyArrow:** `25.0.1`
+- **Pandas:** `3.0.6`
 - **Pandas:** `3.0.6`
 
 ### 1.2 Metodologia
