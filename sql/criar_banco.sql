@@ -40,11 +40,11 @@ CREATE TABLE IF NOT EXISTS interacoes (
 
 DO $$ 
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='interacoes' AND column_name='tempo_consumido') THEN
-        ALTER TABLE interacoes RENAME COLUMN tempo_consumido TO tempo_consumido_min;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'interacoes' AND column_name = 'tempo_consumido') THEN
+        ALTER TABLE public.interacoes RENAME COLUMN tempo_consumido TO tempo_consumido_min;
     END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='interacoes' AND column_name='avaliacao_atribuida') THEN
-        ALTER TABLE interacoes RENAME COLUMN avaliacao_atribuida TO avaliacao;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'interacoes' AND column_name = 'avaliacao_atribuida') THEN
+        ALTER TABLE public.interacoes RENAME COLUMN avaliacao_atribuida TO avaliacao;
     END IF;
 END $$;
 

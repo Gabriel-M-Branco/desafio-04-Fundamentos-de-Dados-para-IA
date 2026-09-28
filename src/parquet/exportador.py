@@ -115,6 +115,34 @@ def preparar_tabela_interacoes_arrow(
     return tabela
 
 
+def carregar_dados_silver_do_banco(config: dict[str, Any] | None = None, logger: Any = None) -> list[dict[str, Any]] | None:
+    """Tenta carregar interações diretamente da tabela silver.interacoes do PostgreSQL (produzida pelo Apache Hop)."""
+    try:
+        from src.config import carregar_config, obter_parametros_conexao_postgres
+        import psycopg2
+        if config is None:
+            config = carregar_config()
+        params = obter_parametros_conexao_postgres(config)
+        with psycopg2.connect(**params) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT interacao_id, usuario_id, conteudo_id, tipo_interacao, 
+                           data_hora, tempo_consumido_min, percentual_conclusao, avaliacao
+                    FROM silver.interacoes
+                    ORDER BY interacao_id;
+                """)
+                cols = [desc[0] for desc in cur.description]
+                rows = cur.fetchall()
+                if rows:
+                    if logger:
+                        logger.info("Carregados %d registros diretamente da tabela PostgreSQL silver.interacoes (gerada pelo Apache Hop).", len(rows))
+                    return [dict(zip(cols, row)) for row in rows]
+    except Exception as exc:
+        if logger:
+            logger.debug("Não foi possível carregar silver.interacoes do PostgreSQL (%s), usando fallback de arquivo.", exc)
+    return None
+
+
 def exportar_interacoes_parquet(
     config: dict[str, Any],
     particionado: bool = True,
@@ -136,10 +164,18 @@ def exportar_interacoes_parquet(
     dir_saida = caminho_absoluto(dir_saida_rel) / "interacoes"
     dir_saida.mkdir(parents=True, exist_ok=True)
 
-    if logger:
-        logger.info("Iniciando exportação Parquet da fonte Silver: %s", caminho_origem)
+    registros = None
+    if origem_rel == "dados/processados/interacoes_processadas.json":
+        registros = carregar_dados_silver_do_banco(config, logger=logger)
 
-    registros = carregar_dados_silver_interacoes(caminho_origem)
+    if not registros:
+        if logger:
+            logger.info("Iniciando exportação Parquet da fonte Silver em arquivo: %s", caminho_origem)
+        registros = carregar_dados_silver_interacoes(caminho_origem)
+    else:
+        if logger:
+            logger.info("Exportando %d registros da tabela PostgreSQL silver.interacoes para Parquet.", len(registros))
+
     tabela = preparar_tabela_interacoes_arrow(registros, lote_id=lote_id)
 
     if particionado:

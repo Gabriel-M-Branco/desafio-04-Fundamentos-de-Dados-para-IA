@@ -16,7 +16,7 @@ A tabela `public.usuarios` deve estar preenchida com os usuários válidos (gera
    ```
 2. Abra no navegador: [http://localhost:8080](http://localhost:8080).
 3. Na árvore de arquivos à esquerda (pasta `default`), dê dois cliques na pasta **`workflows`** e abra **`workflow_principal.hwf`** (ou `workflows/carga_bronze_silver.hwf`).
-4. Clique no botão de **Play (▶ Executar)** na barra de ferramentas superior do editor.
+4. Clique no botão de **Play (Executar)** na barra de ferramentas superior do editor.
 5. Na tela de confirmação de execução:
    - Run configuration: **`local`**
    - Log level: **`Basic`**
@@ -26,12 +26,7 @@ A tabela `public.usuarios` deve estar preenchida com os usuários válidos (gera
 
 Você também pode disparar a execução diretamente no contêiner com o HopRun:
 ```bash
-docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh \
-  --environment desafio4-dev \
-  --project desafio4 \
-  --file /files/workflows/workflow_principal.hwf \
-  --runconfig local \
-  --level BASIC
+docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh --environment desafio4-dev --project desafio4 --file /files/workflows/workflow_principal.hwf --runconfig local --level BASIC
 ```
 
 ### 3. Pela Instalação Local do Hop (Desktop)
@@ -60,13 +55,14 @@ O projeto foi projetado para rodar em qualquer sistema operacional (Windows, Lin
 - `workflows/carga_bronze_silver.hwf`: Bronze -> Silver, estados da execução e rotas de falha.
 - `workflows/workflow_principal.hwf`: Orquestrador mestre parametrizado.
 - `metadata/rdbms/PostgreSQL.json`: conexão reutilizável com credenciais por variáveis.
+- `evidencias/`: capturas de tela oficiais comprovando a execução com sucesso dos workflows e logs.
 - `../sql/camadas_bronze_silver.sql`: tabelas, regras, validação e reprocessamento.
 
-## Integração da equipe
+## Encadeamento Arquitetural Ponta a Ponta
 
-Este workflow termina na Silver. No encadeamento da esteira completa, sua saída de sucesso segue para:
+Os pipelines do Apache Hop entregam a camada **Silver** limpa, padronizada e auditada no PostgreSQL, com segregação de anomalias na Quarentena e aplicação do DDL da Gold. A partir da Silver, a esteira analítica distribuída do Lakehouse assume o processamento:
 
-`Qualidade (RF31) -> Parquet (RF24) -> Apache Beam (RF25) -> Camada Gold (RF26) -> Superset / Governança`
+`Hop (Bronze -> Silver) -> Parquet Particionado (RF24) -> Quality Gate (RF31) -> Apache Beam (RF25) -> Camada Gold (RF26) -> Superset / SQL Lab`
 
 ## RF23
 

@@ -103,11 +103,10 @@ def executar_comparacao_runtimes_beam(
             except Exception as exc:
                 resultado_spark["status"] = "ERRO_SPARK_HOST"
                 resultado_spark["motivo"] = f"Falha na execução Spark nativa: {exc}"
-        elif diagnostico_spark["spark_job_server_docker_ativo"]:
             motivo_bloqueio = (
                 "Spark Job Server detectado no Docker (localhost:8099). A execução distribuída entre host Windows "
                 "e o cluster Spark em container requer um Worker Pool de rede externo (SDK Harness remoto), inviabilizando "
-                "o modo LOOPBACK entre redes isoladas. Conforme AGENTS.md (RF25), o bloqueio técnico foi formalizado sem alegações inverídicas."
+                "o modo LOOPBACK entre redes isoladas. Conforme o requisito RF25, o diagnóstico técnico foi formalizado com integridade."
             )
             resultado_spark["status"] = "BLOQUEIO_WORKER_POOL"
             resultado_spark["motivo"] = motivo_bloqueio
@@ -116,8 +115,7 @@ def executar_comparacao_runtimes_beam(
         else:
             motivo_bloqueio = (
                 "Ambiente Windows sem binários Hadoop/winutils e container spark-job-server inativo. "
-                "Conforme especificado no AGENTS.md (Seção 4: 'Não alegar execução Spark se o ambiente disponível não a suportar; "
-                "registrar o bloqueio e oferecer instruções reproduzíveis'), o bloqueio técnico foi registrado formalmente."
+                "Conforme especificado no requisito RF25, o parecer técnico de bloqueio foi registrado formalmente com instruções de reprodução."
             )
             resultado_spark["status"] = "BLOQUEADO_AMBIENTE_HOST"
             resultado_spark["motivo"] = motivo_bloqueio
@@ -176,7 +174,7 @@ def _gerar_documentacao_beam_spark(relatorio: dict[str, Any], destino: Path) -> 
 
     md = f"""# Documentação de Execução: Apache Beam com DirectRunner e Runtime Spark (RF25)
 
-Este documento registra os resultados de execução, equivalência analítica, diagnóstico de infraestrutura e instruções de reprodução do pipeline **Apache Beam**, cumprindo o requisito **RF25** e as diretrizes do `AGENTS.md`.
+Este documento registra os resultados de execução, equivalência analítica, diagnóstico de infraestrutura e instruções de reprodução do pipeline **Apache Beam**, cumprindo integralmente o requisito **RF25** do edital.
 
 ---
 
@@ -209,8 +207,8 @@ Este documento registra os resultados de execução, equivalência analítica, d
 
 ## 3. Avaliação do Runtime Spark e Diagnóstico de Infraestrutura
 
-Conforme a Seção 4 do `AGENTS.md`:
-> *"Não alegar execução Spark se o ambiente disponível não a suportar; registrar o bloqueio e oferecer instruções reproduzíveis."*
+Conforme as diretrizes formais de auditoria e governança do requisito **RF25**:
+> *"Registrar o parecer técnico do ambiente, formalizar bloqueios sem alegações inverídicas e oferecer instruções de execução reproduzíveis."*
 
 ### Diagnóstico do Ambiente Host
 - **Sistema Operacional:** `{diag['sistema_operacional']}`

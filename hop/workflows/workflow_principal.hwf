@@ -8,7 +8,7 @@
   <created_user>FIC_DEV</created_user>
   <created_date>2026/09/25 21:00:00.000</created_date>
   <modified_user>FIC_DEV</modified_user>
-  <modified_date>2026/09/27 20:00:00.000</modified_date>
+  <modified_date>2026/09/28 21:00:00.000</modified_date>
   <parameters>
     <parameter>
       <name>RUN_ID</name>
@@ -56,7 +56,7 @@
       <description>RF20 a RF23 - Carga das camadas Bronze e Silver com quarentena de inconsistências</description>
       <type>WORKFLOW</type>
       <attributes/>
-      <xloc>240</xloc>
+      <xloc>260</xloc>
       <yloc>120</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
@@ -74,141 +74,32 @@
       <sendOneStatement>T</sendOneStatement>
       <connection>PostgreSQL</connection>
       <parallel>N</parallel>
-      <xloc>460</xloc>
+      <xloc>520</xloc>
       <yloc>120</yloc>
       <attributes_hac/>
     </action>
 
     <action>
-      <name>3. Iniciar Etapa Gold</name>
-      <description>Registra início da consolidação Gold no schema de controle</description>
+      <name>3. Registrar Prontidao Silver e Handoff Analitico</name>
+      <description>RF22/RF26 - Registra conclusao da ingestao Hop, DDL Gold aplicado e handoff para Parquet/Beam</description>
       <type>SQL</type>
       <attributes/>
-      <sql><![CDATA[INSERT INTO controle.execucao_etapa(id_execucao, etapa, inicio, resultado)
-VALUES('${RUN_ID}', 'GOLD', CURRENT_TIMESTAMP, 'EM_EXECUCAO')
+      <sql><![CDATA[INSERT INTO controle.execucao_etapa(id_execucao, etapa, inicio, fim, duracao_segundos, resultado, detalhes)
+VALUES(
+    '${RUN_ID}', 
+    'ORQUESTRACAO_HOP', 
+    CURRENT_TIMESTAMP, 
+    CURRENT_TIMESTAMP, 
+    0, 
+    'SUCESSO', 
+    (SELECT format('catalogo=%s; interacoes=%s; comentarios=%s; quarentena=%s. DDL Gold aplicado com sucesso.',
+        (SELECT count(*) FROM silver.catalogo WHERE id_execucao='${RUN_ID}'),
+        (SELECT count(*) FROM silver.interacoes WHERE id_execucao='${RUN_ID}'),
+        (SELECT count(*) FROM silver.comentarios WHERE id_execucao='${RUN_ID}'),
+        (SELECT count(*) FROM quarentena.registros WHERE id_execucao='${RUN_ID}')))
+)
 ON CONFLICT(id_execucao, etapa) DO UPDATE 
-SET inicio=CURRENT_TIMESTAMP, fim=NULL, duracao_segundos=NULL, resultado='EM_EXECUCAO', detalhes=NULL;]]></sql>
-      <useVariableSubstitution>T</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>PostgreSQL</connection>
-      <parallel>N</parallel>
-      <xloc>680</xloc>
-      <yloc>120</yloc>
-      <attributes_hac/>
-    </action>
-
-    <action>
-      <name>4. Consolidar Camada Gold no Banco</name>
-      <description>RF26 - Consolida tabelas analíticas kpis_mensais_categoria e desempenho_conteudos</description>
-      <type>SQL</type>
-      <attributes/>
-      <sql><![CDATA[-- 1. Popula gold.desempenho_conteudos a partir da Silver
-INSERT INTO gold.desempenho_conteudos (
-    conteudo_id, titulo, tipo, categoria, nivel,
-    total_visualizacoes, total_inicios, total_conclusoes, total_curtidas,
-    taxa_conclusao_pct, tempo_total_min, avaliacao_media,
-    _data_carga_gold, _lote_processamento
-)
-SELECT 
-    c.conteudo_id,
-    c.titulo,
-    c.tipo,
-    c.categoria,
-    c.nivel,
-    COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'visualização' THEN 1 END), 0) AS total_visualizacoes,
-    COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'início' THEN 1 END), 0) AS total_inicios,
-    COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'conclusão' THEN 1 END), 0) AS total_conclusoes,
-    COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'curtida' THEN 1 END), 0) AS total_curtidas,
-    COALESCE(ROUND(
-        (COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'conclusão' THEN 1 END), 0)::NUMERIC / 
-        NULLIF(COALESCE(COUNT(CASE WHEN i.tipo_interacao = 'início' THEN 1 END), 0), 0)) * 100, 2
-    ), 0.0) AS taxa_conclusao_pct,
-    COALESCE(ROUND(COALESCE(SUM(i.tempo_consumido_min), 0)::NUMERIC, 2), 0.0) AS tempo_total_min,
-    ROUND(AVG(i.avaliacao)::NUMERIC, 2) AS avaliacao_media,
-    CURRENT_TIMESTAMP AS _data_carga_gold,
-    '${RUN_ID}' AS _lote_processamento
-FROM silver.catalogo c
-LEFT JOIN silver.interacoes i ON c.conteudo_id = i.conteudo_id
-GROUP BY c.conteudo_id, c.titulo, c.tipo, c.categoria, c.nivel
-ON CONFLICT (conteudo_id) DO UPDATE SET
-    total_visualizacoes = EXCLUDED.total_visualizacoes,
-    total_inicios = EXCLUDED.total_inicios,
-    total_conclusoes = EXCLUDED.total_conclusoes,
-    total_curtidas = EXCLUDED.total_curtidas,
-    taxa_conclusao_pct = EXCLUDED.taxa_conclusao_pct,
-    tempo_total_min = EXCLUDED.tempo_total_min,
-    avaliacao_media = EXCLUDED.avaliacao_media,
-    _data_carga_gold = CURRENT_TIMESTAMP,
-    _lote_processamento = EXCLUDED._lote_processamento;
-
--- 2. Popula gold.kpis_mensais_categoria a partir da Silver
-INSERT INTO gold.kpis_mensais_categoria (
-    ano, mes, categoria, total_interacoes, usuarios_ativos,
-    total_visualizacoes, total_inicios, total_conclusoes, total_curtidas,
-    taxa_conclusao_pct, tempo_total_consumido_min, tempo_medio_min,
-    avaliacao_media, _data_carga_gold, _lote_processamento
-)
-SELECT 
-    EXTRACT(YEAR FROM i.data_hora)::INTEGER AS ano,
-    EXTRACT(MONTH FROM i.data_hora)::INTEGER AS mes,
-    c.categoria,
-    COUNT(i.interacao_id) AS total_interacoes,
-    COUNT(DISTINCT i.usuario_id) AS usuarios_ativos,
-    COUNT(CASE WHEN i.tipo_interacao = 'visualização' THEN 1 END) AS total_visualizacoes,
-    COUNT(CASE WHEN i.tipo_interacao = 'início' THEN 1 END) AS total_inicios,
-    COUNT(CASE WHEN i.tipo_interacao = 'conclusão' THEN 1 END) AS total_conclusoes,
-    COUNT(CASE WHEN i.tipo_interacao = 'curtida' THEN 1 END) AS total_curtidas,
-    COALESCE(ROUND(
-        (COUNT(CASE WHEN i.tipo_interacao = 'conclusão' THEN 1 END)::NUMERIC / 
-        NULLIF(COUNT(CASE WHEN i.tipo_interacao = 'início' THEN 1 END), 0)) * 100, 2
-    ), 0.0) AS taxa_conclusao_pct,
-    COALESCE(ROUND(SUM(i.tempo_consumido_min)::NUMERIC, 2), 0.0) AS tempo_total_consumido_min,
-    COALESCE(ROUND(AVG(i.tempo_consumido_min)::NUMERIC, 2), 0.0) AS tempo_medio_min,
-    ROUND(AVG(i.avaliacao)::NUMERIC, 2) AS avaliacao_media,
-    CURRENT_TIMESTAMP AS _data_carga_gold,
-    '${RUN_ID}' AS _lote_processamento
-FROM silver.interacoes i
-INNER JOIN silver.catalogo c ON i.conteudo_id = c.conteudo_id
-GROUP BY EXTRACT(YEAR FROM i.data_hora), EXTRACT(MONTH FROM i.data_hora), c.categoria
-ON CONFLICT (ano, mes, categoria) DO UPDATE SET
-    total_interacoes = EXCLUDED.total_interacoes,
-    usuarios_ativos = EXCLUDED.usuarios_ativos,
-    total_visualizacoes = EXCLUDED.total_visualizacoes,
-    total_inicios = EXCLUDED.total_inicios,
-    total_conclusoes = EXCLUDED.total_conclusoes,
-    total_curtidas = EXCLUDED.total_curtidas,
-    taxa_conclusao_pct = EXCLUDED.taxa_conclusao_pct,
-    tempo_total_consumido_min = EXCLUDED.tempo_total_consumido_min,
-    tempo_medio_min = EXCLUDED.tempo_medio_min,
-    avaliacao_media = EXCLUDED.avaliacao_media,
-    _data_carga_gold = CURRENT_TIMESTAMP,
-    _lote_processamento = EXCLUDED._lote_processamento;]]></sql>
-      <useVariableSubstitution>T</useVariableSubstitution>
-      <sqlfromfile>F</sqlfromfile>
-      <sqlfilename/>
-      <sendOneStatement>F</sendOneStatement>
-      <connection>PostgreSQL</connection>
-      <parallel>N</parallel>
-      <xloc>900</xloc>
-      <yloc>120</yloc>
-      <attributes_hac/>
-    </action>
-
-    <action>
-      <name>5. Finalizar Etapa Gold</name>
-      <description>Registra término da etapa Gold com contagem de registros</description>
-      <type>SQL</type>
-      <attributes/>
-      <sql><![CDATA[UPDATE controle.execucao_etapa
-SET fim=CURRENT_TIMESTAMP, 
-    duracao_segundos=EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - inicio)), 
-    resultado='SUCESSO',
-    detalhes=(SELECT format('kpis_mensais=%s; desempenho_conteudos=%s',
-        (SELECT count(*) FROM gold.kpis_mensais_categoria),
-        (SELECT count(*) FROM gold.desempenho_conteudos)))
-WHERE id_execucao='${RUN_ID}' AND etapa='GOLD';
+SET fim=CURRENT_TIMESTAMP, resultado='SUCESSO', detalhes=EXCLUDED.detalhes;
 
 UPDATE controle.execucao_workflow
 SET fim=CURRENT_TIMESTAMP,
@@ -217,7 +108,7 @@ SET fim=CURRENT_TIMESTAMP,
         WHEN EXISTS(SELECT 1 FROM quarentena.registros WHERE id_execucao='${RUN_ID}') THEN 'SUCESSO_COM_RESSALVAS' 
         ELSE 'SUCESSO' 
     END,
-    detalhes=format('Fluxo ponta a ponta concluido com sucesso. Gold populada. Quarentena=%s', 
+    detalhes=format('Ingestao Hop e DDL Gold concluidos. Quarentena=%s. Silver homologada para Lakehouse/Beam/Qualidade.', 
         (SELECT count(*) FROM quarentena.registros WHERE id_execucao='${RUN_ID}'))
 WHERE id_execucao='${RUN_ID}';]]></sql>
       <useVariableSubstitution>T</useVariableSubstitution>
@@ -226,19 +117,18 @@ WHERE id_execucao='${RUN_ID}';]]></sql>
       <sendOneStatement>F</sendOneStatement>
       <connection>PostgreSQL</connection>
       <parallel>N</parallel>
-      <xloc>1100</xloc>
+      <xloc>780</xloc>
       <yloc>120</yloc>
       <attributes_hac/>
     </action>
 
     <action>
       <name>SUCESSO_INTEGRADO</name>
-      <description>Fim com sucesso do pipeline ponta a ponta</description>
+      <description>Fim com sucesso do workflow Apache Hop</description>
       <type>SUCCESS</type>
       <attributes/>
-      <xloc>1280</xloc>
+      <xloc>1000</xloc>
       <yloc>120</yloc>
-      <parallel>N</parallel>
       <attributes_hac/>
     </action>
 
@@ -266,7 +156,7 @@ WHERE id_execucao='${RUN_ID}';]]></sql>
       <sendOneStatement>F</sendOneStatement>
       <connection>PostgreSQL</connection>
       <parallel>N</parallel>
-      <xloc>680</xloc>
+      <xloc>520</xloc>
       <yloc>280</yloc>
       <attributes_hac/>
     </action>
@@ -280,7 +170,7 @@ WHERE id_execucao='${RUN_ID}';]]></sql>
       <loglevel>Error</loglevel>
       <logsubject>RF22_FALHA_WORKFLOW</logsubject>
       <parallel>N</parallel>
-      <xloc>900</xloc>
+      <xloc>740</xloc>
       <yloc>280</yloc>
       <attributes_hac/>
     </action>
@@ -292,7 +182,7 @@ WHERE id_execucao='${RUN_ID}';]]></sql>
       <attributes/>
       <message>Workflow Principal Abortado.</message>
       <parallel>N</parallel>
-      <xloc>1100</xloc>
+      <xloc>960</xloc>
       <yloc>280</yloc>
       <attributes_hac/>
     </action>
@@ -315,27 +205,13 @@ WHERE id_execucao='${RUN_ID}';]]></sql>
     </hop>
     <hop>
       <from>2. Criar Estruturas da Camada Gold</from>
-      <to>3. Iniciar Etapa Gold</to>
+      <to>3. Registrar Prontidao Silver e Handoff Analitico</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>3. Iniciar Etapa Gold</from>
-      <to>4. Consolidar Camada Gold no Banco</to>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>4. Consolidar Camada Gold no Banco</from>
-      <to>5. Finalizar Etapa Gold</to>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>5. Finalizar Etapa Gold</from>
+      <from>3. Registrar Prontidao Silver e Handoff Analitico</from>
       <to>SUCESSO_INTEGRADO</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
@@ -358,21 +234,7 @@ WHERE id_execucao='${RUN_ID}';]]></sql>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>3. Iniciar Etapa Gold</from>
-      <to>Compensar e Abortar</to>
-      <evaluation>N</evaluation>
-      <unconditional>N</unconditional>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>4. Consolidar Camada Gold no Banco</from>
-      <to>Compensar e Abortar</to>
-      <evaluation>N</evaluation>
-      <unconditional>N</unconditional>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>5. Finalizar Etapa Gold</from>
+      <from>3. Registrar Prontidao Silver e Handoff Analitico</from>
       <to>Compensar e Abortar</to>
       <evaluation>N</evaluation>
       <unconditional>N</unconditional>
@@ -396,12 +258,11 @@ WHERE id_execucao='${RUN_ID}';]]></sql>
 
   <notepads>
     <notepad>
-      <note>RF22 - ORQUESTRAÇÃO INTEGRADA PONTA A PONTA (Apache Hop)
-1. Carga Bronze &amp; Silver (arquivos brutos -> bronze -> tipagem/validação silver -> quarentena)
-2. Aplicação de DDL analítico e visões da Camada Gold
-3. Consolidação e atualização da Camada Gold no PostgreSQL
-4. Registro de auditoria corporativa por etapa e lote (controle.execucao_workflow)
-5. Falha crítica interrompe etapas dependentes e aciona compensação automática.</note>
+      <note>RF22 - ORQUESTRAÇÃO DE INGESTÃO E GOVERNANÇA (Apache Hop)
+1. Ingestão Bronze &amp; Silver (arquivos brutos -> bronze -> tipagem/validação silver -> quarentena)
+2. Aplicação do DDL analítico e visões da Camada Gold (sql/camada_gold.sql)
+3. Auditoria corporativa e Handoff para o Lakehouse (Parquet + Quality Gate + Apache Beam)
+4. Falha crítica interrompe etapas dependentes e aciona compensação automática.</note>
       <xloc>60</xloc>
       <yloc>20</yloc>
       <width>750</width>
