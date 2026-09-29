@@ -105,11 +105,11 @@ def executar_comparacao_runtimes_beam(
                 resultado_spark["motivo"] = f"Falha na execução Spark nativa: {exc}"
         elif diagnostico_spark["spark_job_server_docker_ativo"]:
             motivo_bloqueio = (
-                "Spark Job Server ativo no Docker (localhost:8099). A execução distribuída entre o host e o cluster Spark "
-                "em container requer um SDK Harness externo (Worker Pool de rede), inviabilizando o modo LOOPBACK entre redes isoladas. "
-                "Conforme especificado no requisito RF25, o diagnóstico técnico foi formalizado com integridade."
+                "Spark Job Server detectado no Docker (localhost:8099). A execução distribuída entre host Windows "
+                "e o cluster Spark em container requer um Worker Pool de rede externo (SDK Harness remoto), inviabilizando "
+                "o modo LOOPBACK entre redes isoladas. Conforme o requisito RF25, o diagnóstico técnico foi formalizado com integridade."
             )
-            resultado_spark["status"] = "JOB_SERVER_ATIVO_BLOQUEIO_WORKER_POOL"
+            resultado_spark["status"] = "BLOQUEIO_WORKER_POOL"
             resultado_spark["motivo"] = motivo_bloqueio
             if logger:
                 logger.info("Diagnóstico Spark: Job Server ativo no Docker (8099); execução distribuída requer SDK harness externo.")
