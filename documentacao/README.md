@@ -8,7 +8,8 @@
 - [especificacao_tecnica.md](especificacao_tecnica.md): Especificação técnica completa de arquitetura de dados, modelagem relacional, armazenamento no MongoDB e motor de recomendação.
 - [arquitetura_etl_elt.md](arquitetura_etl_elt.md): Classificação do fluxo entre ETL e ELT, justificativas sob custo, governança, desempenho e limitações dos scripts isolados (RF19).
 - [modelo-dados.pdf](modelo-dados.pdf): Diagramas conceituais, lógicos e relacionais das entidades do banco de dados.
-- [arquitetura.pdf](arquitetura.pdf): Visão gráfica da arquitetura em camadas e fluxo de dados.
+- [arquitetura.pdf](arquitetura.pdf): Visão gráfica da arquitetura em camadas e fluxo de dados (Desafio 4).
+- [arquitetura-desafio01.pdf](arquitetura-desafio01.pdf): Diagrama de arquitetura preservado do Desafio 1 para rastreabilidade histórica.
 - [kpis.md](kpis.md): Especificação formal dos KPIs, fórmulas matemáticas, views analíticas e perguntas de negócio.
 - [uso_da_ia.md](uso_da_ia.md): Relatório de governança, ética e transparência no uso de ferramentas de Inteligência Artificial.
 
@@ -32,6 +33,11 @@
 ## 4. Governança, Proteção de Dados e Catálogo (OpenMetadata)
 - [governanca_openmetadata.md](governanca_openmetadata.md): Guia de governança, tutorial de catálogo via API REST (*Metadata as Code*), glossário, classificação LGPD e linhagem gráfica (RF27 a RF30, RF32).
 - [dados_mestres.md](dados_mestres.md): Especificação de Master Data Management (MDM), correspondência de entidades (Matching Rules) e Golden Record para conteúdos educacionais (RF30).
+
+---
+
+## 5. Automação, Orquestração e Reprodutibilidade (RF15)
+- [contrato_integracao_pipeline.md](contrato_integracao_pipeline.md): Ordem de encadeamento, contratos de interface e especificação dos orquestradores oficiais de execução (`scripts/executar_fluxo_completo.py` e `scripts/executar_fluxo_completo.ps1` versus execuções modulares).
 
 
 

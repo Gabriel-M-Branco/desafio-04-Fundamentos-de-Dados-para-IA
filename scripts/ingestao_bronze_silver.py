@@ -29,7 +29,13 @@ except Exception:  # permite rodar com --skip-db sem psycopg
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    from zoneinfo import ZoneInfo
+    tz_name = os.environ.get("TZ", "America/Cuiaba")
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = ZoneInfo("America/Cuiaba")
+    return datetime.now(tz).isoformat()
 
 
 def log_event(log_file: Path, run_id: str, etapa: str, status: str, **extras: Any) -> None:

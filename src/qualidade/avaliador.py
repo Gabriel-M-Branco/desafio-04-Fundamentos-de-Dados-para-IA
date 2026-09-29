@@ -9,7 +9,7 @@ import uuid
 
 import pandas as pd
 
-from src.config import caminho_absoluto, carregar_config
+from src.config import agora_iso as obter_agora_iso, agora_projeto, caminho_absoluto, carregar_config
 from src.qualidade.regras import REGRAS_QUALIDADE, Severidade
 
 
@@ -20,8 +20,8 @@ def avaliar_qualidade_dados(
     logger: Any = None,
 ) -> dict[str, Any]:
     """Aplica os 5 testes de qualidade nas dimensões exigidas pelo RF31."""
-    lote = lote_id or f"LOTE_DQ_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
-    agora_iso = datetime.now(timezone.utc).isoformat()
+    lote = lote_id or f"LOTE_DQ_{agora_projeto().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+    agora_iso = obter_agora_iso()
     total_interacoes = len(interacoes_df)
     total_catalogo = len(catalogo_df)
 

@@ -20,7 +20,7 @@ Este documento registra os resultados de execução, equivalência analítica, d
 | **Status da Execução** | `SUCESSO` |
 | **Registros de Entrada Processados** | `1000` interações |
 | **Registros Analíticos Consolidados (Gold)** | `64` categorias/períodos |
-| **Duração do Processamento** | `0.4636 segundos` |
+| **Duração do Processamento** | `0.4502 segundos` |
 | **Arquivo Parquet de Saída** | `C:\Users\branco\Documents\GitHub\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
 | **Tamanho do Arquivo Gerado** | `11962 bytes` |
 
@@ -30,52 +30,52 @@ Este documento registra os resultados de execução, equivalência analítica, d
   {
     "ano": 2026,
     "mes": 4,
-    "categoria": "Banco De Dados",
-    "total_interacoes": 14,
-    "usuarios_ativos": 14,
-    "total_visualizacoes": 3,
-    "total_inicios": 3,
-    "total_conclusoes": 2,
-    "total_curtidas": 0,
-    "taxa_conclusao_pct": 66.67,
-    "tempo_total_consumido_min": 964.0,
-    "tempo_medio_min": 68.86,
-    "avaliacao_media": 4.36,
-    "_data_carga_gold": "2026-09-28T22:34:54.266372+00:00",
-    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
-  },
-  {
-    "ano": 2026,
-    "mes": 7,
     "categoria": "Devops & Cloud",
-    "total_interacoes": 20,
-    "usuarios_ativos": 18,
-    "total_visualizacoes": 5,
-    "total_inicios": 2,
-    "total_conclusoes": 6,
+    "total_interacoes": 19,
+    "usuarios_ativos": 17,
+    "total_visualizacoes": 4,
+    "total_inicios": 5,
+    "total_conclusoes": 2,
     "total_curtidas": 4,
-    "taxa_conclusao_pct": 300.0,
-    "tempo_total_consumido_min": 1992.0,
-    "tempo_medio_min": 99.6,
-    "avaliacao_media": 4.3,
-    "_data_carga_gold": "2026-09-28T22:34:54.266372+00:00",
+    "taxa_conclusao_pct": 40.0,
+    "tempo_total_consumido_min": 3004.0,
+    "tempo_medio_min": 158.11,
+    "avaliacao_media": 4.42,
+    "_data_carga_gold": "2026-09-28T20:35:39.648301-04:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
     "ano": 2026,
-    "mes": 7,
-    "categoria": "Ciência De Dados",
-    "total_interacoes": 13,
-    "usuarios_ativos": 13,
-    "total_visualizacoes": 2,
+    "mes": 8,
+    "categoria": "Devops & Cloud",
+    "total_interacoes": 10,
+    "usuarios_ativos": 10,
+    "total_visualizacoes": 3,
+    "total_inicios": 1,
+    "total_conclusoes": 2,
+    "total_curtidas": 1,
+    "taxa_conclusao_pct": 200.0,
+    "tempo_total_consumido_min": 733.0,
+    "tempo_medio_min": 73.3,
+    "avaliacao_media": 4.4,
+    "_data_carga_gold": "2026-09-28T20:35:39.648301-04:00",
+    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
+  },
+  {
+    "ano": 2026,
+    "mes": 8,
+    "categoria": "Segurança & Governança",
+    "total_interacoes": 7,
+    "usuarios_ativos": 7,
+    "total_visualizacoes": 0,
     "total_inicios": 2,
-    "total_conclusoes": 3,
-    "total_curtidas": 2,
-    "taxa_conclusao_pct": 150.0,
-    "tempo_total_consumido_min": 654.0,
-    "tempo_medio_min": 50.31,
-    "avaliacao_media": 4.31,
-    "_data_carga_gold": "2026-09-28T22:34:54.266372+00:00",
+    "total_conclusoes": 2,
+    "total_curtidas": 1,
+    "taxa_conclusao_pct": 100.0,
+    "tempo_total_consumido_min": 2523.0,
+    "tempo_medio_min": 360.43,
+    "avaliacao_media": 4.29,
+    "_data_carga_gold": "2026-09-28T20:35:39.648301-04:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   }
 ]
@@ -90,7 +90,7 @@ Conforme as diretrizes formais de auditoria e governança do requisito **RF25**:
 
 ### Diagnóstico do Ambiente Host
 - **Sistema Operacional:** `Windows`
-- **Java detectado:** `False` (`None`)
+- **Java detectado:** `True` (`None`)
 - **Spark instalado no host:** `False` (`None`)
 - **Hadoop winutils presente no Windows:** `False` (`None`)
 - **Status do SparkRunner no Host Local:** `BLOQUEADO_AMBIENTE_HOST`

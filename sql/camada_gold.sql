@@ -1,6 +1,14 @@
 -- DDL Oficial da Camada Gold para Consumo Analítico no PostgreSQL (RF26)
 -- Integrada ao Apache Beam (RF25), Qualidade de Dados (RF31), SQL Lab e Superset (RF16-18)
 
+SET timezone TO 'America/Cuiaba';
+DO $$ BEGIN
+    PERFORM 1 FROM pg_database WHERE datname = 'ficdev_analitico';
+    IF FOUND THEN
+        ALTER DATABASE ficdev_analitico SET timezone TO 'America/Cuiaba';
+    END IF;
+END $$;
+
 CREATE SCHEMA IF NOT EXISTS gold;
 
 -- 1. Tabela Gold: KPIs Consolidados por Período e Categoria

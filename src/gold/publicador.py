@@ -9,7 +9,12 @@ import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
 
-from src.config import caminho_absoluto, carregar_config, obter_parametros_conexao_postgres
+from src.config import (
+    caminho_absoluto,
+    carregar_config,
+    converter_para_horario_local,
+    obter_parametros_conexao_postgres,
+)
 from src.beam.pipeline_gold import executar_pipeline_gold_beam
 from src.parquet.leitor import ler_parquet_interacoes
 from src.qualidade.avaliador import avaliar_qualidade_dados, persistir_historico_qualidade
@@ -182,7 +187,7 @@ def publicar_camada_gold(
                     float(r["tempo_total_consumido_min"]),
                     float(r["tempo_medio_min"]),
                     float(r["avaliacao_media"]) if pd.notnull(r.get("avaliacao_media")) else None,
-                    r["_data_carga_gold"],
+                    converter_para_horario_local(r["_data_carga_gold"]),
                     r["_lote_processamento"],
                 )
                 for r in registros_kpis
@@ -226,7 +231,7 @@ def publicar_camada_gold(
                     float(r["taxa_conclusao_pct"]),
                     float(r["tempo_total_min"]),
                     float(r["avaliacao_media"]) if pd.notnull(r.get("avaliacao_media")) else None,
-                    r["_data_carga_gold"],
+                    converter_para_horario_local(r["_data_carga_gold"]),
                     r["_lote_processamento"],
                 )
                 for r in registros_conteudos

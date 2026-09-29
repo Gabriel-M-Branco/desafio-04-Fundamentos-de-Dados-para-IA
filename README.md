@@ -109,23 +109,33 @@ pip install -r requirements.txt
 # 4. Iniciar toda a infraestrutura conteinerizada
 docker compose up -d
 
-# 5. Executar o fluxo ponta a ponta de dados e IA
-python -m src.main                                      # Carga base, pgvector e recomendações IA
+# 5. Executar o fluxo completo de ponta a ponta (Opção A - Comando Único Recomendado)
+python scripts/executar_fluxo_completo.py
 
-# Ingestão Bronze/Silver e DDL Gold no Apache Hop (escolha uma das duas opções):
-# Opção A (Terminal / Headless via Docker - compatível com PowerShell e Bash):
+# Ou via wrappers nativos de cada sistema operacional:
+# No Windows PowerShell: .\.scripts\executar_fluxo_completo.ps1
+# No Linux / macOS:      ./scripts/executar_fluxo_completo.sh
+
+# --- OU execute passo a passo (Opção B): ---
+# 5.1 Carga base, pgvector e recomendações IA
+python -m src.main
+
+# 5.2 Ingestão Bronze/Silver e DDL Gold no Apache Hop (Headless via Docker):
 docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh --environment desafio4-dev --project desafio4 --file /files/workflows/workflow_principal.hwf --runconfig local --level BASIC
-# Opção B (Navegador via Hop Web): acesse http://localhost:8080 e execute workflow_principal.hwf
 
-# Pipeline analítico, Particionamento Parquet Hive, Testes RF31, LGPD e Apache Beam:
+# 5.3 Pipeline analítico, Parquet Hive, Testes RF31, LGPD e Apache Beam:
 python -m src.executar_etapas --etapa todas
 
-# 6. Governança, Metadados e Sincronização Analítica
-python scripts/demonstrar_dados_mestres.py              # MDM / Golden Record (RF30)
-python scripts/configurar_openmetadata.py               # Catálogo, Glossário e Linhagem 5 pontas (RF27-RF29)
-python dashboard/sync_database.py                       # Importação dos dashboards no Apache Superset (RF16-RF18)
+# 5.4 Governança de Dados Mestres (MDM / Golden Record - RF30)
+python scripts/demonstrar_dados_mestres.py
 
-# 7. Executar a suíte completa com 98 testes automatizados
+# 5.5 Catálogo, Glossário e Linhagem 5 pontas no OpenMetadata (RF27-RF29)
+python scripts/configurar_openmetadata.py
+
+# 5.6 Sincronização e publicação dos dashboards no Apache Superset (RF16-RF18)
+python dashboard/sync_database.py
+
+# 5.7 Executar a suíte completa com 103 testes automatizados (RF34)
 python -m pytest tests/
 ```
 
@@ -237,9 +247,49 @@ docker compose ps
 
 ### 7. Execução do Pipeline Ponta a Ponta
 
-Para executar toda a plataforma de forma sequencial e integrada, siga as 4 etapas abaixo:
+O ecossistema disponibiliza **duas modalidades oficiais de execução**, atendendo tanto à necessidade de automação e reprodutibilidade ágil quanto à auditoria e depuração granular de cada camada:
 
-#### Etapa A: Carga Base, IA e Embeddings (Motor Legado e Pré-requisitos)
+1. **Modalidade A: Execução Integrada em Comando Único (Recomendada / Pipeline Completo)**
+2. **Modalidade B: Execução Modular Passo a Passo (Inspeção Granular por Camada)**
+
+---
+
+#### Modalidade A: Execução Integrada em Comando Único (Recomendada)
+
+Projetada para avaliações acadêmicas, validações de bancada e homologação rápida do ecossistema completo. O script orquestrador [`scripts/executar_fluxo_completo.py`](scripts/executar_fluxo_completo.py) encadeia automaticamente todas as etapas na sequência rigorosa de dependências, monitora códigos de retorno (interrompendo imediatamente em caso de falha), cronometra o tempo de cada etapa e emite o resumo executivo:
+
+```bash
+# Execução completa com a suíte de 103 testes automatizados ao final (~60 segundos):
+python scripts/executar_fluxo_completo.py
+
+# No Windows PowerShell (via wrapper nativo):
+.\scripts\executar_fluxo_completo.ps1
+
+# No Linux e macOS (Bash / Zsh):
+./scripts/executar_fluxo_completo.sh
+
+# Execução rápida de dados, metadados e dashboards (omitindo apenas o pytest final):
+python scripts/executar_fluxo_completo.py --sem-testes
+# No PowerShell: .\scripts\executar_fluxo_completo.ps1 -SemTestes
+# No Linux/macOS: ./scripts/executar_fluxo_completo.sh --sem-testes
+```
+
+> **Sequência Encadeada Executada pelo Orquestrador Unificado:**
+> 1. `[1/7] python -m src.main`: Inicialização de esquemas, persistência PostgreSQL/MongoDB, geração de embeddings `pgvector` e recomendações IA.
+> 2. `[2/7] docker exec hop-web ...`: Workflow integrado do Apache Hop (`workflow_principal.hwf`), gravando Bronze, isolando anomalias na Quarentena, gerando Silver limpa e provisionando o DDL Gold.
+> 3. `[3/7] python -m src.executar_etapas --etapa todas`: Particionamento colunar Parquet Hive, benchmark comparativo, motor de qualidade de dados RF31 (Quality Gate nas 5 dimensões), técnicas de proteção LGPD (RF32/RF33) e agregação analítica com Apache Beam (DirectRunner + diagnóstico formal Spark).
+> 4. `[4/7] python scripts/demonstrar_dados_mestres.py`: Governança de Dados Mestres (MDM / Golden Record - RF30) sobre registros reais divergentes da Silver.
+> 5. `[5/7] python scripts/configurar_openmetadata.py`: Catalogação das 12 tabelas nas 4 camadas, 4 termos de glossário de negócio e grafo de linhagem de 5 pontas via API REST oficial do OpenMetadata (RF27-RF29).
+> 6. `[6/7] python dashboard/sync_database.py`: Sincronização da conexão de dados e publicação automática dos dashboards no Apache Superset (RF16-RF18).
+> 7. `[7/7] python -m pytest tests/`: Execução da suíte completa de 103 testes automatizados (RF34).
+
+---
+
+#### Modalidade B: Execução Modular Passo a Passo (Inspeção Granular)
+
+Se desejar depurar, medir ou auditar uma camada específica separadamente, execute os comandos individuais na ordem abaixo:
+
+##### Etapa A: Carga Base, IA e Embeddings (Motor Legado e Pré-requisitos)
 Gera o catálogo de conteúdos, carrega o MongoDB, calcula embeddings com `sentence-transformers` na extensão `pgvector` e gera as recomendações personalizadas:
 
 ```bash
@@ -248,7 +298,7 @@ python -m src.main
 
 > Este comando garante a presença das referências em `public.usuarios` e `public.conteudos`, que são validadas na etapa de integridade referencial do Apache Hop.
 
-#### Etapa B: Ingestão e Governança de Borda no Apache Hop (RF20 a RF23 e RF26)
+##### Etapa B: Ingestão e Governança de Borda no Apache Hop (RF20 a RF23 e RF26)
 O Apache Hop executa o workflow integrado mestre `workflow_principal.hwf`, que lê os arquivos de `dados/brutos/`, grava a camada bruta com metadados de auditoria em `bronze.*`, valida e padroniza em `silver.*`, isola inconsistências em `quarentena.registros`, provisiona o DDL analítico [sql/camada_gold.sql](sql/camada_gold.sql) e registra no schema `controle` a prontidão dos dados e o handoff para a esteira analítica distribuída.
 
 Você pode rodá-lo por **qualquer uma das opções**:
@@ -264,7 +314,7 @@ Você pode rodá-lo por **qualquer uma das opções**:
   docker exec hop-web /usr/local/tomcat/webapps/ROOT/hop-run.sh --environment desafio4-dev --project desafio4 --file /files/workflows/workflow_principal.hwf --runconfig local --level BASIC
   ```
 
-#### Etapa C: Formato Colunar Parquet, Qualidade de Dados, LGPD e Apache Beam (RF24, RF25, RF31, RF32/RF33)
+##### Etapa C: Formato Colunar Parquet, Qualidade de Dados, LGPD e Apache Beam (RF24, RF25, RF31, RF32/RF33)
 Com a camada Silver validada e as estruturas analíticas preparadas, execute a esteira de processamento colunar Parquet, qualidade de dados e computação da camada Gold via Apache Beam:
 
 ```bash
@@ -282,7 +332,7 @@ O orquestrador modular executará de forma encadeada:
 6. **RF25 (Apache Beam e Runtimes):** Agrega os KPIs analíticos mensais e de desempenho via DirectRunner e avalia o cluster Spark, gravando em Parquet analítico (`dados/parquet/gold/kpis_mensais_categoria.parquet`).
 7. **RF26 (Camada Gold):** Sincroniza e consolida as tabelas analíticas no PostgreSQL (`gold.kpis_mensais_categoria`, `gold.desempenho_conteudos` e visões executivas) e atualiza as amostras físicas em `dados/gold/`.
 
-#### Etapa D: Dados Mestres (MDM) e Governança no OpenMetadata (RF27 a RF30)
+##### Etapa D: Dados Mestres (MDM) e Governança no OpenMetadata (RF27 a RF30)
 Para consolidar a resolução de conflitos cadastrais e catalogar os metadados técnicos e termos de negócio:
 
 1. **Reconciliação de Dados Mestres (RF30):**
@@ -300,6 +350,21 @@ Para consolidar a resolução de conflitos cadastrais e catalogar os metadados t
    *Otimização de Recursos:* O container de ingestão nativo baseado em Apache Airflow foi desativado por padrão, gerando uma economia de **~3.0 GB de RAM** sem qualquer perda funcional. Toda a governança é provisionada em segundos via API REST oficial.  
    *Evidência gerada:* `openmetadata/dossie_metadados_oficial.json` e documentação técnica em [`documentacao/governanca_openmetadata.md`](documentacao/governanca_openmetadata.md).  
    *Acesso Web:* [http://localhost:8585](http://localhost:8585) (Login: **`admin@openmetadata.org`** / Senha: valor de `OPENMETADATA_ADMIN_PASSWORD` no `.env`).
+
+##### Etapa E: Sincronização Analítica no Apache Superset (RF16 a RF18)
+Sincroniza a conexão de banco de dados e importa automaticamente os dashboards analíticos no Apache Superset:
+
+```bash
+python dashboard/sync_database.py
+```
+*Acesso Web:* [http://localhost:8088](http://localhost:8088) (Login: `admin` / Senha: `admin`).
+
+##### Etapa F: Suíte de Testes Automatizados (RF34)
+Executa a validação de integridade de software com 103 testes automatizados:
+
+```bash
+python -m pytest tests/
+```
 
 ---
 
