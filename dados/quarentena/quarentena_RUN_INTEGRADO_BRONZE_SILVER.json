@@ -5,7 +5,7 @@
     "origem": "cenarios_de_teste/catalogo_cenarios.csv",
     "regra": "campo obrigatório ausente: titulo",
     "mensagem": "registro rejeitado",
-    "data_erro": "2026-09-28T19:34:45.277233",
+    "data_erro": "2026-09-28T20:35:10.089435",
     "id_execucao": "manual",
     "registro": "{\"tipo\": \"Vídeo\", \"autor\": \"Carlos Eduardo Santos\", \"nivel\": \"Básico\", \"titulo\": null, \"categoria\": \"Ciência de Dados\", \"descricao\": \"Cenário de violação de completude: título nulo/vazio.\", \"conteudo_id\": \"3\", \"data_publicacao\": \"2026-02-20\", \"carga_horaria_min\": \"45\"}"
   },
@@ -15,7 +15,7 @@
     "origem": "cenarios_de_teste/catalogo_cenarios.csv",
     "regra": "carga_horaria_min deve ser positiva",
     "mensagem": "registro rejeitado",
-    "data_erro": "2026-09-28T19:34:45.277233",
+    "data_erro": "2026-09-28T20:35:10.089435",
     "id_execucao": "manual",
     "registro": "{\"tipo\": \"Artigo\", \"autor\": \"Mariana Vasconcelos\", \"nivel\": \"Intermediário\", \"titulo\": \"Análise de Métricas com Validade Inválida\", \"categoria\": \"Business Intelligence\", \"descricao\": \"Cenário de violação de validade: carga horária negativa.\", \"conteudo_id\": \"4\", \"data_publicacao\": \"2026-03-01\", \"carga_horaria_min\": \"-120\"}"
   },
@@ -25,7 +25,7 @@
     "origem": "cenarios_de_teste/catalogo_cenarios.csv",
     "regra": "conteudo_id repetido",
     "mensagem": "Duplicidade de chave de negócio",
-    "data_erro": "2026-09-28T19:34:45.277233",
+    "data_erro": "2026-09-28T20:35:10.089435",
     "id_execucao": "manual",
     "registro": "{\"tipo\": \"Curso\", \"autor\": \"Gabriel Moreira Branco\", \"nivel\": \"Avançado\", \"titulo\": \"Duplicata Proposital do Conteúdo ID 1\", \"categoria\": \"Engenharia de Dados\", \"descricao\": \"Cenário de violação de unicidade: chave primária repetida.\", \"conteudo_id\": \"1\", \"data_publicacao\": \"2026-01-10\", \"carga_horaria_min\": \"1200\"}"
   },
@@ -35,7 +35,7 @@
     "origem": "catalogo.csv",
     "regra": "conteudo_id repetido",
     "mensagem": "Duplicidade de chave de negócio",
-    "data_erro": "2026-09-28T19:34:45.277233",
+    "data_erro": "2026-09-28T20:35:10.089435",
     "id_execucao": "manual",
     "registro": "{\"tipo\": \"Curso\", \"autor\": \"Profa. Carla Antunes Silveira\", \"nivel\": \"Avançado\", \"titulo\": \"Curso Completo de Segurança de Redes e Controle de Acesso: Da Teoria à Prática\", \"categoria\": \"DevOps & Cloud\", \"descricao\": \"Neste curso aprofundado, você aprenderá de forma estruturada sobre Segurança de Redes e Controle de Acesso. O treinamento abrange tópicos de nível avançado, exercícios práticos e construção de projetos completos. Indicado para profissionais que desejam dominar ferramentas modernas e padrões consolidados em DevOps & Cloud.\", \"conteudo_id\": \"1\", \"data_publicacao\": \"2025-03-06\", \"carga_horaria_min\": \"3479\"}"
   },
@@ -45,7 +45,7 @@
     "origem": "catalogo.csv",
     "regra": "conteudo_id repetido",
     "mensagem": "Duplicidade de chave de negócio",
-    "data_erro": "2026-09-28T19:34:45.277233",
+    "data_erro": "2026-09-28T20:35:10.089435",
     "id_execucao": "manual",
     "registro": "{\"tipo\": \"Podcast\", \"autor\": \"Prof. Lucas Fernandes Prado\", \"nivel\": \"Básico\", \"titulo\": \"Deep Dive Ep. 21: Casos de Sucesso em Linhagem de Dados e Rastreabilidade de Origem\", \"categoria\": \"Segurança & Governança\", \"descricao\": \"Episódio enriquecedor com debates aprofundados sobre Linhagem de Dados e Rastreabilidade de Origem. Nesta gravação para o público de nível básico, especialistas compartilham experiências práticas, desafios reais do mercado e reflexões sobre impactos estratégicos e técnicos em Segurança & Governança.\", \"conteudo_id\": \"2\", \"data_publicacao\": \"2024-10-21\", \"carga_horaria_min\": \"39\"}"
   },
@@ -55,7 +55,7 @@
     "origem": "catalogo.csv",
     "regra": "conteudo_id repetido",
     "mensagem": "Duplicidade de chave de negócio",
-    "data_erro": "2026-09-28T19:34:45.277233",
+    "data_erro": "2026-09-28T20:35:10.089435",
     "id_execucao": "manual",
     "registro": "{\"tipo\": \"Podcast\", \"autor\": \"Eng. Thiago Pinheiro Borges\", \"nivel\": \"Avançado\", \"titulo\": \"Data Insights Ep. 54: Experiências Reais com Práticas de DataOps e Qualidade de Dados\", \"categoria\": \"Engenharia de Dados\", \"descricao\": \"Episódio enriquecedor com debates aprofundados sobre Práticas de DataOps e Qualidade de Dados. Nesta gravação para o público de nível avançado, especialistas compartilham experiências práticas, desafios reais do mercado e reflexões sobre impactos estratégicos e técnicos em Engenharia de Dados.\", \"conteudo_id\": \"3\", \"data_publicacao\": \"2024-09-14\", \"carga_horaria_min\": \"75\"}"
   },
@@ -65,7 +65,7 @@
     "origem": "catalogo.csv",
     "regra": "conteudo_id repetido",
     "mensagem": "Duplicidade de chave de negócio",
-    "data_erro": "2026-09-28T19:34:45.277233",
+    "data_erro": "2026-09-28T20:35:10.089435",
     "id_execucao": "manual",
     "registro": "{\"tipo\": \"Artigo\", \"autor\": \"Eng. Bruno César Pires\", \"nivel\": \"Avançado\", \"titulo\": \"Guia Definitivo e Boas Práticas sobre Integração de Conectores com SQLAlchemy e Psycopg3\", \"categoria\": \"Programação & Software\", \"descricao\": \"Artigo técnico detalhado que explora Integração de Conectores com SQLAlchemy e Psycopg3 sob uma ótica técnica e conceitual. Focado em nível avançado, aborda trade-offs arquiteturais, vantagens competitivas, padrões recomendados e diretrizes fundamentais para especialistas que atuam em Programação & Software.\", \"conteudo_id\": \"4\", \"data_publicacao\": \"2025-07-24\", \"carga_horaria_min\": \"7\"}"
   },
@@ -75,7 +75,7 @@
     "origem": "cenarios_de_teste/interacoes_cenarios.json",
     "regra": "referência a usuário inexistente",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.484863",
+    "data_erro": "2026-09-28T20:35:10.226384",
     "id_execucao": "manual",
     "registro": "{\"data_hora\": \"2026-03-10T14:30:00\", \"usuario_id\": \"1001\", \"conteudo_id\": \"1\", \"tipo_interacao\": \"conclusão\", \"tempo_consumido\": \"60\", \"avaliacao_atribuida\": \"5.0\", \"percentual_conclusao\": \"100.0\"}"
   },
@@ -85,7 +85,7 @@
     "origem": "cenarios_de_teste/interacoes_cenarios.json",
     "regra": "referência a usuário inexistente",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.484863",
+    "data_erro": "2026-09-28T20:35:10.226384",
     "id_execucao": "manual",
     "registro": "{\"data_hora\": \"2026-03-11T09:15:00\", \"usuario_id\": \"1002\", \"conteudo_id\": \"2\", \"tipo_interacao\": \"início\", \"tempo_consumido\": \"15\", \"avaliacao_atribuida\": \"5.0\", \"percentual_conclusao\": \"30.0\"}"
   },
@@ -95,7 +95,7 @@
     "origem": "cenarios_de_teste/interacoes_cenarios.json",
     "regra": "referência a usuário inexistente",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.484863",
+    "data_erro": "2026-09-28T20:35:10.226384",
     "id_execucao": "manual",
     "registro": "{\"data_hora\": \"2026-03-12T10:00:00\", \"usuario_id\": \"1002\", \"conteudo_id\": \"1\", \"tipo_interacao\": \"conclusão\", \"tempo_consumido\": \"20\", \"avaliacao_atribuida\": \"4.0\", \"percentual_conclusao\": \"100.0\"}"
   },
@@ -105,7 +105,7 @@
     "origem": "cenarios_de_teste/interacoes_cenarios.json",
     "regra": "referência a usuário inexistente | avaliação deve estar entre 1 e 5",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.484863",
+    "data_erro": "2026-09-28T20:35:10.226384",
     "id_execucao": "manual",
     "registro": "{\"data_hora\": \"2026-03-13T11:00:00\", \"usuario_id\": \"1003\", \"conteudo_id\": \"1\", \"tipo_interacao\": \"avaliação\", \"tempo_consumido\": \"10\", \"avaliacao_atribuida\": \"7.5\", \"percentual_conclusao\": \"50.0\"}"
   },
@@ -115,7 +115,7 @@
     "origem": "cenarios_de_teste/interacoes_cenarios.json",
     "regra": "referência a usuário inexistente | percentual_conclusao deve estar entre 0 e 100 | avaliação deve estar entre 1 e 5",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.484863",
+    "data_erro": "2026-09-28T20:35:10.226384",
     "id_execucao": "manual",
     "registro": "{\"data_hora\": \"2026-03-14T12:00:00\", \"usuario_id\": \"1004\", \"conteudo_id\": \"1\", \"tipo_interacao\": \"início\", \"tempo_consumido\": \"5\", \"avaliacao_atribuida\": \"7.5\", \"percentual_conclusao\": \"150.0\"}"
   },
@@ -125,7 +125,7 @@
     "origem": "cenarios_de_teste/interacoes_cenarios.json",
     "regra": "referência a usuário inexistente | avaliação deve estar entre 1 e 5",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.484863",
+    "data_erro": "2026-09-28T20:35:10.226384",
     "id_execucao": "manual",
     "registro": "{\"data_hora\": \"2026-03-15T13:00:00\", \"usuario_id\": \"1005\", \"conteudo_id\": \"2\", \"tipo_interacao\": \"início\", \"tempo_consumido\": \"10\", \"avaliacao_atribuida\": \"7.5\", \"percentual_conclusao\": \"10.0\"}"
   },
@@ -135,7 +135,7 @@
     "origem": "cenarios_de_teste/interacoes_cenarios.json",
     "regra": "referência a usuário inexistente",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.484863",
+    "data_erro": "2026-09-28T20:35:10.226384",
     "id_execucao": "manual",
     "registro": "{\"data_hora\": \"2026-03-16T14:00:00\", \"usuario_id\": \"1006\", \"conteudo_id\": \"1\", \"tipo_interacao\": \"conclusão\", \"tempo_consumido\": \"15\", \"avaliacao_atribuida\": \"4.0\", \"percentual_conclusao\": \"25.0\"}"
   },
@@ -145,7 +145,7 @@
     "origem": "cenarios_de_teste/interacoes_cenarios.json",
     "regra": "referência a usuário inexistente | referência a conteúdo inexistente",
     "mensagem": "Integridade referencial de conteúdo | Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.484863",
+    "data_erro": "2026-09-28T20:35:10.226384",
     "id_execucao": "manual",
     "registro": "{\"data_hora\": \"2026-03-17T15:00:00\", \"usuario_id\": \"1007\", \"conteudo_id\": \"99999\", \"tipo_interacao\": \"início\", \"tempo_consumido\": \"5\", \"avaliacao_atribuida\": \"4.0\", \"percentual_conclusao\": \"10.0\"}"
   },
@@ -155,7 +155,7 @@
     "origem": "cenarios_de_teste/comentarios_cenarios.json",
     "regra": "referência a usuário inexistente",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.601478",
+    "data_erro": "2026-09-28T20:35:10.340334",
     "id_execucao": "manual",
     "registro": "{\"data\": \"2026-03-10\", \"tags\": \"[\\\"lakehouse\\\",\\\"beam\\\",\\\"medalhao\\\"]\", \"avaliacao\": \"5.0\", \"comentario\": \"Excelente curso de Engenharia de Dados! A didática e a prática com Beam e Medalhão foram muito claras.\", \"usuario_id\": \"1001\", \"conteudo_id\": \"1\"}"
   },
@@ -165,7 +165,7 @@
     "origem": "cenarios_de_teste/comentarios_cenarios.json",
     "regra": "referência a usuário inexistente",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.601478",
+    "data_erro": "2026-09-28T20:35:10.340334",
     "id_execucao": "manual",
     "registro": "{\"data\": \"2026-03-11\", \"tags\": \"[\\\"lgpd\\\",\\\"governanca\\\",\\\"seguranca\\\"]\", \"avaliacao\": \"4.5\", \"comentario\": \"O artigo sobre LGPD e governança foi esclarecedor para meu trabalho de conclusao de curso.\", \"usuario_id\": \"1002\", \"conteudo_id\": \"2\"}"
   },
@@ -175,7 +175,7 @@
     "origem": "cenarios_de_teste/comentarios_cenarios.json",
     "regra": "referência a usuário inexistente | avaliação deve estar entre 1 e 5",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.601478",
+    "data_erro": "2026-09-28T20:35:10.340334",
     "id_execucao": "manual",
     "registro": "{\"data\": \"2026-03-12\", \"tags\": \"[\\\"erro\\\",\\\"quarentena\\\"]\", \"avaliacao\": \"0.0\", \"comentario\": \"Avaliacao com nota zero para simular violacao de escala de satisfacao.\", \"usuario_id\": \"1003\", \"conteudo_id\": \"1\"}"
   },
@@ -185,7 +185,7 @@
     "origem": "cenarios_de_teste/comentarios_cenarios.json",
     "regra": "referência a usuário inexistente | avaliação deve estar entre 1 e 5",
     "mensagem": "Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.601478",
+    "data_erro": "2026-09-28T20:35:10.340334",
     "id_execucao": "manual",
     "registro": "{\"data\": \"2026-03-13\", \"tags\": \"[\\\"invalido\\\"]\", \"avaliacao\": \"-1.0\", \"comentario\": \"Nota negativa para teste de validade.\", \"usuario_id\": \"1004\", \"conteudo_id\": \"1\"}"
   },
@@ -195,7 +195,7 @@
     "origem": "cenarios_de_teste/comentarios_cenarios.json",
     "regra": "referência a usuário inexistente | referência a conteúdo inexistente",
     "mensagem": "Integridade referencial de conteúdo | Integridade referencial de usuário",
-    "data_erro": "2026-09-28T19:34:45.601478",
+    "data_erro": "2026-09-28T20:35:10.340334",
     "id_execucao": "manual",
     "registro": "{\"data\": \"2026-03-14\", \"tags\": \"[\\\"orfao\\\"]\", \"avaliacao\": \"4.0\", \"comentario\": \"Comentario vinculado a conteudo inexistente no catalogo.\", \"usuario_id\": \"1005\", \"conteudo_id\": \"99999\"}"
   }

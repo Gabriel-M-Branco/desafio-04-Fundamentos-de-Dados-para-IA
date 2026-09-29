@@ -10,10 +10,15 @@ from __future__ import annotations
 
 import difflib
 import json
+import sys
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+RAIZ_PROJETO = Path(__file__).resolve().parents[1]
+if str(RAIZ_PROJETO) not in sys.path:
+    sys.path.insert(0, str(RAIZ_PROJETO))
 
 from src.config import agora_iso
 

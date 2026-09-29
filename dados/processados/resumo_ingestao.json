@@ -44,9 +44,9 @@
     "mongodb": 1000
   },
   "tempos_etapas_segundos": {
-    "leitura": 0.0078,
-    "tratamento_validacao": 0.0582,
-    "gravacao_saidas": 0.1529
+    "leitura": 0.0085,
+    "tratamento_validacao": 0.0571,
+    "gravacao_saidas": 0.158
   },
-  "tempo_total_segundos": 7.417
+  "tempo_total_segundos": 7.6255
 }

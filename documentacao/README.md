@@ -33,5 +33,10 @@
 - [governanca_openmetadata.md](governanca_openmetadata.md): Guia de governança, tutorial de catálogo via API REST (*Metadata as Code*), glossário, classificação LGPD e linhagem gráfica (RF27 a RF30, RF32).
 - [dados_mestres.md](dados_mestres.md): Especificação de Master Data Management (MDM), correspondência de entidades (Matching Rules) e Golden Record para conteúdos educacionais (RF30).
 
+---
+
+## 5. Automação, Orquestração e Reprodutibilidade (RF15)
+- [contrato_integracao_pipeline.md](contrato_integracao_pipeline.md): Ordem de encadeamento, contratos de interface e especificação dos orquestradores oficiais de execução (`scripts/executar_fluxo_completo.py` e `scripts/executar_fluxo_completo.ps1` versus execuções modulares).
+
 
 
