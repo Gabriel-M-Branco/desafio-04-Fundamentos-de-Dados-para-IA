@@ -103,6 +103,7 @@ def executar_comparacao_runtimes_beam(
             except Exception as exc:
                 resultado_spark["status"] = "ERRO_SPARK_HOST"
                 resultado_spark["motivo"] = f"Falha na execução Spark nativa: {exc}"
+        elif diagnostico_spark["spark_job_server_docker_ativo"]:
             motivo_bloqueio = (
                 "Spark Job Server detectado no Docker (localhost:8099). A execução distribuída entre host Windows "
                 "e o cluster Spark em container requer um Worker Pool de rede externo (SDK Harness remoto), inviabilizando "
