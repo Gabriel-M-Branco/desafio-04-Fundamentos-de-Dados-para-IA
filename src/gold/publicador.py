@@ -239,6 +239,22 @@ def publicar_camada_gold(
             execute_values(cur, sql_upsert_conteudos, valores_conteudos)
         conn.commit()
 
+        # 6.3 Exportação física de amostras analíticas na camada Gold (dados/gold/)
+        try:
+            dir_gold = caminho_absoluto("dados/gold")
+            dir_gold.mkdir(parents=True, exist_ok=True)
+
+            df_kpis = pd.DataFrame(registros_kpis)
+            df_kpis.to_parquet(dir_gold / "kpis_mensais_categoria.parquet", index=False)
+            df_kpis.to_csv(dir_gold / "kpis_mensais_categoria.csv", index=False, encoding="utf-8")
+
+            df_desempenho = pd.DataFrame(registros_conteudos)
+            df_desempenho.to_parquet(dir_gold / "desempenho_conteudos.parquet", index=False)
+            df_desempenho.to_csv(dir_gold / "desempenho_conteudos.csv", index=False, encoding="utf-8")
+        except Exception as exc_export:
+            if logger:
+                logger.warning("Falha ao exportar arquivos físicos em dados/gold: %s", exc_export)
+
     duracao_seg = round(perf_counter() - inicio, 4)
 
     resultado = {

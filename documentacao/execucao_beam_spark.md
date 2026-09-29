@@ -20,7 +20,7 @@ Este documento registra os resultados de execução, equivalência analítica, d
 | **Status da Execução** | `SUCESSO` |
 | **Registros de Entrada Processados** | `1000` interações |
 | **Registros Analíticos Consolidados (Gold)** | `64` categorias/períodos |
-| **Duração do Processamento** | `0.4502 segundos` |
+| **Duração do Processamento** | `0.4227 segundos` |
 | **Arquivo Parquet de Saída** | `C:\Users\branco\Documents\GitHub\desafio-04-Fundamentos-de-Dados-para-IA\dados\parquet\gold\kpis_mensais_categoria.parquet` |
 | **Tamanho do Arquivo Gerado** | `11962 bytes` |
 
@@ -29,53 +29,53 @@ Este documento registra os resultados de execução, equivalência analítica, d
 [
   {
     "ano": 2026,
-    "mes": 4,
-    "categoria": "Devops & Cloud",
-    "total_interacoes": 19,
-    "usuarios_ativos": 17,
+    "mes": 3,
+    "categoria": "Ciência De Dados",
+    "total_interacoes": 13,
+    "usuarios_ativos": 12,
     "total_visualizacoes": 4,
-    "total_inicios": 5,
-    "total_conclusoes": 2,
-    "total_curtidas": 4,
-    "taxa_conclusao_pct": 40.0,
-    "tempo_total_consumido_min": 3004.0,
-    "tempo_medio_min": 158.11,
-    "avaliacao_media": 4.42,
-    "_data_carga_gold": "2026-09-28T20:35:39.648301-04:00",
+    "total_inicios": 4,
+    "total_conclusoes": 1,
+    "total_curtidas": 0,
+    "taxa_conclusao_pct": 25.0,
+    "tempo_total_consumido_min": 1263.0,
+    "tempo_medio_min": 97.15,
+    "avaliacao_media": 4.38,
+    "_data_carga_gold": "2026-09-28T21:13:38.888273-04:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   },
   {
     "ano": 2026,
-    "mes": 8,
-    "categoria": "Devops & Cloud",
-    "total_interacoes": 10,
-    "usuarios_ativos": 10,
-    "total_visualizacoes": 3,
-    "total_inicios": 1,
-    "total_conclusoes": 2,
-    "total_curtidas": 1,
-    "taxa_conclusao_pct": 200.0,
-    "tempo_total_consumido_min": 733.0,
-    "tempo_medio_min": 73.3,
-    "avaliacao_media": 4.4,
-    "_data_carga_gold": "2026-09-28T20:35:39.648301-04:00",
-    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
-  },
-  {
-    "ano": 2026,
-    "mes": 8,
-    "categoria": "Segurança & Governança",
-    "total_interacoes": 7,
-    "usuarios_ativos": 7,
-    "total_visualizacoes": 0,
+    "mes": 1,
+    "categoria": "Inteligência Artificial",
+    "total_interacoes": 15,
+    "usuarios_ativos": 14,
+    "total_visualizacoes": 4,
     "total_inicios": 2,
-    "total_conclusoes": 2,
-    "total_curtidas": 1,
-    "taxa_conclusao_pct": 100.0,
-    "tempo_total_consumido_min": 2523.0,
-    "tempo_medio_min": 360.43,
-    "avaliacao_media": 4.29,
-    "_data_carga_gold": "2026-09-28T20:35:39.648301-04:00",
+    "total_conclusoes": 3,
+    "total_curtidas": 5,
+    "taxa_conclusao_pct": 150.0,
+    "tempo_total_consumido_min": 1007.0,
+    "tempo_medio_min": 67.13,
+    "avaliacao_media": 4.33,
+    "_data_carga_gold": "2026-09-28T21:13:38.888273-04:00",
+    "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
+  },
+  {
+    "ano": 2026,
+    "mes": 3,
+    "categoria": "Inteligência Artificial",
+    "total_interacoes": 16,
+    "usuarios_ativos": 16,
+    "total_visualizacoes": 5,
+    "total_inicios": 4,
+    "total_conclusoes": 1,
+    "total_curtidas": 2,
+    "taxa_conclusao_pct": 25.0,
+    "tempo_total_consumido_min": 821.0,
+    "tempo_medio_min": 51.31,
+    "avaliacao_media": 4.38,
+    "_data_carga_gold": "2026-09-28T21:13:38.888273-04:00",
     "_lote_processamento": "LOTE_DIRECTRUNNER_OFICIAL"
   }
 ]
