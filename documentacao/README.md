@@ -8,7 +8,8 @@
 - [especificacao_tecnica.md](especificacao_tecnica.md): Especificação técnica completa de arquitetura de dados, modelagem relacional, armazenamento no MongoDB e motor de recomendação.
 - [arquitetura_etl_elt.md](arquitetura_etl_elt.md): Classificação do fluxo entre ETL e ELT, justificativas sob custo, governança, desempenho e limitações dos scripts isolados (RF19).
 - [modelo-dados.pdf](modelo-dados.pdf): Diagramas conceituais, lógicos e relacionais das entidades do banco de dados.
-- [arquitetura.pdf](arquitetura.pdf): Visão gráfica da arquitetura em camadas e fluxo de dados.
+- [arquitetura.pdf](arquitetura.pdf): Visão gráfica da arquitetura em camadas e fluxo de dados (Desafio 4).
+- [arquitetura-desafio01.pdf](arquitetura-desafio01.pdf): Diagrama de arquitetura preservado do Desafio 1 para rastreabilidade histórica.
 - [kpis.md](kpis.md): Especificação formal dos KPIs, fórmulas matemáticas, views analíticas e perguntas de negócio.
 - [uso_da_ia.md](uso_da_ia.md): Relatório de governança, ética e transparência no uso de ferramentas de Inteligência Artificial.
 
