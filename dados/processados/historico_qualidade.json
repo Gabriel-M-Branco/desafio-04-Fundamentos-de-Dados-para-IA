@@ -284,5 +284,70 @@
       "taxa_consistencia_pct": 100.0,
       "taxa_integridade_referencial_pct": 100.0
     }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_224552_fb799f",
+    "data_hora": "2026-09-28T22:45:52.398723-04:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_224553_4f4f93",
+    "data_hora": "2026-09-28T22:45:53.256203-04:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_224625_566cdb",
+    "data_hora": "2026-09-28T22:46:25.248546-04:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_224626_89fce1",
+    "data_hora": "2026-09-28T22:46:26.643104-04:00",
+    "status_geral": "APROVADO_INTEGRAL",
+    "bloquear_publicacao_gold": false,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 100.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
+  },
+  {
+    "lote_id": "LOTE_DQ_20260928_224628_e11a06",
+    "data_hora": "2026-09-28T22:46:28.074411-04:00",
+    "status_geral": "REPROVADO_CRITICO",
+    "bloquear_publicacao_gold": true,
+    "metricas": {
+      "taxa_completude_pct": 100.0,
+      "taxa_validade_pct": 75.0,
+      "taxa_unicidade_pct": 100.0,
+      "taxa_consistencia_pct": 100.0,
+      "taxa_integridade_referencial_pct": 100.0
+    }
   }
 ]
